@@ -1,4 +1,4 @@
-# HAMSA: Hash Aided Machine-Intelligence Sans Accelerators
+# HAMSA: Hash Aided Machine-intelligence Sans Accelerators
 
 This project seeks to enable machine intelligence based on neural networks aided by hash algorithms without requiring hardware accelerators such as Graphics Processor Unit (GPU), Field Programmable Gate Array (FPGA), or neuromorphic computing architectures. A high-end x86 server with solid state disk (SSD) and adequate random access memory (RAM) should suffice.
 
