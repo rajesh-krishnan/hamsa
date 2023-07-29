@@ -11,7 +11,7 @@
 #define EPS 0.00000001
 
 #define BUCKETSIZE 128
-#define binsize 8
+#define BINSIZE 8
 
 #define THRESH 2
 #define LOADWEIGHT 0

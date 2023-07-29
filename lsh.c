@@ -27,137 +27,46 @@ void clear_lsh(LSH *l) {
     for (int i = 0; i < totsz; i++) reset(&b[i]);
 }
 
+
 /*
-int *add(LSH *l, int *indices, int id);
-int addOne(LSH *l, int indices, int tableId, int id);
-int *hashesToIndex(LSH *l, int * hashes);
-void hashesToIndexAddOpt(LSH *l, int * hashes, int id);
-int **retrieveRaw(LSH *l, int *indices);
-int retrieve(LSH *l, int table, int indices, int bucket);
-void count(LSH *l);
+   Expects to be provided indices of length l->_L
 */
 
+void hashesToIndex(LSH *l, int *hashes, int *indices) {
+    const int logbinsize = (int)floor(log(BINSIZE));  /* should this be log2? */
 
-/*
-
-void LSH::count()
-{
-    for (int j=0; j<_L;j++) {
-        int total = 0;
-        for (int i = 0; i < 1 << _RangePow; i++) {
-            if (_bucket[j][i].getSize()!=0) {
-                cout <<_bucket[j][i].getSize() << " ";
-            }
-            total += _bucket[j][i].getSize();
-        }
-        cout << endl;
-        cout <<"TABLE "<< j << "Total "<< total << endl;
-    }
-}
-
-
-int* LSH::hashesToIndex(int * hashes)
-{
-  const int logbinsize = (int)floor(log(binsize));
-
-    int * indices = new int[_L];
-    for (int i = 0; i < _L; i++)
-    {
+    /* int *indices = new int[l->_L]; */
+    for (int i = 0; i < l->_L; i++) {
         unsigned int index = 0;
-
-        for (int j = 0; j < _K; j++)
-        {
-
-            if (HashFunction==4){
-                unsigned int h = hashes[_K*i + j];
-                index += h<<(_K-1-j);
-            }else if (HashFunction==1 | HashFunction==2){
-                unsigned int h = hashes[_K*i + j];
-                index += h<<((_K-1-j) * logbinsize);
-
-            }else {
-                unsigned int h = rand1[_K*i + j];
-                h *= rand1[_K * i + j];
-                h ^= h >> 13;
-                h ^= rand1[_K * i + j];
-                index += h * hashes[_K * i + j];
-            }
-        }
-        if (HashFunction==3) {
-            index = index&((1<<_RangePow)-1);
+        for (int j = 0; j < l->_K; j++) {
+             unsigned int h = hashes[l->_K*i + j];
+             index += h<<((l->_K-1-j) * logbinsize);
         }
         indices[i] = index;
     }
-
-    return indices;
 }
-
-
-int* LSH::add(int *indices, int id)
-{
-    int * secondIndices = new int[_L];
-    for (int i = 0; i < _L; i++)
-    {
-        secondIndices[i] = _bucket[i][indices[i]].add(id);
-    }
-
-    return secondIndices;
-}
-
-void LSH::hashesToIndexAddOpt(int * hashes, int id) {
-  const int logbinsize = (int)floor(log(binsize));
-  for (int i = 0; i < _L; i++) {
-    unsigned int index = 0;
-
-    for (int j = 0; j < _K; j++) {
-      if (HashFunction==4){
-        unsigned int h = hashes[_K*i + j];
-        index += h<<(_K-1-j);
-      } else if (HashFunction==1 | HashFunction==2){
-        unsigned int h = hashes[_K*i + j];
-        index += h<<((_K-1-j)*logbinsize);
-      } else {
-        unsigned int h = rand1[_K*i + j];
-        h *= rand1[_K * i + j];
-        h ^= h >> 13;
-        h ^= rand1[_K * i + j];
-        index += h * hashes[_K * i + j];
-      }
-    }
-    if (HashFunction==3) {
-      index = index&((1<<_RangePow)-1);
-    }
-    _bucket[i][index].add(id);
-  }
-}
-
-int LSH::add(int tableId, int indices, int id)
-{
-    int secondIndices = _bucket[tableId][indices].add(id);
-    return secondIndices;
-}
-*/
-
 
 /*
-* Returns all the buckets
+   Expects to be provided secondIndices of length l->_L
 */
-/*
-int** LSH::retrieveRaw(int *indices)
-{
-    int ** rawResults = new int*[_L];
-
-    for (int i = 0; i < _L; i++)
+void add_lsh(LSH *l, int *indices, int id, int *secondIndices) {
+    /* int * secondIndices = new int[_L]; */
+    for (int i = 0; i < l->_L; i++)
     {
-        rawResults[i] = _bucket[i][indices[i]].getAll();
+        secondIndices[i] = add(&l->_bucket[i][indices[i]], id);
     }
-    return rawResults;
 }
 
-
-int LSH::retrieve(int table, int indices, int bucket)
-{
-    return _bucket[table][indices].retrieve(bucket);
-}
-
+/*
+  Returns all the buckets
+  Expects rawResults of length l->_L
 */
+
+void retrieveRaw(LSH *l, int *indices, int **rawResults) {
+    /* int ** rawResults = new int*[_L]; */
+    for (int i = 0; i < l->_L; i++)
+    {
+        rawResults[i] = getAll(&l->_bucket[i][indices[i]]);
+    }
+}
+

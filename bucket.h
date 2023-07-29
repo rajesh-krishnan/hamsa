@@ -12,7 +12,6 @@ typedef struct {
 void reset(Bucket *b);
 int add(Bucket *b, int id);
 int retrieve(Bucket *b, int index);
-int getSize(Bucket *b);
 int *getAll(Bucket *b);
 void test_bucket();
 

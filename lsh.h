@@ -15,15 +15,8 @@ typedef struct {
 LSH *new_lsh(int K, int L, int RangePow);
 void delete_lsh(LSH *l);
 void clear_lsh(LSH *l);
-
-/*
-int* add(LSH *l, int *indices, int id);
-int add(LSH *l, int indices, int tableId, int id);
-int * hashesToIndex(LSH *l, int * hashes);
-void hashesToIndexAddOpt(LSH *l, int * hashes, int id);
-int** retrieveRaw(LSH *l, int *indices);
-int retrieve(LSH *l, int table, int indices, int bucket);
-void count(LSH *l);
-*/
+void hashesToIndex(LSH *l, int *hashes, int *indices);
+void add_lsh(LSH *l, int *indices, int id, int *secondIndices);
+void retrieveRaw(LSH *l, int *indices, int **rawResults);
 
 #endif /* _LSH_H_ */
