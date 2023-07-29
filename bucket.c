@@ -1,5 +1,4 @@
 #include "bucket.h"
-#include <stdlib.h>
 
 void reset(Bucket *b) {
     b->inited = -1;
@@ -22,5 +21,15 @@ int *getAll(Bucket *b) {
     if (b->inited == -1) return NULL;
     if (b->count<BUCKETSIZE) b->arr[b->count]=-1; 
     return b->arr;
+}
+
+void test_bucket() {
+    Bucket * b = malloc(sizeof(Bucket));
+    reset(b);
+    add(b,3);
+    printf("Size: %d\n", getSize(b));
+    printf("Retrieved: %d\n", retrieve(b,0));
+    reset(b);
+    printf("Size: %d\n", getSize(b));
 }
 

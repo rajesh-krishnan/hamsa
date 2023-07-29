@@ -1,5 +1,6 @@
 #include "mhelper.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <linux/mman.h>
 #include <sys/mman.h>
 #include <asm-generic/mman-common.h>
@@ -13,6 +14,7 @@ void *mymap (size_t size) {
     }
     if (ptr == MAP_FAILED){
         fprintf(stderr, "mmap failed \n");
+        exit(0);
     }
     return ptr;
 }
