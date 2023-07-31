@@ -1,18 +1,19 @@
 #include "lsh.h"
 
-LSH *new_lsh(int K, int L, int RangePow) {
+LSH *lsh_new(int K, int L, int RangePow) {
+    Bucket *b;
     size_t sz  = 1 << RangePow;
     LSH *l     = (LSH *) mymap(sizeof(LSH));
-    Bucket *b  = (Bucket *) mymap(L * sz * sizeof(Bucket));
     l->_bucket = (Bucket **) mymap(L * sizeof(Bucket *));
+    b = (Bucket *) mymap(L * sz * sizeof(Bucket));            /* this is really large */
+    for (int i = 0; i < L; i++) l->_bucket[i] = &b[i * sz];
     l->_K = K;
     l->_L = L;
     l->_RangePow = RangePow;
-    for (int i = 0; i < L; i++) l->_bucket[i] = &b[i * sz];
     return l;
 }
 
-void delete_lsh(LSH *l) {
+void lsh_delete(LSH *l) {
     size_t sz  = 1 << l->_RangePow;
     Bucket *b  = l->_bucket[0];
     myunmap(b, l->_L * sz * sizeof(Bucket));
@@ -20,19 +21,17 @@ void delete_lsh(LSH *l) {
     myunmap(l, sizeof(LSH));
 }
 
-void clear_lsh(LSH *l) {
+void lsh_clear(LSH *l) {
     size_t totsz = (1 << l->_RangePow) * l->_L;
     Bucket *b    = l->_bucket[0];
 #pragma omp parallel for 
-    for (int i = 0; i < totsz; i++) reset(&b[i]);
+    for (int i = 0; i < totsz; i++) bucket_reset(&b[i]);
 }
-
 
 /*
    Expects to be provided indices of length l->_L
 */
-
-void hashesToIndex(LSH *l, int *hashes, int *indices) {
+void lsh_hashes_to_indices(LSH *l, int *hashes, int *indices) {
     const int logbinsize = (int)floor(log(BINSIZE));  /* should this be log2? */
 
     /* int *indices = new int[l->_L]; */
@@ -47,26 +46,21 @@ void hashesToIndex(LSH *l, int *hashes, int *indices) {
 }
 
 /*
-   Expects to be provided secondIndices of length l->_L
+   Adds id to L buckets at specified indices
+   Returns index of bucket array where added in secondIndices
+   Expects to receive secondIndices of length l->_L
 */
-void add_lsh(LSH *l, int *indices, int id, int *secondIndices) {
-    /* int * secondIndices = new int[_L]; */
+void lsh_add_indices(LSH *l, int *indices, int id, int *secondIndices) {
     for (int i = 0; i < l->_L; i++)
-    {
-        secondIndices[i] = add(&l->_bucket[i][indices[i]], id);
-    }
+        secondIndices[i] = bucket_add_to(&l->_bucket[i][indices[i]], id);
 }
 
 /*
-  Returns all the buckets
-  Expects rawResults of length l->_L
+  Returns bucket arrays for L buckets at specified indices in rawResults corresponding to 
+  Expects to receive rawResults of length l->_L
 */
-
-void retrieveRaw(LSH *l, int *indices, int **rawResults) {
-    /* int ** rawResults = new int*[_L]; */
-    for (int i = 0; i < l->_L; i++)
-    {
-        rawResults[i] = getAll(&l->_bucket[i][indices[i]]);
-    }
+void lsh_retrieve_indices_raw(LSH *l, int *indices, int **rawResults) {
+    for (int i = 0; i < l->_L; i++) 
+        rawResults[i] = bucket_get_array(&l->_bucket[i][indices[i]]);
 }
 

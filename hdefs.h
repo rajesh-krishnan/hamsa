@@ -1,6 +1,7 @@
 #ifndef _HDEFS_H_
 #define _HDEFS_H_
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -13,6 +14,7 @@
 #define BUCKETSIZE 128
 #define BINSIZE 8
 
+#define TOPK 30
 #define THRESH 2
 #define LOADWEIGHT 0
 #define MAPLEN 325056

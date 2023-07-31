@@ -1,23 +1,17 @@
 #include "bucket.h"
 
-void reset(Bucket *b) {
-    b->inited = -1;
-    b->count = 0;
-}
+void bucket_reset(Bucket *b) { b->count = 0; }
 
-int add(Bucket *b, int id) {
-    int index = b->count & (BUCKETSIZE - 1);
+int bucket_add_to(Bucket *b, int id) {
+    int index = b->count & (BUCKETSIZE - 1);  /* place index in [0, BUCKETSIZE), cheaper than modulo */
     b->arr[index] = id;
-    b->inited = 1;
     b->count++;
+    assert (b->count > 0);                    /* overflow */
     return index;
 }
 
-int retrieve(Bucket *b, int index) { return (index >= BUCKETSIZE) ? -1 : b->arr[index]; }
-
-int *getAll(Bucket *b) {
-    if (b->inited == -1) return NULL;
-    if (b->count<BUCKETSIZE) b->arr[b->count]=-1; 
+int *bucket_get_array(Bucket *b) {
+    if (b->count<BUCKETSIZE) b->arr[b->count]=-1;  /* set first unused entry in bucket to -1 */
     return b->arr;
 }
 

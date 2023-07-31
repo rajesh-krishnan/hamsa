@@ -12,11 +12,11 @@ typedef struct {
     int _RangePow;
 } LSH;
 
-LSH *new_lsh(int K, int L, int RangePow);
-void delete_lsh(LSH *l);
-void clear_lsh(LSH *l);
-void hashesToIndex(LSH *l, int *hashes, int *indices);
-void add_lsh(LSH *l, int *indices, int id, int *secondIndices);
-void retrieveRaw(LSH *l, int *indices, int **rawResults);
+LSH *lsh_new(int K, int L, int RangePow);
+void lsh_delete(LSH *l);
+void lsh_clear(LSH *l);
+void lsh_hashes_to_indices(LSH *l, int *hashes, int *indices);
+void lsh_add_indices(LSH *l, int *indices, int id, int *secondIndices);
+void lsh_retrieve_indices_raw(LSH *l, int *indices, int **rawResults);
 
 #endif /* _LSH_H_ */

@@ -5,11 +5,10 @@
 
 void test_bucket() {
     Bucket * b = malloc(sizeof(Bucket));
-    reset(b);
-    add(b,3);
+    bucket_reset(b);
+    bucket_add_to(b,3);
     printf("Size: %d\n", b->count);
-    printf("Retrieved: %d\n", retrieve(b,0));
-    reset(b);
+    bucket_reset(b);
     printf("Size: %d\n", b->count);
 }
 
@@ -24,15 +23,15 @@ void test_mt() {
     }
 }
 
-void test_lsh() {
-    LSH *l = new_lsh(6, 50, 18);
-    clear_lsh(l);
-    delete_lsh(l);
+void test_lsh(int K, int L, int R) {
+    LSH *l = lsh_new(K,L,R);
+    lsh_clear(l);
+    lsh_delete(l);
 }
 
 int main(int argc, char *argv[]) {
     test_bucket();
     test_mt();
-    test_lsh();
+    test_lsh(6,50,18);
     return 0;
 }
