@@ -18,7 +18,7 @@ void test_mt() {
     init_by_array(init, length);
     printf("10 outputs of genrand_int31()\n");
     for (i=0; i<10; i++) {
-        printf("%10lu ", genrand_int32());
+        printf("%10lu ", genrand_int31());
         if (i%5==4) printf("\n");
     }
 }

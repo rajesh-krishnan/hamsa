@@ -1,6 +1,9 @@
 #include "lsh.h"
 
+const int logbinsize = (int)floor(log2(BINSIZE));  /* XXX: original code used log, not log2 */
+
 LSH *lsh_new(int K, int L, int RangePow) {
+    assert (K * logbinsize == RangePow);
     Bucket *b;
     size_t sz  = 1 << RangePow;
     LSH *l     = (LSH *) mymap(sizeof(LSH));
@@ -32,7 +35,6 @@ void lsh_clear(LSH *l) {
    Expects to be provided indices of length l->_L
 */
 void lsh_hashes_to_indices(LSH *l, int *hashes, int *indices) {
-    const int logbinsize = (int)floor(log(BINSIZE));  /* should this be log2? */
 
     /* int *indices = new int[l->_L]; */
     for (int i = 0; i < l->_L; i++) {
