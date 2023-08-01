@@ -1,6 +1,6 @@
 #ifndef _DWTAHASH_H_
 #define _DWTAHASH_H_
-#include "mhelper.h"
+#include "myhelper.h"
 
 typedef struct _struct_dwtahash {
     int _numhashes;
