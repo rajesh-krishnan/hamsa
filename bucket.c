@@ -6,7 +6,7 @@ int bucket_add_to(Bucket *b, int id) {
     int index = b->count & (BUCKETSIZE - 1);  /* place index in [0, BUCKETSIZE), cheaper than modulo */
     b->arr[index] = id;
     b->count++;
-    assert (b->count > 0);                    /* overflow */
+    assert (b->count > 0);                    /* check for overflow */
     return index;
 }
 

@@ -1,9 +1,8 @@
 #ifndef _LSH_H_
 #define _LSH_H_
-
-#include "bucket.h"
-#include "mhelper.h"
 #include "hdefs.h"
+#include "mhelper.h"
+#include "bucket.h"
 
 typedef struct {
     Bucket ** _bucket;

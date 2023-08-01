@@ -55,33 +55,34 @@ int dwtahash_getRandDoubleHash(DWTAHash *d, int binid, int count) {
     return (d->_randHash[0] * tohash << 3) >> (32 - d->_lognumhash);
 }
 
-#if 0
-/* XXX: make these functions not allocate memory */
-int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dataLen, int topK) {
-    int *hashes = new int[_numhashes];
-    float *values = new float[_numhashes];
-    int *hashArray = new int[_numhashes];
+/*
+   Expects hashes, values, and hashArray of length d->_numhashes
+   Expects xindices of length dataLen if easy is false
+   Returns the pointer to hashArray for convenience
+*/
+static int *gethash(DWTAHash *d, float* data, int dataLen, int *hashes, float *values, 
+    int *xindices, bool easy, int *hashArray) {
+    assert(easy == true || xindices != NULL);
 
-    for (int i = 0; i < _numhashes; i++)
+    for (int i = 0; i < d->_numhashes; i++)
     {
         hashes[i] = INT_MIN;
         values[i] = INT_MIN;
     }
 
-    for (int p=0; p< _permute; p++) {
-        int bin_index = p * _rangePow;
+    for (int p=0,bin_index=0; p < d->_permute; p++, bin_index+=d->_rangePow) {
         for (int i = 0; i < dataLen; i++) {
-            int inner_index = bin_index + i;
-            int binid = _indices[inner_index];
+            int inner_index = bin_index + (easy ? i : xindices[i]);
+            int binid = d->_indices[inner_index];
             float loc_data = data[i];
-            if(binid < _numhashes && values[binid] < loc_data) {
+            if(binid < d->_numhashes && values[binid] < loc_data) {
                 values[binid] = loc_data;
-                hashes[binid] = _pos[inner_index];
+                hashes[binid] = d->_pos[inner_index];
             }
         }
     }
 
-    for (int i = 0; i < _numhashes; i++)
+    for (int i = 0; i < d->_numhashes; i++)
     {
         int next = hashes[i];
         if (next != INT_MIN)
@@ -93,73 +94,23 @@ int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dataLen, int topK) {
         while (next == INT_MIN)
         {
             count++;
-            int index = std::min(
-                    getRandDoubleHash(i, count),
-                    _numhashes);
-
-            next = hashes[index]; // Kills GPU.
-            if (count > 100) // Densification failure.
-                break;
+            int r = dwtahash_getRandDoubleHash(d, i, count);
+            int index = r < d->_numhashes ? r : d->_numhashes;
+            next = hashes[index];
+            if (count > 100) break;      /* Densification failure */
         }
         hashArray[i] = next;
     }
-    delete[] hashes;
-    delete[] values;
     return hashArray;
 }
 
-int *dwtahash_getHash(DWTAHash *d, int* indices, float* data, int dataLen) {
-    int *hashes = new int[_numhashes];
-    float *values = new float[_numhashes];
-    int *hashArray = new int[_numhashes];
-
-    // init hashes and values to INT_MIN to start
-    for (int i = 0; i < _numhashes; i++)
-    {
-        hashes[i] = INT_MIN;
-        values[i] = INT_MIN;
-    }
-
-    //
-    for (int p = 0; p < _permute; p++) {
-        for (int i = 0; i < dataLen; i++) {
-            int binid = _indices[p * _rangePow + indices[i]];
-            if(binid < _numhashes) {
-                if (values[binid] < data[i]) {
-                    values[binid] = data[i];
-                    hashes[binid] = _pos[p * _rangePow + indices[i]];
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < _numhashes; i++)
-    {
-        int next = hashes[i];
-        if (next != INT_MIN)
-        {
-            hashArray[i] = hashes[i];
-            continue;
-        }
-        int count = 0;
-        while (next == INT_MIN)
-        {
-            count++;
-            int index = std::min(
-                    getRandDoubleHash(i, count),
-                    _numhashes);
-
-            next = hashes[index]; // Kills GPU.
-            if (count > 100) // Densification failure.
-                break;
-        }
-        hashArray[i] = next;
-    }
-
-    delete[] hashes;
-    delete[] values;
-
-    return hashArray;
+int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dataLen, int topK,
+    int *hashes, float *values, int *hashArray) {
+    return gethash(d, data, dataLen, hashes, values, NULL, false, hashArray);
 }
 
-#endif
+int *dwtahash_getHash(DWTAHash *d, int* xindices, float* data, int dataLen,
+    int *hashes, float *values, int *hashArray) {
+    return gethash(d, data, dataLen, hashes, values, xindices, true, hashArray);
+}
+

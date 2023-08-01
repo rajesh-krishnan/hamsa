@@ -2,6 +2,7 @@
 #define _NODE_H_
 
 #include "hdefs.h"
+#include "mhelper.h"
 
 typedef enum { ReLU, Softmax} NodeType;
 
@@ -20,18 +21,14 @@ typedef struct {
     int _currentBatchsize;
     float *_weights;
     float _bias;
-
     float *_adamAvgMom;
     float *_adamAvgVel;
     float* _t;
-
     Train *_train;
-
     int _activeInputs;
     float _tbias;
     float _adamAvgMombias;
     float _adamAvgVelbias;
-
     int *_indicesInTables;
     int *_indicesInBuckets;
     int *_update;
@@ -40,19 +37,15 @@ typedef struct {
 void node_update(Node *n, int dim, int nodeID, int layerID, NodeType type, int batchsize, 
     float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, 
     Train* train_blob);
-
 float node_get_last_activation(Node *n, int inputID);
 void node_set_last_activation(Node *n, int inputID, float realActivation);
-
 void node_increment_delta(Node *n, int inputID, float incrementValue);
 float node_get_activation(Node *n, int* indices, float* values, int length, int inputID);
 bool node_get_input_active(Node *n, int inputID);
 bool node_get_active_inputs(Node *n);
-
 float node_perturb_weight(Node *n, int weightid, float delta);
 float node_get_gradient(Node *n, int weightid, int inputID, float InputVal);
 void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int* label, int labelsize);
-
 void node_backprop(Node *n, Node* previousNodes, int* previousLayerActiveNodeIds, int previousLayerActiveNodeSize, 
     float learningRate, int inputID);
 void node_backprop_firstlayer(Node *n, int* nnzindices, float* nnzvalues, int nnzSize, 
