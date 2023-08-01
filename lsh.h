@@ -4,7 +4,7 @@
 #include "mhelper.h"
 #include "bucket.h"
 
-typedef struct {
+typedef struct _struct_lsh {
     Bucket ** _bucket;
     int _K;
     int _L;

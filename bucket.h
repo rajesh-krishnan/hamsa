@@ -3,7 +3,7 @@
 #include "hdefs.h"
 #include "mhelper.h"
 
-typedef struct {
+typedef struct _struct_bucket {
   int count;
   int arr[BUCKETSIZE];
 } Bucket;

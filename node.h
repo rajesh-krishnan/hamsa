@@ -6,14 +6,14 @@
 
 typedef enum { ReLU, Softmax} NodeType;
 
-typedef struct {
+typedef struct _struct_train {
     float _lastDeltaforBPs;
     float _lastActivations;
     float _lastGradients;
     int _ActiveinputIds;
 } __attribute__ ((aligned (64))) Train;
 
-typedef struct {
+typedef struct _struct_node {
     size_t _dim;
     size_t _layerNum;
     size_t _IDinLayer;
