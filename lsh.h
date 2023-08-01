@@ -1,7 +1,11 @@
 #ifndef _LSH_H_
 #define _LSH_H_
-#include "mhelper.h"
-#include "bucket.h"
+#include "myhelper.h"
+
+typedef struct _struct_bucket {
+  int count;
+  int arr[BUCKETSIZE];
+} Bucket;
 
 typedef struct _struct_lsh {
     Bucket ** _bucket;
@@ -9,6 +13,10 @@ typedef struct _struct_lsh {
     int _L;
     int _RangePow;
 } LSH;
+
+void bucket_reset(Bucket *b);
+int bucket_add_to(Bucket *b, int id);
+int *bucket_get_array(Bucket *b);
 
 LSH *lsh_new(int K, int L, int RangePow);
 void lsh_delete(LSH *l);

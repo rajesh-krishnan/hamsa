@@ -1,5 +1,4 @@
 #include "hdefs.h"
-#include "bucket.h"
 #include "lsh.h"
 #include "mt19937/mt19937ar.h"
 
@@ -14,8 +13,7 @@ void test_bucket() {
 
 void test_mt() {
     int i;
-    unsigned long init[4]={0x123, 0x234, 0x345, 0x456}, length=4;
-    init_by_array(init, length);
+    myrnginit();
     printf("10 outputs of genrand_int31()\n");
     for (i=0; i<10; i++) {
         printf("%10lu ", genrand_int31());

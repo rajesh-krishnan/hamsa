@@ -1,6 +1,6 @@
 #ifndef _NODE_H_
 #define _NODE_H_
-#include "mhelper.h"
+#include "myhelper.h"
 
 typedef enum { ReLU, Softmax} NodeType;
 

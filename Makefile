@@ -1,6 +1,7 @@
-SRC = main.c mt19937/mt19937ar.c mhelper.c bucket.c lsh.c node.c dwtahash.c
+SRC = mt19937/mt19937ar.c myhelper.c lsh.c dwtahash.c node.c 
+#layer.c network.c
 
-hamsa: $(SRC)
+hamsa: main.c $(SRC)
 	gcc -o $@ -fopenmp $^ -lm
 
 clean:

@@ -1,4 +1,4 @@
-#include "mhelper.h"
+#include "myhelper.h"
 
 void *mymap (size_t size) {
     void *ptr;
@@ -16,7 +16,8 @@ void myunmap (void *ptr, size_t size) { munmap(ptr, size); }
 void myrnginit() {
     static int inited = 0;
     if (inited) return;
-    init_by_array({0x123, 0x234, 0x345, 0x456}, 4);
+    unsigned long init[] = {0x123, 0x234, 0x345, 0x456};
+    init_by_array(init, 4);
     inited = 1;
 }
 
