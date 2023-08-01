@@ -1,6 +1,6 @@
 #include "lsh.h"
 
-const int logbinsize = (int)floor(log2(BINSIZE));  /* XXX: original code used log, not log2 */
+static int logbinsize = (int)floor(log2(BINSIZE));  /* XXX: original code used log, not log2 */
 
 void bucket_reset(Bucket *b) { b->count = 0; }
 
@@ -47,11 +47,10 @@ void lsh_clear(LSH *l) {
 }
 
 /*
-   Expects to be provided indices of length l->_L
+   Expects indices of length l->_L and hashes of length l->_L * l->_K
+   XXX: why is there a LxK vs. KxL transposition?
 */
 void lsh_hashes_to_indices(LSH *l, int *hashes, int *indices) {
-
-    /* int *indices = new int[l->_L]; */
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = 0;
         for (int j = 0; j < l->_K; j++) {
@@ -63,9 +62,9 @@ void lsh_hashes_to_indices(LSH *l, int *hashes, int *indices) {
 }
 
 /*
-   Adds id to L buckets at specified indices
-   Returns index of bucket array where added in secondIndices
-   Expects to receive secondIndices of length l->_L
+   Expects indices and secondIndices of length l->_L
+   Adds id to l->_L buckets at i,indices[i] locations
+   Returns index of bucket array where id was added in secondIndices[i]
 */
 void lsh_add_indices(LSH *l, int *indices, int id, int *secondIndices) {
     for (int i = 0; i < l->_L; i++)
@@ -73,8 +72,8 @@ void lsh_add_indices(LSH *l, int *indices, int id, int *secondIndices) {
 }
 
 /*
-  Returns bucket arrays for L buckets at specified indices in rawResults corresponding to 
-  Expects to receive rawResults of length l->_L
+  Expects indices and rawResults of length l->_L
+  Returns L arrays of buckets at i,indices[i] locations in rawResults[i]
 */
 void lsh_retrieve_indices_raw(LSH *l, int *indices, int **rawResults) {
     for (int i = 0; i < l->_L; i++) 

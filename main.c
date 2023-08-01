@@ -49,13 +49,8 @@ void test_bucket() {
 }
 
 void test_lsh(int K, int L, int R) {
+    printf("\nTesting Locality Sensitive Hashing\n");
     LSH *l = lsh_new(K,L,R);
-    /*
-    -- test hashing and retrieval
-    lsh_hashes_to_indices(LSH *l, int *hashes, int *indices);
-    lsh_add_indices(LSH *l, int *indices, int id, int *secondIndices);
-    lsh_retrieve_indices_raw(LSH *l, int *indices, int **rawResults);
-    */
     lsh_clear(l);
     lsh_delete(l);
 }

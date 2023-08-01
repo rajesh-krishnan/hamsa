@@ -4,31 +4,32 @@
 #include "dwtahash.h"
 
 typedef struct _struct_layer {
+    size_t _noOfNodes;
+    int _previousLayerNumOfNodes;
+    int _layerID;
     NodeType _type;
-    Node *_Nodes;
-    int *_randNode;
-    float *_normalizationConstants;
+    int _batchsize;
     int _K;
     int _L;
-    int _RangeRow;
-    int _previousLayerNumOfNodes;
-    int _batchsize;
-    Train *_train_array;
-
-    int _layerID;
+    int _RangePow;
+    float _Sparsity;
+    float _qSparsity;
     int _noOfActive;
-    size_t _noOfNodes;
-    float* _weights;
-    float* _adamAvgMom;
-    float* _adamAvgVel;
-    float* _bias;
+    Node *_Nodes;
     LSH *_hashTables;
     DWTAHash *_dwtaHasher;
-    int * _binids;
+    Train *_train_array;
+    int *_randNode;
+    float *_weights;
+    float *_bias;
+    float *_adamAvgMom;
+    float *_adamAvgVel;
+    float *_adamT;
+    float *_normalizationConstants;
 } Layer;
 
-Layer *layer_new(size_t _numNodex, int previousLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
-    int K, int L, int RangePow, float Sparsity, float* weights, float* bias, float *adamAvgMom, float *adamAvgVel);
+Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
+    int K, int L, int RangePow, float Sparsity, float qSparsity, bool load, char * path);
 void layer_delete(Layer *l);
 void layer_save(Layer *l, char *path);
 

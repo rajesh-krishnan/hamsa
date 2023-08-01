@@ -10,3 +10,5 @@
 #define THRESH 2
 #define LOADWEIGHT 0
 #define MAPLEN 325056
+
+#define DEBUG 1

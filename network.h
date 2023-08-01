@@ -3,18 +3,13 @@
 
 typedef struct _struct_network {
     Layer **_hiddenlayers;
-    NodeType *_layersTypes;
-    int *_sizesOfLayers;
-    float *_Sparsity;
-    float _learningRate;
     int _numberOfLayers;
+    float _learningRate;
     int _currentBatchSize;
 } Network;
 
-/*
-Network *network_new(int* sizesOfLayers, NodeType* layersTypes, int noOfLayers, int batchsize, float lr, 
-    int inputdim, int* K, int* L, int* RangePow, float* Sparsity, cnpy::npz_t arr);
-*/
+Network *network_new(int *sizesOfLayers, NodeType *layersTypes, int noOfLayers, int batchSize, float lr, 
+    int inputdim, int *K, int *L, int *RangePow, float *Sparsity, bool load, char *path);
 void network_delete(Network *n);
 
 Layer *getLayer(Network *n, int LayerID);
