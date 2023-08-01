@@ -1,16 +1,5 @@
 #include "dwtahash.h"
 
-static void shuffle(int *array, int n)
-{
-    if (n <= 1) return;
-    for (int i = 0; i < n - 1; i++) {
-        int j = i + (genrand_int31() % (n - i + 1));
-        int t = array[j];
-        array[j] = array[i];
-        array[i] = t;
-    }
-}
-
 DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     int *n_array;
     unsigned long init[4]={0x123, 0x234, 0x345, 0x456}, length=4;

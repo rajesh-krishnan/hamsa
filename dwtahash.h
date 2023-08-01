@@ -2,7 +2,6 @@
 #define _DWTAHASH_H_
 #include "hdefs.h"
 #include "mhelper.h"
-#include "mt19937/mt19937ar.h"
 
 typedef struct _struct_dwtahash {
     int _numhashes;

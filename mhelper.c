@@ -13,3 +13,12 @@ void *mymap (size_t size) {
 
 void myunmap (void *ptr, size_t size) { munmap(ptr, size); }
 
+void myshuffle(int *array, int n) {
+    if (n <= 1) return;
+    for (int i = 0; i < n - 1; i++) {
+        int j = i + (genrand_int31() % (n - i + 1));
+        int t = array[j];
+        array[j] = array[i];
+        array[i] = t;
+    }
+}

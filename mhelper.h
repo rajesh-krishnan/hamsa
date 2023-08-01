@@ -1,5 +1,6 @@
-#ifndef _MMAP_HELPER_H
-#define _MMAP_HELPER_H
+#ifndef _MYHELPER_H
+#define _MYHELPER_H
+#include <omp.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,8 +11,9 @@
 #include <sys/mman.h>
 #include <linux/mman.h>
 #include <asm-generic/mman-common.h>
+#include "mt19937/mt19937ar.h"
 
 void *mymap (size_t size);
 void myunmap (void *ptr, size_t size);
 
-#endif /* _MMAP_HELPER_H */
+#endif /* _MYHELPER_H */
