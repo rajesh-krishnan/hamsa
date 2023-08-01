@@ -13,6 +13,13 @@ void *mymap (size_t size) {
 
 void myunmap (void *ptr, size_t size) { munmap(ptr, size); }
 
+void myrnginit() {
+    static int inited = 0;
+    if (inited) return;
+    init_by_array({0x123, 0x234, 0x345, 0x456}, 4);
+    inited = 1;
+}
+
 void myshuffle(int *array, int n) {
     if (n <= 1) return;
     for (int i = 0; i < n - 1; i++) {

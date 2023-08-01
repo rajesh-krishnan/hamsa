@@ -2,10 +2,9 @@
 
 DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     int *n_array;
-    unsigned long init[4]={0x123, 0x234, 0x345, 0x456}, length=4;
     DWTAHash *d = (DWTAHash *) mymap(sizeof(DWTAHash));
 
-    init_by_array(init, length);
+    myrnginit();
     d->_numhashes = numHashes;
     d->_rangePow = noOfBitsToHash;
     d->_permute = (int) ceil(numHashes * BINSIZE * 1.0 / noOfBitsToHash);
@@ -21,7 +20,7 @@ DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     for (int i = 0; i < d->_rangePow; i++) n_array[i] = i;
 
     for (int p = 0; p < d->_permute ;p++) {
-        shuffle(n_array, d->_rangePow);
+        myshuffle(n_array, d->_rangePow);
         int base = d->_rangePow * p;
         for (int j = 0; j < d->_rangePow; j++) {
             d->_indices[base + n_array[j]] = (base + j) / BINSIZE;
