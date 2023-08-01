@@ -27,7 +27,19 @@ void test_lsh(int K, int L, int R) {
     lsh_delete(l);
 }
 
+void test_myshuffle() {
+    int i, x[100];
+    myrnginit();
+    for (i = 0; i < 100; i++) x[i] = i;
+    myshuffle(x, 100);
+    for (i = 0; i < 100; i++) {
+        printf("%d", x[i]);
+        printf("%s", (i+1) % 10 == 0 ? "\n" : " ");
+    }
+}
+
 int main(int argc, char *argv[]) {
+    test_myshuffle();
     test_bucket();
     test_mt();
     test_lsh(6,50,18);

@@ -24,7 +24,8 @@ void myrnginit() {
 void myshuffle(int *array, int n) {
     if (n <= 1) return;
     for (int i = 0; i < n - 1; i++) {
-        int j = i + (genrand_int31() % (n - i + 1));
+        int j = i + (genrand_int31() % (n - i));
+        assert(j >= 0 && j < n);
         int t = array[j];
         array[j] = array[i];
         array[i] = t;
