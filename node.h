@@ -1,5 +1,4 @@
-#ifndef _NODE_H_
-#define _NODE_H_
+#pragma once
 #include "myhelper.h"
 
 typedef enum { ReLU, Softmax} NodeType;
@@ -48,5 +47,3 @@ void node_backprop(Node *n, Node* previousNodes, int* previousLayerActiveNodeIds
     float learningRate, int inputID);
 void node_backprop_firstlayer(Node *n, int* nnzindices, float* nnzvalues, int nnzSize, 
     float learningRate, int inputID);
-
-#endif /* _NODE_H_ */

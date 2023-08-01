@@ -1,30 +1,12 @@
-#include "hdefs.h"
-#include "lsh.h"
-#include "mt19937/mt19937ar.h"
-
-void test_bucket() {
-    Bucket * b = malloc(sizeof(Bucket));
-    bucket_reset(b);
-    bucket_add_to(b,3);
-    printf("Size: %d\n", b->count);
-    bucket_reset(b);
-    printf("Size: %d\n", b->count);
-}
+#include "network.h"
 
 void test_mt() {
-    int i;
     myrnginit();
-    printf("10 outputs of genrand_int31()\n");
-    for (i=0; i<10; i++) {
+    printf("\nOutput 20 draws of genrand_int31()\n");
+    for (int i=0; i<20; i++) {
         printf("%10lu ", genrand_int31());
-        if (i%5==4) printf("\n");
+        if (i%10==9) printf("\n");
     }
-}
-
-void test_lsh(int K, int L, int R) {
-    LSH *l = lsh_new(K,L,R);
-    lsh_clear(l);
-    lsh_delete(l);
 }
 
 void test_myshuffle() {
@@ -32,16 +14,56 @@ void test_myshuffle() {
     myrnginit();
     for (i = 0; i < 100; i++) x[i] = i;
     myshuffle(x, 100);
+    printf("\nOutput shuffle of [0:99]\n");
     for (i = 0; i < 100; i++) {
         printf("%d", x[i]);
-        printf("%s", (i+1) % 10 == 0 ? "\n" : " ");
+        printf("%s", (i%10==9) ? "\n" : " ");
     }
+    printf("\n");
+}
+
+void test_bucket() {
+    int i, *x;
+    Bucket *b = malloc(sizeof(Bucket));
+    bucket_reset(b);
+    bucket_add_to(b,3);
+    bucket_add_to(b,2);
+    bucket_add_to(b,4);
+    bucket_add_to(b,9);
+    printf("\nSize: %d In-buckets:\n", b->count);
+    x = bucket_get_array(b);
+    for (i = 0; i <= b->count; i++) {
+        printf("%d", x[i]);
+        printf("%s", (i%10==9) ? "\n" : " ");
+    }
+    printf("\n");
+    bucket_reset(b);
+    x = bucket_get_array(b);
+    printf("\nSize: %d In-buckets:\n", b->count);
+    for (i = 0; i <= b->count; i++) {
+        printf("%d", x[i]);
+        printf("%s", (i%10==9) ? "\n" : " ");
+    }
+    printf("\n");
+    free(b);
+}
+
+void test_lsh(int K, int L, int R) {
+    LSH *l = lsh_new(K,L,R);
+    /*
+    -- test hashing and retrieval
+    lsh_hashes_to_indices(LSH *l, int *hashes, int *indices);
+    lsh_add_indices(LSH *l, int *indices, int id, int *secondIndices);
+    lsh_retrieve_indices_raw(LSH *l, int *indices, int **rawResults);
+    */
+    lsh_clear(l);
+    lsh_delete(l);
 }
 
 int main(int argc, char *argv[]) {
+    test_mt();
     test_myshuffle();
     test_bucket();
-    test_mt();
     test_lsh(6,50,18);
     return 0;
 }

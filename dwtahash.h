@@ -1,5 +1,4 @@
-#ifndef _DWTAHASH_H_
-#define _DWTAHASH_H_
+#pragma once
 #include "myhelper.h"
 
 typedef struct _struct_dwtahash {
@@ -19,5 +18,3 @@ int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dataLen, int topK,
     int *hashes, float *values, int *hashArray);
 int *dwtahash_getHash(DWTAHash *d, int* xindices, float* data, int dataLen,
     int *hashes, float *values, int *hashArray);
-
-#endif /* _DWTAHASH_H_ */

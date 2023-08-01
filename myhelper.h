@@ -1,5 +1,4 @@
-#ifndef _MYHELPER_H
-#define _MYHELPER_H
+#pragma once
 #include <omp.h>
 #include <math.h>
 #include <stdio.h>
@@ -19,5 +18,3 @@ void *mymap (size_t size);
 void myunmap (void *ptr, size_t size);
 void myrnginit();
 void myshuffle(int *array, int n);
-
-#endif /* _MYHELPER_H */
