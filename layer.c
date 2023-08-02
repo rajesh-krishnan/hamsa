@@ -1,7 +1,7 @@
 #include "layer.h"
 
 Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
-    int K, int L, int RangePow, float Sparsity, float qSparsity, bool load, char * path) {
+    int K, int L, int RangePow, float Sparsity, float qSparsity, bool load, char *path) {
     Layer *l = mymap(sizeof(Layer));
 
     myrnginit();
@@ -34,22 +34,18 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     l->_adamT = mymap(fano * sizeof(float));
 
     if (type == Softmax) l->_normalizationConstants = mymap(batchsize * sizeof(float));
-
-    if (load) {
-        layer_load(l, path);
-    }else{
-        layer_randinit(l);
-    }
+    (load) ?  layer_load(l, path) : layer_randinit(l);
 
 #pragma omp parallel for
     for (size_t i = 0; i < noOfNodes; i++)
     {
         size_t index = previousLayerNumOfNodes * i;
         node_update(&l->_Nodes[i], previousLayerNumOfNodes, i, layerID, type, batchsize,
-            &l->_weights[index], l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->adamT[index], 
+            &l->_weights[index], l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
             l->_train_array);
-        layer_addtoHashTable(l, l->_Nodes[i]._weights, previousLayerNumOfNodes, l->_Nodes[i]._bias, i);
+        //layer_addToHashTable(l, l->_Nodes[i]._weights, previousLayerNumOfNodes, l->_Nodes[i]._bias, i);
     }
+    return l;
 }
 
 void layer_delete(Layer *l) {
@@ -64,15 +60,15 @@ void layer_delete(Layer *l) {
     myunmap(l->_adamAvgMom, fano * sizeof(float));
     myunmap(l->_adamAvgVel, fano * sizeof(float));
     myunmap(l->_adamT, fano * sizeof(float));
-    if (type == Softmax) myunmap(l->_normalizationConstants, l->batchsize * sizeof(float));
+    if (l->_type == Softmax) myunmap(l->_normalizationConstants, l->_batchsize * sizeof(float));
 }
 
 void layer_randinit(Layer *l) {
     size_t fano = l->_noOfNodes * l->_previousLayerNumOfNodes;
 #pragma omp parallel for
-    for (size_t i = 0; i < fano; i++) l->weights[i] = randnorm(0.0,0.01);
+    for (size_t i = 0; i < fano; i++) l->_weights[i] = randnorm(0.0,0.01);
 #pragma omp parallel for
-    for (size_t i = 0; i < l->_noOfNodes; i++) l->bias[i] = randnorm(0.0,0.01);
+    for (size_t i = 0; i < l->_noOfNodes; i++) l->_bias[i] = randnorm(0.0,0.01);
 }
 
 void layer_load(Layer *l, char *path) {
@@ -115,16 +111,6 @@ Node *layer_getAllNodes(Layer *l) { return l->_Nodes; }
 
 int layer_getNodeCount(Layer *l) { return l->_noOfNodes; }
 
-void layer_addtoHashTable(Layer *l, float* weights, int length, float bias, int id) {
-// FIX
-    int *hashes = _dwtaHasher->getHashEasy(weights, length, TOPK);
-    int *hashIndices = _hashTables->hashesToIndex(hashes);
-    int *bucketIndices = _hashTables->add(hashIndices, ID+1);
-    _Nodes[ID]._indicesInTables = hashIndices;
-    _Nodes[ID]._indicesInBuckets = bucketIndices;
-    delete [] hashes;
-}
-
 float layer_getNormalizationConstant(Layer *l, int inputID) {
     assert(l->_type == Softmax);
     return l->_normalizationConstants[inputID];
@@ -137,8 +123,19 @@ void layer_updateTable(Layer *l) {
 
 void layer_updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes); }
 
-int layer_queryActiveNodeandComputeActivations(Layer *l, int** activenodesperlayer, float** activeValuesperlayer, 
-    int* inlenght, int layerID, int inputID,  int* label, int labelsize, float Sparsity, int iter) {
+#if 0
+void layer_addToHashTable(Layer *l, float* weights, int length, float bias, int id) {
+// FIX
+    int *hashes = _dwtaHasher->getHashEasy(weights, length, TOPK);
+    int *hashIndices = _hashTables->hashesToIndex(hashes);
+    int *bucketIndices = _hashTables->add(hashIndices, ID+1);
+    _Nodes[ID]._indicesInTables = hashIndices;
+    _Nodes[ID]._indicesInBuckets = bucketIndices;
+    delete [] hashes;
+}
+
+int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlayer, float **activeValuesperlayer, 
+    int *inlength, int layerID, int inputID,  int *label, int labelsize, float Sparsity, int iter) {
 
 // replace sparsity arg with tORq?
     //LSH QueryLogic
@@ -251,3 +248,4 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int** activenodesperlay
     return in;
 }
 
+#endif

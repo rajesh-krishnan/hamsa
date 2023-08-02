@@ -29,7 +29,7 @@ typedef struct _struct_layer {
 } Layer;
 
 Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
-    int K, int L, int RangePow, float Sparsity, float qSparsity, bool load, char * path);
+    int K, int L, int RangePow, float Sparsity, float qSparsity, bool load, char *path);
 void layer_delete(Layer *l);
 void layer_randinit(Layer *l);
 void layer_load(Layer *l, char *path);
@@ -38,9 +38,9 @@ void layer_save(Layer *l, char *path);
 Node *layer_getNodebyID(Layer *l, size_t nodeID);
 Node *layer_getAllNodes(Layer *l);
 int layer_getNodeCount(Layer *l);
-void layer_addtoHashTable(Layer *l, float* weights, int length, float bias, int id);
 float layer_getNormalizationConstant(Layer *l, int inputID);
 void layer_updateTable(Layer *l);
 void layer_updateRandomNodes(Layer *l);
-int layer_queryActiveNodeandComputeActivations(Layer *l, int** activenodesperlayer, float** activeValuesperlayer, 
-    int* inlenght, int layerID, int inputID,  int* label, int labelsize, float Sparsity, int iter);
+void layer_addToHashTable(Layer *l, float* weights, int length, float bias, int id);
+int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlayer, float **activeValuesperlayer, 
+    int *inlength, int layerID, int inputID,  int *label, int labelsize, float Sparsity, int iter);

@@ -18,7 +18,12 @@ void myrnginit() {
     int rd;
     unsigned long init[] = {0x123, 0x234, 0x345, 0x456};
     if (inited) return;
-    if((rd = open("/dev/urandom", O_RDONLY)) >= 0) read(rd, init, 4);
+    if((rd = open("/dev/urandom", O_RDONLY)) < 0) {
+        fprintf(stderr, "Could not open /dev/urandom\n");
+    }
+    else {
+        if(read(rd, init, 4) < 0) fprintf(stderr, "Read from /dev/urandom failed\n");
+    }
     init_by_array(init, 4);
     inited = 1;
 }

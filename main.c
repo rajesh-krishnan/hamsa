@@ -65,6 +65,14 @@ void test_bucket() {
     free(b);
 }
 
+void test_dwtahash() {
+    printf("\nTesting Densified Winner Take All Hashing\n");
+    DWTAHash *d = dwtahash_new(300, 128);
+    printf("Get Random: %d\n", dwtahash_getRandDoubleHash(d, 10, 5));
+    printf("Get Random: %d\n", dwtahash_getRandDoubleHash(d, 10, 5));
+    dwtahash_delete(d);
+}
+
 void test_lsh(int K, int L, int R) {
     printf("\nTesting Locality Sensitive Hashing\n");
     LSH *l = lsh_new(K,L,R);
@@ -72,11 +80,19 @@ void test_lsh(int K, int L, int R) {
     lsh_delete(l);
 }
 
+void test_layer() {
+    printf("\nTesting Layer \n");
+    Layer *l = layer_new(670091, 128, 1, ReLU, 1024, 6, 50, 18, 0.01, 1.0, false, NULL);
+    layer_delete(l);
+}
+
 int main(int argc, char *argv[]) {
     test_mt();
     test_norm();
     test_myshuffle();
     test_bucket();
+    test_dwtahash();
     test_lsh(6,50,18);
+    test_layer();
     return 0;
 }
