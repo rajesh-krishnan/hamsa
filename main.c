@@ -1,5 +1,15 @@
 #include "network.h"
 
+void test_savenpy() {
+    float farr[20];
+    printf("\nTest saving of 1D and 2D float arrays as npy files\n");
+    for (int i=0; i<20; i++) farr[i] = (float) i;
+    write_fnpy(farr, false, 20, 1, "float_20.npy");
+    write_fnpy(farr, true, 1, 20, "float_1x20.npy");
+    write_fnpy(farr, true, 20, 1, "float_20x1.npy");
+    write_fnpy(farr, true, 4, 5, "float_4x5.npy");
+}
+
 void test_mt() {
     myrnginit();
     printf("\nOutput 20 draws of genrand_int31()\n");
@@ -23,7 +33,7 @@ void test_norm() {
     samp[i] = samp[i] - mean;
     for (i=0, totl=0.0; i<N; i++) totl += samp[i] * samp[i];
     stdv = sqrt(totl / N);
-    printf("\nExpected mean,stdv: 0.0,0.01 Actual mean,stdv: %f,%f\n", mean, stdv);
+    printf("Expected mean,stdv: 0.0,0.01 Actual mean,stdv: %f,%f\n", mean, stdv);
 }
 
 void test_myshuffle() {
@@ -87,6 +97,7 @@ void test_layer() {
 }
 
 int main(int argc, char *argv[]) {
+    test_savenpy();
     test_mt();
     test_norm();
     test_myshuffle();

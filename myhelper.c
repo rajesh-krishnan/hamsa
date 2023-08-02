@@ -1,4 +1,5 @@
 #include "myhelper.h"
+#include "cnpy/cnpy.h"
 
 void *mymap (size_t size) {
     void *ptr;
@@ -61,3 +62,30 @@ float randnorm (double mu, double sigma) {
     call = !call;
     return (float) (mu + sigma * X1);
 }
+
+void write_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
+  cnpy_array a;
+  size_t index[2];
+
+  index[0] = d0;
+  index[1] = (twoD ? d1 : 1);
+  unlink(fn);
+  if (cnpy_create(fn, CNPY_BE, CNPY_F4, CNPY_FORTRAN_ORDER, (twoD?2:1), index, &a) != CNPY_SUCCESS) {
+    cnpy_perror("Unable to create file");
+    abort();
+  }
+
+  float *t = farr;
+  for (index[0] = 0; index[0] < d0; index[0]++) {
+      for (index[1] = 0; index[1] < d1; index[1]++) {
+          cnpy_set_f4(a, index, *t);
+          t++;
+      }
+  }
+
+  if (cnpy_close(&a) != CNPY_SUCCESS) {
+    cnpy_perror("Unable to close file");
+    abort();
+  }
+}
+
