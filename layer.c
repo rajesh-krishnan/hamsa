@@ -32,7 +32,49 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     l->_adamT = mymap(fano * sizeof(float));
     if (type == Softmax) l->_normalizationConstants = mymap(batchsize * sizeof(float));
 
-    if (LOADWEIGHT) {
+    if (load) {
+        layer_load(l, path);
+    }else{
+        layer_randinit(l);
+    }
+
+#pragma omp parallel for
+    for (size_t i = 0; i < noOfNodes; i++)
+    {
+        size_t index = previousLayerNumOfNodes * i;
+        node_update(&l->_Nodes[i], previousLayerNumOfNodes, i, layerID, type, batchsize,
+            &l->_weights[index], l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->adamT[index], 
+            l->_train_array);
+        layer_addtoHashTable(l, l->_Nodes[i]._weights, previousLayerNumOfNodes, l->_Nodes[i]._bias, i);
+    }
+}
+
+void layer_delete(Layer *l) {
+    size_t fano = l->_noOfNodes * l->_previousLayerNumOfNodes;
+    lsh_delete(l->_hashTables);
+    dwtahash_delete(l->_dwtaHasher);
+    myunmap(l->_Nodes, l->_noOfNodes * sizeof(Node));
+    myunmap(l->_train_array, l->_noOfNodes * l->_batchsize * sizeof(Train));
+    myunmap(l->_randNode, l->_noOfNodes * sizeof(int));
+    myunmap(l->_weights, fano * sizeof(float));
+    myunmap(l->_bias, l->_noOfNodes * sizeof(float));
+    myunmap(l->_adamAvgMom, fano * sizeof(float));
+    myunmap(l->_adamAvgVel, fano * sizeof(float));
+    myunmap(l->_adamT, fano * sizeof(float));
+    if (type == Softmax) myunmap(l->_normalizationConstants, l->batchsize * sizeof(float));
+}
+
+void layer_randinit(Layer *l) {
+/*
+        random_device rd;
+        default_random_engine dre(rd());
+        normal_distribution<float> distribution(0.0, 0.01);
+        generate(_weights, _weights + _noOfNodes * previousLayerNumOfNodes, [&] () { return distribution(dre); });
+        generate(_bias, _bias + _noOfNodes, [&] () { return distribution(dre); });
+*/
+}
+
+void layer_load(Layer *l, char *path) {
 /*
         float *weight, *bias, *adamAvgMom, *adamAvgVel;
         if(LOADWEIGHT){
@@ -52,84 +94,28 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
         _adamAvgMom = adamAvgMom;
         _adamAvgVel = adamAvgVel;
 */
-    }else{
-
-        random_device rd;
-        default_random_engine dre(rd());
-        normal_distribution<float> distribution(0.0, 0.01);
-
-        generate(_weights, _weights + _noOfNodes * previousLayerNumOfNodes, [&] () { return distribution(dre); });
-        generate(_bias, _bias + _noOfNodes, [&] () { return distribution(dre); });
-    }
-
-#pragma omp parallel for
-    for (size_t i = 0; i < noOfNodes; i++)
-    {
-// will need dim and adam_t
-        _Nodes[i].Update(previousLayerNumOfNodes, i, _layerID, type, batchsize, _weights+previousLayerNumOfNodes*i,
-                _bias[i], _adamAvgMom+previousLayerNumOfNodes*i , _adamAvgVel+previousLayerNumOfNodes*i, _train_array);
-        addtoHashTable(_Nodes[i]._weights, previousLayerNumOfNodes, _Nodes[i]._bias, i);
-    }
-
 }
 
-void saveWeights(Layer *l, char *path) {
-    if (_layerID==0) {
-        cnpy::npz_save(file, "w_layer_0", _weights, {_noOfNodes, _Nodes[0]._dim}, "w");
-        cnpy::npz_save(file, "b_layer_0", _bias, {_noOfNodes}, "a");
-        cnpy::npz_save(file, "am_layer_0", _adamAvgMom, {_noOfNodes, _Nodes[0]._dim}, "a");
-        cnpy::npz_save(file, "av_layer_0", _adamAvgVel, {_noOfNodes, _Nodes[0]._dim}, "a");
-        cout<<"save for layer 0"<<endl;
-        cout<<_weights[0]<<" "<<_weights[1]<<endl;
-    }else{
-        cnpy::npz_save(file, "w_layer_"+ to_string(_layerID), _weights, {_noOfNodes, _Nodes[0]._dim}, "a");
-        cnpy::npz_save(file, "b_layer_"+ to_string(_layerID), _bias, {_noOfNodes}, "a");
-        cnpy::npz_save(file, "am_layer_"+ to_string(_layerID), _adamAvgMom, {_noOfNodes, _Nodes[0]._dim}, "a");
-        cnpy::npz_save(file, "av_layer_"+ to_string(_layerID), _adamAvgVel, {_noOfNodes, _Nodes[0]._dim}, "a");
-        cout<<"save for layer "<<to_string(_layerID)<<endl;
-        cout<<_weights[0]<<" "<<_weights[1]<<endl;
-    }
+void layer_save(Layer *l, char *path) {
+/*
+    cnpy::npz_save(file, "w_layer_"+ to_string(_layerID), _weights, {_noOfNodes, _Nodes[0]._dim}, "a");
+    cnpy::npz_save(file, "b_layer_"+ to_string(_layerID), _bias, {_noOfNodes}, "a");
+    cnpy::npz_save(file, "am_layer_"+ to_string(_layerID), _adamAvgMom, {_noOfNodes, _Nodes[0]._dim}, "a");
+    cnpy::npz_save(file, "av_layer_"+ to_string(_layerID), _adamAvgVel, {_noOfNodes, _Nodes[0]._dim}, "a");
+*/
 }
 
-
-void layer_delete(Layer *l) {
-    size_t fano = l->_noOfNodes * l->_previousLayerNumOfNodes;
-    lsh_delete(l->_hashTables);
-    dwtahash_delete(l->_dwtaHasher);
-
-    myunmap(l->_Nodes, l->_noOfNodes * sizeof(Node));
-    myunmap(l->_train_array, l->_noOfNodes * l->_batchsize * sizeof(Train));
-    myunmap(l->_randNode, l->_noOfNodes * sizeof(int));
-    myunmap(l->_weights, fano * sizeof(float));
-    myunmap(l->_bias, l->_noOfNodes * sizeof(float));
-    myunmap(l->_adamAvgMom, fano * sizeof(float));
-    myunmap(l->_adamAvgVel, fano * sizeof(float));
-    myunmap(l->_adamT, fano * sizeof(float));
-    if (type == Softmax) myunmap(l->_normalizationConstants, l->batchsize * sizeof(float));
-}
-
-void updateTable(Layer *l) {
-    dwtahash_delete(l->_dwtaHasher);
-    l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_previousLayerNumOfNodes);
-}
-
-void updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes); }
-
-Node* getAllNodes(Layer *l) { return l->_Nodes; }
-
-int getNodeCount(Layer *l) { return l->_noOfNodes; }
-
-Node* getNodebyID(Layer *l, size_t nodeID) {
+Node *layer_getNodebyID(Layer *l, size_t nodeID) {
     assert(nodeID < l->_noOfNodes);
     return &l->_Nodes[nodeID];
 }
 
-float getNomalizationConstant(Layer *l, int inputID) {
-    assert(l->_type == Softmax);
-    return l->_normalizationConstants[inputID];
-}
+Node *layer_getAllNodes(Layer *l) { return l->_Nodes; }
 
-void Layer::addtoHashTable(float* weights, int length, float bias, int ID) {
+int layer_getNodeCount(Layer *l) { return l->_noOfNodes; }
+
+void layer_addtoHashTable(Layer *l, float* weights, int length, float bias, int id) {
+// FIX
     int *hashes = _dwtaHasher->getHashEasy(weights, length, TOPK);
     int *hashIndices = _hashTables->hashesToIndex(hashes);
     int *bucketIndices = _hashTables->add(hashIndices, ID+1);
@@ -138,7 +124,22 @@ void Layer::addtoHashTable(float* weights, int length, float bias, int ID) {
     delete [] hashes;
 }
 
-int Layer::queryActiveNodeandComputeActivations(int** activenodesperlayer, float** activeValuesperlayer, int* lengths, int layerIndex, int inputID, int* label, int labelsize, float Sparsity, int iter) {
+float layer_getNormalizationConstant(Layer *l, int inputID) {
+    assert(l->_type == Softmax);
+    return l->_normalizationConstants[inputID];
+}
+
+void layer_updateTable(Layer *l) {
+    dwtahash_delete(l->_dwtaHasher);
+    l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_previousLayerNumOfNodes);
+}
+
+void layer_updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes); }
+
+int layer_queryActiveNodeandComputeActivations(Layer *l, int** activenodesperlayer, float** activeValuesperlayer, 
+    int* inlenght, int layerID, int inputID,  int* label, int labelsize, float Sparsity, int iter) {
+
+// replace sparsity arg with tORq?
     //LSH QueryLogic
 
     //Beidi. Query out all the candidate nodes

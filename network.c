@@ -27,12 +27,15 @@ Layer *getLayer(Network *n, int LayerID) {
     return n->_hiddenlayers[LayerID];
 }
 
-void saveWeights(Network *n, char *path) {
-    // xxx: save network parameters or leave in config?
-    for (int i = 0; i < n->_numberOfLayers; i++) n->_hiddenlayers[i]->saveWeights(file);
+void network_save(Network *n, char *path) {
+    for (int i = 0; i < n->_numberOfLayers; i++) n->_hiddenlayers[i]->layer_save(path);
 }
 
-int Network::predictClass(int **inputIndices, float **inputValues, int *length, int **labels, int *labelsize) {
+void network_load(Network *n, char *path) {
+    for (int i = 0; i < n->_numberOfLayers; i++) n->_hiddenlayers[i]->layer_load(path);
+}
+
+int network_infer(Network *n, int **inputIndices, float **inputValues, int *length, int **labels, int *labelsize) {
     int correctPred = 0;
 
 #pragma omp parallel for reduction(+:correctPred)
@@ -79,7 +82,8 @@ int Network::predictClass(int **inputIndices, float **inputValues, int *length, 
     return correctPred;
 }
 
-int Network::ProcessInput(int **inputIndices, float **inputValues, int *lengths, int **labels, int *labelsize, int iter, bool rehash, bool rebuild) {
+int network_train(Network *n, int **inputIndices, float **inputValues, int *lengths, int **labels, int *labelsize, 
+    int iter, bool rehash, bool rebuild) {
 
     float logloss = 0.0;
     int* avg_retrieval = new int[_numberOfLayers]();
