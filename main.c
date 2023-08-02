@@ -93,6 +93,7 @@ void test_lsh(int K, int L, int R) {
 void test_layer() {
     printf("\nTesting Layer \n");
     Layer *l = layer_new(670091, 128, 1, ReLU, 1024, 6, 50, 18, 0.01, 1.0, false, NULL);
+    layer_save(l, ".");
     layer_delete(l);
 }
 

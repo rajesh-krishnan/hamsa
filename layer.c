@@ -94,12 +94,26 @@ void layer_load(Layer *l, char *path) {
 }
 
 void layer_save(Layer *l, char *path) {
-/*
-    cnpy::npz_save(file, "w_layer_"+ to_string(_layerID), _weights, {_noOfNodes, _Nodes[0]._dim}, "a");
-    cnpy::npz_save(file, "b_layer_"+ to_string(_layerID), _bias, {_noOfNodes}, "a");
-    cnpy::npz_save(file, "am_layer_"+ to_string(_layerID), _adamAvgMom, {_noOfNodes, _Nodes[0]._dim}, "a");
-    cnpy::npz_save(file, "av_layer_"+ to_string(_layerID), _adamAvgVel, {_noOfNodes, _Nodes[0]._dim}, "a");
-*/
+    char fn[1024];
+    size_t len = strlen(path);
+    assert(len < 1000);
+    strcpy(fn, path);
+
+    sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
+    fprintf(stderr, "Writing biases for layer %d to %s\n", l->_layerID, fn);
+    write_fnpy(l->_bias, false, l->_noOfNodes, 1, fn);
+
+    sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
+    fprintf(stderr, "Writing weights for layer %d to %s\n", l->_layerID, fn);
+    write_fnpy(l->_weights, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
+
+    sprintf(fn+len, "/am_layer_%d.npy", l->_layerID);
+    fprintf(stderr, "Writing ADAM moments for layer %d to %s\n", l->_layerID, fn);
+    write_fnpy(l->_adamAvgMom, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
+
+    sprintf(fn+len, "/av_layer_%d.npy", l->_layerID);
+    fprintf(stderr, "Writing ADAM velocities for layer %d to %s\n", l->_layerID, fn);
+    write_fnpy(l->_adamAvgVel, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
 }
 
 Node *layer_getNodebyID(Layer *l, size_t nodeID) {
