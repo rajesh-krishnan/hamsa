@@ -9,6 +9,23 @@ void test_mt() {
     }
 }
 
+void test_norm() {
+    int i,N = 10000;
+    float samp[10000];
+    float totl, mean, stdv = 0;
+    myrnginit();
+    printf("\nDrawing %d items of randnorm()\n", N);
+    for (i=0, totl=0.0; i<N; i++) {
+        samp[i] = randnorm(0.0, 0.01);
+        totl+=samp[i];
+    }
+    mean = totl / N;
+    samp[i] = samp[i] - mean;
+    for (i=0, totl=0.0; i<N; i++) totl += samp[i] * samp[i];
+    stdv = sqrt(totl / N);
+    printf("\nExpected mean,stdv: 0.0,0.01 Actual mean,stdv: %f,%f\n", mean, stdv);
+}
+
 void test_myshuffle() {
     int i, x[100];
     myrnginit();
@@ -57,6 +74,7 @@ void test_lsh(int K, int L, int R) {
 
 int main(int argc, char *argv[]) {
     test_mt();
+    test_norm();
     test_myshuffle();
     test_bucket();
     test_lsh(6,50,18);

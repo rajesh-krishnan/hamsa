@@ -3,6 +3,8 @@
 Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
     int K, int L, int RangePow, float Sparsity, float qSparsity, bool load, char * path) {
     Layer *l = mymap(sizeof(Layer));
+
+    myrnginit();
     l->_noOfNodes = noOfNodes;
     l->_previousLayerNumOfNodes = previousLayerNumOfNodes;
     l->_layerID = layerID;
@@ -30,6 +32,7 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     l->_adamAvgMom = mymap(fano * sizeof(float));
     l->_adamAvgVel = mymap(fano * sizeof(float));
     l->_adamT = mymap(fano * sizeof(float));
+
     if (type == Softmax) l->_normalizationConstants = mymap(batchsize * sizeof(float));
 
     if (load) {
@@ -65,13 +68,11 @@ void layer_delete(Layer *l) {
 }
 
 void layer_randinit(Layer *l) {
-/*
-        random_device rd;
-        default_random_engine dre(rd());
-        normal_distribution<float> distribution(0.0, 0.01);
-        generate(_weights, _weights + _noOfNodes * previousLayerNumOfNodes, [&] () { return distribution(dre); });
-        generate(_bias, _bias + _noOfNodes, [&] () { return distribution(dre); });
-*/
+    size_t fano = l->_noOfNodes * l->_previousLayerNumOfNodes;
+#pragma omp parallel for
+    for (size_t i = 0; i < fano; i++) l->weights[i] = randnorm(0.0,0.01);
+#pragma omp parallel for
+    for (size_t i = 0; i < l->_noOfNodes; i++) l->bias[i] = randnorm(0.0,0.01);
 }
 
 void layer_load(Layer *l, char *path) {

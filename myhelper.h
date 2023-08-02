@@ -1,6 +1,8 @@
 #pragma once
 #include <omp.h>
 #include <math.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -18,3 +20,4 @@ void *mymap (size_t size);
 void myunmap (void *ptr, size_t size);
 void myrnginit();
 void myshuffle(int *array, int n);
+float randnorm (double mu, double sigma);
