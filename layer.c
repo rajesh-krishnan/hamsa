@@ -61,6 +61,7 @@ void layer_delete(Layer *l) {
     myunmap(l->_adamAvgVel, fano * sizeof(float));
     myunmap(l->_adamT, fano * sizeof(float));
     if (l->_type == Softmax) myunmap(l->_normalizationConstants, l->_batchsize * sizeof(float));
+    myunmap(l, sizeof(Layer));
 }
 
 void layer_randinit(Layer *l) {
