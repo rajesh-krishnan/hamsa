@@ -12,9 +12,6 @@ typedef struct _struct_layer {
     int _K;
     int _L;
     int _RangePow;
-    float _Sparsity;
-    float _qSparsity;
-    int _noOfActive;
     Node *_Nodes;
     LSH *_hashTables;
     DWTAHash *_dwtaHasher;
@@ -29,7 +26,7 @@ typedef struct _struct_layer {
 } Layer;
 
 Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
-    int K, int L, int RangePow, float Sparsity, float qSparsity, bool load, char *path);
+    int K, int L, int RangePow, bool load, char *path);
 void layer_delete(Layer *l);
 void layer_randinit(Layer *l);
 void layer_load(Layer *l, char *path);

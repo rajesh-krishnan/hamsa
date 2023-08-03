@@ -1,7 +1,7 @@
 #include "layer.h"
 
 Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
-    int K, int L, int RangePow, float Sparsity, float qSparsity, bool load, char *path) {
+    int K, int L, int RangePow, bool load, char *path) {
     Layer *l = mymap(sizeof(Layer));
 
     myrnginit();
@@ -13,9 +13,6 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     l->_K = K;
     l->_L = L;
     l->_RangePow = RangePow;
-    l->_Sparsity = Sparsity;
-    l->_qSparsity = qSparsity;
-    l->_noOfActive = floor(noOfNodes * Sparsity);
 
     l->_Nodes = mymap(noOfNodes * sizeof(Node));
     l->_hashTables = lsh_new(K, L, RangePow);
