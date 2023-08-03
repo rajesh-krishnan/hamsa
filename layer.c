@@ -34,9 +34,7 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     l->_adamT = mymap(fano * sizeof(float));
 
     if (type == Softmax) l->_normalizationConstants = mymap(batchsize * sizeof(float));
-    fprintf(stderr, "Allocated memory\n");
     (load) ?  layer_load(l, path) : layer_randinit(l);
-    fprintf(stderr, "Randomized weights \n");
 
 #pragma omp parallel for
     for (size_t i = 0; i < noOfNodes; i++)
