@@ -124,7 +124,7 @@ void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
 
 #if 0
 int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlayer, float **activeValuesperlayer, 
-    int *inlength, int layerID, int inputID,  int *label, int labelsize, float Sparsity, int iter) {
+    int *lengths, int layerIndex, int inputID,  int *label, int labelsize, float Sparsity, int iter) {
 
 // replace sparsity arg with tORq?
     //LSH QueryLogic

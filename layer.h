@@ -43,4 +43,4 @@ void layer_updateTable(Layer *l);
 void layer_updateRandomNodes(Layer *l);
 void layer_addToHashTable(Layer *l, float* weights, int length, int id);
 int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlayer, float **activeValuesperlayer, 
-    int *inlength, int layerID, int inputID,  int *label, int labelsize, float Sparsity, int iter);
+    int *length, int layerID, int inputID,  int *label, int labelsize, float Sparsity, int iter);
