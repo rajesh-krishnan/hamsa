@@ -21,4 +21,4 @@ LSH *lsh_new(int K, int L, int RangePow);
 void lsh_delete(LSH *l);
 void lsh_clear(LSH *l);
 void lsh_hashes_to_indices_add(LSH *l, int *hashes, int id);
-void lsh_retrieve_indices_raw(LSH *l, int *indices, int **rawResults);
+void lsh_hashes_to_indices_retrieve_raw(LSH *l, int *hashes, int **rawResults);

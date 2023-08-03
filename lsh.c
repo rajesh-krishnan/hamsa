@@ -46,16 +46,18 @@ void lsh_clear(LSH *l) {
     for (int i = 0; i < totsz; i++) bucket_reset(&b[i]);
 }
 
-/*
-   Expects hashes of length l->_L * l->_K
-*/
+static unsigned int ith_index(LSH *l, int *hashes, int i) {
+    unsigned int index = 0;
+    for (int j = 0; j < l->_K; j++) {
+        unsigned int h = hashes[l->_K*i + j];
+        index += h<<((l->_K-1-j) * logbinsize);
+    }
+    return index;
+}
+
 void lsh_hashes_to_indices_add(LSH *l, int *hashes, int id) {
     for (int i = 0; i < l->_L; i++) {
-        unsigned int index = 0;
-        for (int j = 0; j < l->_K; j++) {
-             unsigned int h = hashes[l->_K*i + j];
-             index += h<<((l->_K-1-j) * logbinsize);
-        }
+        unsigned int index = ith_index(l, hashes, i);
 	bucket_add_to(&l->_bucket[i][index], id);
     }
 }
@@ -64,8 +66,9 @@ void lsh_hashes_to_indices_add(LSH *l, int *hashes, int id) {
   Expects indices and rawResults of length l->_L
   Returns L arrays of buckets at i,indices[i] locations in rawResults[i]
 */
-void lsh_retrieve_indices_raw(LSH *l, int *indices, int **rawResults) {
-    for (int i = 0; i < l->_L; i++) 
-        rawResults[i] = bucket_get_array(&l->_bucket[i][indices[i]]);
+void lsh_hashes_to_indices_retrieve_raw(LSH *l, int *hashes, int **rawResults) {
+    for (int i = 0; i < l->_L; i++) {
+        unsigned int index = ith_index(l, hashes, i);
+        rawResults[i] = bucket_get_array(&l->_bucket[i][index]);
+    }
 }
-
