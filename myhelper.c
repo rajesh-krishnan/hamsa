@@ -1,7 +1,7 @@
 #include "myhelper.h"
 #include "cnpy/cnpy.h"
 
-void *mymap (size_t size) {
+void *mymap(size_t size) {
     void *ptr;
     ptr = mmap(NULL, size, PROT_READ | PROT_EXEC | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB, -1, 0);
     if (ptr != MAP_FAILED) return ptr;
@@ -12,7 +12,7 @@ void *mymap (size_t size) {
     exit(0);
 }
 
-void myunmap (void *ptr, size_t size) { munmap(ptr, size); }
+void myunmap(void *ptr, size_t size) { munmap(ptr, size); }
 
 void myrnginit() {
     static int inited = 0;
