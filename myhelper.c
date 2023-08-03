@@ -89,3 +89,30 @@ void write_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   }
 }
 
+/* Expects farr to have size d0 * d1 */
+void read_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
+  cnpy_array a;
+  size_t index[2];
+
+  if (cnpy_open(fn, false, &a) != CNPY_SUCCESS) {
+    cnpy_perror("Unable to load file");
+    abort();
+  }
+
+  assert(a.n_dim == (twoD ? 2 : 1));
+  assert(a.dims[0] == d0);
+  if (a.n_dim==2) assert(a.dims[1] == d1);
+
+  for (index[0] = 0; index[0] < d0; index[0]++) {
+      for (index[1] = 0; index[1] < (twoD ? d1 : 1); index[1]++) {
+          *farr = cnpy_get_f4(a, index);
+          farr++;
+      }
+  }
+
+  if (cnpy_close(&a) != CNPY_SUCCESS) {
+    cnpy_perror("Unable to close file");
+    abort();
+  }
+}
+

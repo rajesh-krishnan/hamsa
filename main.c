@@ -1,22 +1,36 @@
 #include "network.h"
 
-void test_savenpy() {
-    float farr[20];
-    printf("\nTest saving of 1D and 2D float arrays as npy files\n");
-    for (int i=0; i<20; i++) farr[i] = (float) i;
-    write_fnpy(farr, false, 20, 1, "float_20.npy");
-    write_fnpy(farr, true, 1, 20, "float_1x20.npy");
-    write_fnpy(farr, true, 20, 1, "float_20x1.npy");
-    write_fnpy(farr, true, 4, 5, "float_4x5.npy");
+void test_wrnpy() {
+    float ifarr[20];
+    float ofarr[20];
+
+    printf("\nTest saving and loading of 1D and 2D float arrays as npy files\n");
+    for (int i=0; i<20; i++) ifarr[i] = i;
+
+    write_fnpy(ifarr, false, 20, 1, "float_20.npy");
+    read_fnpy(ofarr, false, 20, 1, "float_20.npy");
+    for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
+
+    write_fnpy(ifarr, true, 1, 20, "float_1x20.npy");
+    read_fnpy(ofarr, true, 1, 20, "float_1x20.npy");
+    for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
+
+    write_fnpy(ifarr, true, 20, 1, "float_20x1.npy");
+    read_fnpy(ofarr, true, 20, 1, "float_20x1.npy");
+    for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
+
+    write_fnpy(ifarr, true, 4, 5, "float_4x5.npy");
+    read_fnpy(ofarr, true, 4, 5, "float_4x5.npy");
+    for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
 }
 
 void test_mt() {
+    int i,N = 10000;
+    double totl;
     myrnginit();
-    printf("\nOutput 20 draws of genrand_int31()\n");
-    for (int i=0; i<20; i++) {
-        printf("%10lu ", genrand_int31());
-        if (i%10==9) printf("\n");
-    }
+    printf("\nDrawing %d draws of genrand_int31()\n", N);
+    for (i=0, totl=0.0; i<N; i++) totl+=genrand_int31();
+    printf("Expected mean: %d  Observed mean: %d\n", INT_MAX/2, (int)totl/N);
 }
 
 void test_norm() {
@@ -33,7 +47,7 @@ void test_norm() {
     samp[i] = samp[i] - mean;
     for (i=0, totl=0.0; i<N; i++) totl += samp[i] * samp[i];
     stdv = sqrt(totl / N);
-    printf("Expected mean,stdv: 0.0,0.01 Actual mean,stdv: %f,%f\n", mean, stdv);
+    printf("Expected mean,stdv: 0.0,0.01  Observed mean,stdv: %.4f,%.4f\n", mean, stdv);
 }
 
 void test_myshuffle() {
@@ -94,11 +108,12 @@ void test_layer() {
     printf("\nTesting Layer \n");
     Layer *l = layer_new(670091, 128, 1, ReLU, 1024, 6, 50, 18, 0.01, 1.0, false, NULL);
     layer_save(l, ".");
+    layer_load(l, ".");
     layer_delete(l);
 }
 
 int main(int argc, char *argv[]) {
-    test_savenpy();
+    test_wrnpy();
     test_mt();
     test_norm();
     test_myshuffle();

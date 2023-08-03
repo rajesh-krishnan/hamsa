@@ -71,53 +71,30 @@ void layer_randinit(Layer *l) {
     for (size_t i = 0; i < l->_noOfNodes; i++) l->_bias[i] = randnorm(0.0,0.01);
 }
 
-void layer_load(Layer *l, char *path) {
-/*
-        float *weight, *bias, *adamAvgMom, *adamAvgVel;
-        if(LOADWEIGHT){
-            cnpy::NpyArray weightArr, biasArr, adamArr, adamvArr;
-            weightArr = arr["w_layer_"+to_string(i)];
-            weight = weightArr.data<float>();
-            biasArr = arr["b_layer_"+to_string(i)];
-            bias = biasArr.data<float>();
-
-            adamArr = arr["am_layer_"+to_string(i)];
-            adamAvgMom = adamArr.data<float>();
-            adamvArr = arr["av_layer_"+to_string(i)];
-            adamAvgVel = adamvArr.data<float>();
-        }
-        _weights = weights;
-        _bias = bias;
-        _adamAvgMom = adamAvgMom;
-        _adamAvgVel = adamAvgVel;
-*/
-}
-
-void layer_save(Layer *l, char *path) {
+static void layer_rw(Layer *l, char *path, bool read) {
     char fn[1024];
     size_t len = strlen(path);
     assert(len < 1000);
     strcpy(fn, path);
-
+    void (*rwfn)(float*,bool,size_t,size_t,char*);
+    rwfn = read ? read_fnpy : write_fnpy;
     sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
-    fprintf(stderr, "Writing biases for layer %d to %s\n", l->_layerID, fn);
-    write_fnpy(l->_bias, false, l->_noOfNodes, 1, fn);
-
+    (*rwfn)(l->_bias, false, l->_noOfNodes, 1, fn);
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
-    fprintf(stderr, "Writing weights for layer %d to %s\n", l->_layerID, fn);
-    write_fnpy(l->_weights, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
-
+    (*rwfn)(l->_weights, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
     sprintf(fn+len, "/am_layer_%d.npy", l->_layerID);
-    fprintf(stderr, "Writing ADAM moments for layer %d to %s\n", l->_layerID, fn);
-    write_fnpy(l->_adamAvgMom, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
-
+    (*rwfn)(l->_adamAvgMom, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
     sprintf(fn+len, "/av_layer_%d.npy", l->_layerID);
-    fprintf(stderr, "Writing ADAM velocities for layer %d to %s\n", l->_layerID, fn);
-    write_fnpy(l->_adamAvgVel, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
+    (*rwfn)(l->_adamAvgVel, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
+    fprintf(stderr, "%s bias, weights, moments, and velocities for layer %d\n", read ? "Loaded" : "Saved", l->_layerID);
 }
 
+void layer_load(Layer *l, char *path) { layer_rw(l, path, true); }
+
+void layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
+
 Node *layer_getNodebyID(Layer *l, size_t nodeID) {
-    assert(nodeID < l->_noOfNodes);
+    assert((nodeID >= 0) && (nodeID < l->_noOfNodes));
     return &l->_Nodes[nodeID];
 }
 
