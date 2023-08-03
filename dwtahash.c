@@ -43,11 +43,6 @@ int dwtahash_getRandDoubleHash(DWTAHash *d, int binid, int count) {
     return (d->_randHash[0] * tohash << 3) >> (32 - d->_lognumhash);
 }
 
-/*
-   Expects hashes, values, and hashArray of length d->_numhashes
-   Expects xindices of length dataLen if easy is false
-   Returns the pointer to hashArray for convenience
-*/
 static int *gethash(DWTAHash *d, float* data, int dataLen, int *xindices, bool easy) {
     assert(easy == true || xindices != NULL);
 
