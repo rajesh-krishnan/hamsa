@@ -13,10 +13,6 @@ typedef struct _struct_lsh {
     int _RangePow;
 } LSH;
 
-void bucket_reset(Bucket *b);
-int bucket_add_to(Bucket *b, int id);
-int *bucket_get_array(Bucket *b);
-
 LSH *lsh_new(int K, int L, int RangePow);
 void lsh_delete(LSH *l);
 void lsh_clear(LSH *l);

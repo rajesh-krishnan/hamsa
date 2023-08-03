@@ -2,9 +2,9 @@
 
 static int logbinsize = (int)floor(log2(BINSIZE));  /* XXX: original code used log, not log2 */
 
-void bucket_reset(Bucket *b) { b->count = 0; }
+inline static void __attribute__((always_inline)) bucket_reset(Bucket *b) { b->count = 0; }
 
-int bucket_add_to(Bucket *b, int id) {
+inline static int __attribute__((always_inline)) bucket_add_to(Bucket *b, int id) {
     int index = b->count & (BUCKETSIZE - 1);  /* place index in [0, BUCKETSIZE), cheaper than modulo */
     b->arr[index] = id;
     b->count++;
@@ -12,7 +12,7 @@ int bucket_add_to(Bucket *b, int id) {
     return index;
 }
 
-int *bucket_get_array(Bucket *b) {
+inline static int __attribute__((always_inline)) *bucket_get_array(Bucket *b) {
     if (b->count<BUCKETSIZE) b->arr[b->count]=-1;  /* set first unused entry in bucket to -1 */
     return b->arr;
 }
@@ -62,13 +62,10 @@ void lsh_hashes_to_indices_add(LSH *l, int *hashes, int id) {
     }
 }
 
-/*
-  Expects indices and rawResults of length l->_L
-  Returns L arrays of buckets at i,indices[i] locations in rawResults[i]
-*/
 void lsh_hashes_to_indices_retrieve_raw(LSH *l, int *hashes, int **rawResults) {
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = ith_index(l, hashes, i);
         rawResults[i] = bucket_get_array(&l->_bucket[i][index]);
     }
 }
+
