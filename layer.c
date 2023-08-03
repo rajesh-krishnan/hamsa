@@ -69,13 +69,13 @@ void layer_randinit(Layer *l) {
     for (size_t i = 0; i < l->_noOfNodes; i++) l->_bias[i] = randnorm(0.0,0.01);
 }
 
-static void layer_rw(Layer *l, char *path, bool read) {
+static void layer_rw(Layer *l, char *path, bool load) {
     char fn[1024];
     size_t len = strlen(path);
     assert(len < 1000);
     strcpy(fn, path);
     void (*rwfn)(float*,bool,size_t,size_t,char*);
-    rwfn = read ? read_fnpy : write_fnpy;
+    rwfn = load ? load_fnpy : save_fnpy;
     sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_bias, false, l->_noOfNodes, 1, fn);
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
@@ -85,7 +85,7 @@ static void layer_rw(Layer *l, char *path, bool read) {
     (*rwfn)(l->_adamAvgMom, true, l->_noOfNodes, l->_previousLayerNumOfNodes, fn);
     sprintf(fn+len, "/av_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_adamAvgVel, true, l->_noOfNodes, l->_previousLayerNumOfNodes, fn);
-    fprintf(stderr, "%s bias, weights, moments, and velocities for layer %d\n", read ? "Loaded" : "Saved", l->_layerID);
+    fprintf(stderr, "%s parameters for layer %d\n", load ? "Loaded" : "Saved", l->_layerID);
 }
 
 void layer_load(Layer *l, char *path) { layer_rw(l, path, true); }

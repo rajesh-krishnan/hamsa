@@ -63,7 +63,7 @@ float randnorm (double mu, double sigma) {
     return (float) (mu + sigma * X1);
 }
 
-void write_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
+void save_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   cnpy_array a;
   size_t index[2];
 
@@ -90,7 +90,7 @@ void write_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
 }
 
 /* Expects farr to have size d0 * d1 */
-void read_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
+void load_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   cnpy_array a;
   size_t index[2];
 

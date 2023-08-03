@@ -1,6 +1,7 @@
 #include "network.h"
 
 /*
+Keep this until the counts capture code is tested
 void test_bucket() {
     int i, *x;
     Bucket tmp;
@@ -35,38 +36,34 @@ void test_wrnpy() {
     printf("\nTest saving and loading of 1D and 2D float arrays as npy files\n");
     for (int i=0; i<20; i++) ifarr[i] = i;
 
-    write_fnpy(ifarr, false, 20, 1, "float_20.npy");
+    save_fnpy(ifarr, false, 20, 1, "/tmp/float_20.npy");
     for (int i=0; i<20; i++) ofarr[i] = 0;
-    read_fnpy(ofarr, false, 20, 1, "float_20.npy");
+    load_fnpy(ofarr, false, 20, 1, "/tmp/float_20.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
-    unlink("float_20.npy");
 
-    write_fnpy(ifarr, true, 1, 20, "float_1x20.npy");
+    save_fnpy(ifarr, true, 1, 20, "/tmp/float_1x20.npy");
     for (int i=0; i<20; i++) ofarr[i] = 0;
-    read_fnpy(ofarr, true, 1, 20, "float_1x20.npy");
+    load_fnpy(ofarr, true, 1, 20, "/tmp/float_1x20.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
-    unlink("float_1x20.npy");
 
-    write_fnpy(ifarr, true, 20, 1, "float_20x1.npy");
+    save_fnpy(ifarr, true, 20, 1, "/tmp/float_20x1.npy");
     for (int i=0; i<20; i++) ofarr[i] = 0;
-    read_fnpy(ofarr, true, 20, 1, "float_20x1.npy");
+    load_fnpy(ofarr, true, 20, 1, "/tmp/float_20x1.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
-    unlink("float_20x1.npy");
 
-    write_fnpy(ifarr, true, 4, 5, "float_4x5.npy");
+    save_fnpy(ifarr, true, 4, 5, "/tmp/float_4x5.npy");
     for (int i=0; i<20; i++) ofarr[i] = 0;
-    read_fnpy(ofarr, true, 4, 5, "float_4x5.npy");
+    load_fnpy(ofarr, true, 4, 5, "/tmp/float_4x5.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
-    unlink("float_4x5.npy");
 }
 
 void test_mt() {
     int i,N = 10000;
     double totl;
     myrnginit();
-    printf("\nDrawing %d draws of genrand_int31()\n", N);
     for (i=0, totl=0.0; i<N; i++) totl+=genrand_int31();
-    printf("Expected mean: %d  Observed mean: %d\n", INT_MAX/2, (int)totl/N);
+    printf("\nFor %d samples of genrand_int31() -- ", N);
+    printf("Expected mean: %d  Observed mean: %d\n", INT_MAX/2, (int)(totl/N));
 }
 
 void test_norm() {
@@ -74,7 +71,7 @@ void test_norm() {
     float samp[10000];
     float totl, mean, stdv = 0;
     myrnginit();
-    printf("\nDrawing %d items of randnorm()\n", N);
+    printf("\nFor %d samples of randnorm() -- ", N);
     for (i=0, totl=0.0; i<N; i++) {
         samp[i] = randnorm(0.0, 0.01);
         totl+=samp[i];
@@ -94,11 +91,9 @@ void test_myshuffle() {
     printf("\nOutput shuffle of [0:99]\n");
     for (i = 0; i < 100; i++) {
         printf("%d", x[i]);
-        printf("%s", (i%10==9) ? "\n" : " ");
+        printf("%s", (i%20==19) ? "\n" : " ");
     }
-    printf("\n");
 }
-
 
 void test_dwtahash() {
     printf("\nTesting Densified Winner Take All Hashing\n");
@@ -118,8 +113,8 @@ void test_lsh(int K, int L, int R) {
 void test_layer() {
     printf("\nTesting Layer \n");
     Layer *l = layer_new(670091, 128, 1, ReLU, 1024, 6, 50, 18, false, NULL);
-    // layer_save(l, ".");
-    // layer_load(l, ".");
+    layer_save(l, "/tmp");
+    layer_load(l, "/tmp");
     layer_delete(l);
 }
 

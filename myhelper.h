@@ -22,5 +22,5 @@ void myunmap(void *ptr, size_t size);
 void myrnginit();
 void myshuffle(int *array, int n);
 float randnorm(double mu, double sigma);
-void write_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
-void read_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
+void save_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
+void load_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
