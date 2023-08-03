@@ -2,21 +2,21 @@
 
 DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     int *n_array;
-    DWTAHash *d = (DWTAHash *) mymap(sizeof(DWTAHash));
+    DWTAHash *d = (DWTAHash *) malloc(sizeof(DWTAHash));
 
     myrnginit();
     d->_numhashes = numHashes;
     d->_rangePow = noOfBitsToHash;
     d->_permute = (int) ceil(numHashes * BINSIZE * 1.0 / noOfBitsToHash);
     d->_lognumhash = (int) ceil(log2(numHashes));
-    d->_indices = (int *) mymap (d->_rangePow * d->_permute * sizeof(int));
-    d->_pos = (int *) mymap (d->_rangePow * d->_permute * sizeof(int));
+    d->_indices = (int *) malloc(d->_rangePow * d->_permute * sizeof(int));
+    d->_pos = (int *) malloc(d->_rangePow * d->_permute * sizeof(int));
     d->_randHash[0] = genrand_int31();
     d->_randHash[1] = genrand_int31();
     if (d->_randHash[0] % 2 == 0) d->_randHash[0]++;
     if (d->_randHash[1] % 2 == 0) d->_randHash[1]++;
 
-    n_array = (int *) mymap (d->_rangePow * sizeof(int));
+    n_array = (int *) malloc(d->_rangePow * sizeof(int));
     for (int i = 0; i < d->_rangePow; i++) n_array[i] = i;
 
     for (int p = 0; p < d->_permute ;p++) {
@@ -28,14 +28,14 @@ DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
         }
     }
 
-    myunmap (n_array, d->_rangePow * sizeof(int));
+    free(n_array);
     return d;
 }
 
 void dwtahash_delete(DWTAHash *d) {
-    myunmap(d->_indices, d->_rangePow * d->_permute * sizeof(int));
-    myunmap(d->_pos, d->_rangePow * d->_permute * sizeof(int));
-    myunmap(d, sizeof(DWTAHash));
+    free(d->_indices);
+    free(d->_pos);
+    free(d);
 }
 
 int dwtahash_getRandDoubleHash(DWTAHash *d, int binid, int count) {
@@ -48,9 +48,15 @@ int dwtahash_getRandDoubleHash(DWTAHash *d, int binid, int count) {
    Expects xindices of length dataLen if easy is false
    Returns the pointer to hashArray for convenience
 */
-static int *gethash(DWTAHash *d, float* data, int dataLen, int *hashes, float *values, 
-    int *xindices, bool easy, int *hashArray) {
+static int *gethash(DWTAHash *d, float* data, int dataLen, int *xindices, bool easy) {
     assert(easy == true || xindices != NULL);
+
+    int *hashes = malloc(d->_numhashes * sizeof(int));
+    memset(hashes, 0, sizeof(int) * d->_numhashes);
+    float *values = malloc(d->_numhashes * sizeof(float));
+    memset(values, 0, sizeof(float) * d->_numhashes);
+    int *hashArray = malloc(d->_numhashes * sizeof(int));
+    memset(hashArray, 0, sizeof(int) * d->_numhashes);
 
     for (int i = 0; i < d->_numhashes; i++)
     {
@@ -89,16 +95,16 @@ static int *gethash(DWTAHash *d, float* data, int dataLen, int *hashes, float *v
         }
         hashArray[i] = next;
     }
+    free(hashes);
+    free(values);
     return hashArray;
 }
 
-int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dataLen, int topK,
-    int *hashes, float *values, int *hashArray) {
-    return gethash(d, data, dataLen, hashes, values, NULL, false, hashArray);
+int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dataLen) {
+    return gethash(d, data, dataLen, NULL, true);
 }
 
-int *dwtahash_getHash(DWTAHash *d, int* xindices, float* data, int dataLen,
-    int *hashes, float *values, int *hashArray) {
-    return gethash(d, data, dataLen, hashes, values, xindices, true, hashArray);
+int *dwtahash_getHash(DWTAHash *d, int* xindices, float* data, int dataLen) {
+    return gethash(d, data, dataLen, xindices, false);
 }
 

@@ -34,7 +34,9 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     l->_adamT = mymap(fano * sizeof(float));
 
     if (type == Softmax) l->_normalizationConstants = mymap(batchsize * sizeof(float));
+    fprintf(stderr, "Allocated memory\n");
     (load) ?  layer_load(l, path) : layer_randinit(l);
+    fprintf(stderr, "Randomized weights \n");
 
 #pragma omp parallel for
     for (size_t i = 0; i < noOfNodes; i++)
@@ -43,7 +45,7 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
         node_update(&l->_Nodes[i], i, type, batchsize,
             &l->_weights[index], l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
             l->_train_array);
-        //layer_addToHashTable(l, l->_Nodes[i]._weights, l->_Nodes[i]._dim, l->_Nodes[i]._bias, i);
+        layer_addToHashTable(l, &l->_weights[index], previousLayerNumOfNodes, i);
     }
     return l;
 }
@@ -116,13 +118,13 @@ void layer_updateTable(Layer *l) {
 
 void layer_updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes); }
 
-#if 0
-void layer_addToHashTable(Layer *l, float* weights, int length, float bias, int id) {
-    int *hashes = _dwtaHasher->getHashEasy(weights, length, TOPK);
-    lsh_hashes_to_indices_add(l, hashes, id + 1);
-    delete [] hashes;
+void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
+    int *hashes = dwtahash_getHashEasy(l->_dwtaHasher, weights, length);
+    lsh_hashes_to_indices_add(l->_hashTables, hashes, id + 1);
+    free(hashes);
 }
 
+#if 0
 int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlayer, float **activeValuesperlayer, 
     int *inlength, int layerID, int inputID,  int *label, int labelsize, float Sparsity, int iter) {
 

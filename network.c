@@ -2,8 +2,8 @@
 
 Network *network_new(int *sizesOfLayers, NodeType *layersTypes, int noOfLayers, int batchSize, float lr, 
     int inputdim, int *K, int *L, int *RangePow, float *Sparsity, bool load, char *path) {
-    Network *n = mymap(sizeof(Network));
-    n->_hiddenlayers = mymap(noOfLayers * sizeof(Layer *));
+    Network *n = malloc(sizeof(Network));
+    n->_hiddenlayers = malloc(noOfLayers * sizeof(Layer *));
     n->_numberOfLayers = noOfLayers;
     n->_learningRate = lr;
     n->_currentBatchSize = batchSize;
@@ -18,8 +18,8 @@ Network *network_new(int *sizesOfLayers, NodeType *layersTypes, int noOfLayers, 
 
 void network_delete(Network *n) {
     for (int i = 0; i < n->_numberOfLayers; i++) layer_delete(n->_hiddenlayers[i]);
-    myunmap(n->_hiddenlayers, n->numberOfLayers * sizeof(Layer *));
-    myunmap(n, sizeof(Network));
+    free(n->_hiddenlayers);
+    free(n);
 }
 
 Layer *getLayer(Network *n, int LayerID) {
