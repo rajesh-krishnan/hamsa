@@ -20,6 +20,5 @@ int *bucket_get_array(Bucket *b);
 LSH *lsh_new(int K, int L, int RangePow);
 void lsh_delete(LSH *l);
 void lsh_clear(LSH *l);
-void lsh_hashes_to_indices(LSH *l, int *hashes, int *indices);
-void lsh_add_indices(LSH *l, int *indices, int id, int *secondIndices);
+void lsh_hashes_to_indices_add(LSH *l, int *hashes, int id);
 void lsh_retrieve_indices_raw(LSH *l, int *indices, int **rawResults);

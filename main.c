@@ -8,21 +8,25 @@ void test_wrnpy() {
     for (int i=0; i<20; i++) ifarr[i] = i;
 
     write_fnpy(ifarr, false, 20, 1, "float_20.npy");
+    for (int i=0; i<20; i++) ofarr[i] = 0;
     read_fnpy(ofarr, false, 20, 1, "float_20.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
     unlink("float_20.npy");
 
     write_fnpy(ifarr, true, 1, 20, "float_1x20.npy");
+    for (int i=0; i<20; i++) ofarr[i] = 0;
     read_fnpy(ofarr, true, 1, 20, "float_1x20.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
     unlink("float_1x20.npy");
 
     write_fnpy(ifarr, true, 20, 1, "float_20x1.npy");
+    for (int i=0; i<20; i++) ofarr[i] = 0;
     read_fnpy(ofarr, true, 20, 1, "float_20x1.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
     unlink("float_20x1.npy");
 
     write_fnpy(ifarr, true, 4, 5, "float_4x5.npy");
+    for (int i=0; i<20; i++) ofarr[i] = 0;
     read_fnpy(ofarr, true, 4, 5, "float_4x5.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
     unlink("float_4x5.npy");

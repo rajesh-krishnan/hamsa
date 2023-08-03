@@ -11,8 +11,6 @@ typedef struct _struct_train {
 } __attribute__ ((aligned (64))) Train;
 
 typedef struct _struct_node {
-    size_t _dim;
-    size_t _layerNum;
     size_t _IDinLayer;
     NodeType _type;
     int _currentBatchsize;
@@ -26,12 +24,9 @@ typedef struct _struct_node {
     float _tbias;
     float _adamAvgMombias;
     float _adamAvgVelbias;
-    int *_indicesInTables;
-    int *_indicesInBuckets;
-    int *_update;
 } Node;
 
-void node_update(Node *n, int dim, int nodeID, int layerID, NodeType type, int batchsize, 
+void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
     float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, 
     Train* train_blob);
 float node_get_last_activation(Node *n, int inputID);

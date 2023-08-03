@@ -1,22 +1,17 @@
 #include "node.h"
 
-void node_update(Node *n, int dim, int nodeID, int layerID, NodeType type, int batchsize, 
+void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
     float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, 
     Train* train_blob) {
-    n->_dim = dim;
     n->_IDinLayer = nodeID;
-    n->_layerNum = layerID;
     n->_type = type;
     n->_currentBatchsize = batchsize;
     n->_weights = weights;
     n->_bias = bias;
-
     n->_adamAvgMom = adamAvgMom;
     n->_adamAvgVel = adamAvgVel;
     n->_t = adam_t;
-
     n->_train = train_blob + nodeID * batchsize;
-
     n->_activeInputs = 0;
 }
 

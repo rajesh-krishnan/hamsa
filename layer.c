@@ -40,10 +40,10 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     for (size_t i = 0; i < noOfNodes; i++)
     {
         size_t index = previousLayerNumOfNodes * i;
-        node_update(&l->_Nodes[i], previousLayerNumOfNodes, i, layerID, type, batchsize,
+        node_update(&l->_Nodes[i], i, type, batchsize,
             &l->_weights[index], l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
             l->_train_array);
-        //layer_addToHashTable(l, l->_Nodes[i]._weights, previousLayerNumOfNodes, l->_Nodes[i]._bias, i);
+        //layer_addToHashTable(l, l->_Nodes[i]._weights, l->_Nodes[i]._dim, l->_Nodes[i]._bias, i);
     }
     return l;
 }
@@ -82,11 +82,12 @@ static void layer_rw(Layer *l, char *path, bool read) {
     sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_bias, false, l->_noOfNodes, 1, fn);
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_weights, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
+
+    (*rwfn)(l->_weights, true, l->_noOfNodes, l->_previousLayerNumOfNodes, fn);
     sprintf(fn+len, "/am_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_adamAvgMom, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
+    (*rwfn)(l->_adamAvgMom, true, l->_noOfNodes, l->_previousLayerNumOfNodes, fn);
     sprintf(fn+len, "/av_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_adamAvgVel, true, l->_noOfNodes, l->_Nodes[0]._dim, fn);
+    (*rwfn)(l->_adamAvgVel, true, l->_noOfNodes, l->_previousLayerNumOfNodes, fn);
     fprintf(stderr, "%s bias, weights, moments, and velocities for layer %d\n", read ? "Loaded" : "Saved", l->_layerID);
 }
 
@@ -117,12 +118,8 @@ void layer_updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes);
 
 #if 0
 void layer_addToHashTable(Layer *l, float* weights, int length, float bias, int id) {
-// FIX
     int *hashes = _dwtaHasher->getHashEasy(weights, length, TOPK);
-    int *hashIndices = _hashTables->hashesToIndex(hashes);
-    int *bucketIndices = _hashTables->add(hashIndices, ID+1);
-    _Nodes[ID]._indicesInTables = hashIndices;
-    _Nodes[ID]._indicesInBuckets = bucketIndices;
+    lsh_hashes_to_indices_add(l, hashes, id + 1);
     delete [] hashes;
 }
 

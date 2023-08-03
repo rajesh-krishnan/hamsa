@@ -174,7 +174,7 @@ int network_train(Network *n, int **inputIndices, float **inputValues, int *leng
         for (size_t m = 0; m < _hiddenlayers[l]->_noOfNodes; m++)
         {
             Node *tmp = _hiddenlayers[l]->getNodebyID(m);
-            int dim = tmp->_dim;
+            int dim = _hiddenlayers[l]->_previousLayerNumOfNodes;
             float* local_weights = new float[dim];
             std::copy(tmp->_weights, tmp->_weights + dim, local_weights);
 
@@ -197,12 +197,8 @@ int network_train(Network *n, int **inputIndices, float **inputValues, int *leng
             std::copy(local_weights, local_weights + dim, tmp->_weights);
             if (tmpRehash) {
                 int *hashes = _hiddenlayers[l]->_dwtaHasher->getHashEasy(local_weights, dim, TOPK);
-                int *hashIndices = _hiddenlayers[l]->_hashTables->hashesToIndex(hashes);
-                int * bucketIndices = _hiddenlayers[l]->_hashTables->add(hashIndices, m+1);
-
+                lsh_hashes_to_indices_add(n->_hiddenlayers[l]->_hashTables, hashes, m+1);
                 delete[] hashes;
-                delete[] hashIndices;
-                delete[] bucketIndices;
             }
 
             delete[] local_weights;

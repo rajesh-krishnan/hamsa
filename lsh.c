@@ -47,28 +47,17 @@ void lsh_clear(LSH *l) {
 }
 
 /*
-   Expects indices of length l->_L and hashes of length l->_L * l->_K
-   XXX: why is there a LxK vs. KxL transposition?
+   Expects hashes of length l->_L * l->_K
 */
-void lsh_hashes_to_indices(LSH *l, int *hashes, int *indices) {
+void lsh_hashes_to_indices_add(LSH *l, int *hashes, int id) {
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = 0;
         for (int j = 0; j < l->_K; j++) {
              unsigned int h = hashes[l->_K*i + j];
              index += h<<((l->_K-1-j) * logbinsize);
         }
-        indices[i] = index;
+	bucket_add_to(&l->_bucket[i][index], id);
     }
-}
-
-/*
-   Expects indices and secondIndices of length l->_L
-   Adds id to l->_L buckets at i,indices[i] locations
-   Returns index of bucket array where id was added in secondIndices[i]
-*/
-void lsh_add_indices(LSH *l, int *indices, int id, int *secondIndices) {
-    for (int i = 0; i < l->_L; i++)
-        secondIndices[i] = bucket_add_to(&l->_bucket[i][indices[i]], id);
 }
 
 /*
