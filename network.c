@@ -82,10 +82,9 @@ int network_infer(Network *n, int **inputIndices, float **inputValues, int *leng
     return correctPred;
 }
 
-int network_train(Network *n, int **inputIndices, float **inputValues, int *lengths, int **labels, int *labelsize, 
+void network_train(Network *n, int **inputIndices, float **inputValues, int *lengths, int **labels, int *labelsize, 
     int iter, bool rehash, bool rebuild) {
 
-    float logloss = 0.0;
     int* avg_retrieval = new int[_numberOfLayers]();
 
     for (int j = 0; j < _numberOfLayers; j++)
@@ -102,6 +101,7 @@ int network_train(Network *n, int **inputIndices, float **inputValues, int *leng
     int*** activeNodesPerBatch = new int**[_currentBatchSize];
     float*** activeValuesPerBatch = new float**[_currentBatchSize];
     int** sizesPerBatch = new int*[_currentBatchSize];
+
 #pragma omp parallel for
     for (int i = 0; i < _currentBatchSize; i++) {
         int **activenodesperlayer = new int *[_numberOfLayers + 1]();
@@ -115,6 +115,8 @@ int network_train(Network *n, int **inputIndices, float **inputValues, int *leng
         activenodesperlayer[0] = inputIndices[i];  // inputs parsed from training data file
         activeValuesperlayer[0] = inputValues[i];
         sizes[0] = lengths[i];
+
+        // forward propagate
         int in;
         for (int j = 0; j < _numberOfLayers; j++) {
             in = _hiddenlayers[j]->queryActiveNodeandComputeActivations(activenodesperlayer, activeValuesperlayer, sizes, j, i, labels[i], labelsize[i],
@@ -122,17 +124,15 @@ int network_train(Network *n, int **inputIndices, float **inputValues, int *leng
             avg_retrieval[j] += in;
         }
 
-        //Now backpropagate.
-        // layers
+        // back propagate 
         for (int j = _numberOfLayers - 1; j >= 0; j--) {
             Layer* layer = _hiddenlayers[j];
             Layer* prev_layer = _hiddenlayers[j - 1];
-            // nodes
             for (int k = 0; k < sizesPerBatch[i][j + 1]; k++) {
                 Node* node = layer->getNodebyID(activeNodesPerBatch[i][j + 1][k]);
                 if (j == _numberOfLayers - 1) {
-                    //TODO: Compute Extra stats: labels[i];
-                    node->ComputeExtaStatsForSoftMax(layer->getNomalizationConstant(i), i, labels[i], labelsize[i]);
+                    //TODO: Compute Extra stats: labels[i]; XXX: check LNS
+                    node->ComputeExtaStatsForSoftMax(layer->getNormalizationConstant(i), i, labels[i], labelsize[i]);
                 }
                 if (j != 0) {
                     node->backPropagate(prev_layer->getAllNodes(), activeNodesPerBatch[i][j], sizesPerBatch[i][j], tmplr, i);
@@ -142,6 +142,7 @@ int network_train(Network *n, int **inputIndices, float **inputValues, int *leng
             }
         }
     }
+
     for (int i = 0; i < _currentBatchSize; i++) {
         //Free memory to avoid leaks
         delete[] sizesPerBatch[i];
@@ -157,55 +158,26 @@ int network_train(Network *n, int **inputIndices, float **inputValues, int *leng
     delete[] activeValuesPerBatch;
     delete[] sizesPerBatch;
 
-
+    // gradient descent
     bool tmpRehash;
     bool tmpRebuild;
-
     for (int l=0; l < _numberOfLayers; l++) {
         tmpRehash = (rehash & _Sparsity[l] < 1) ? true : false;
         tmpRebuild = (rebuild & _Sparsity[l] < 1) ? true : false;
         if (tmpRehash) _hiddenlayers[l]->_hashTables->clear();
         if (tmpRebuild) _hiddenlayers[l]->updateTable();
-
-        int ratio = 1;
 #pragma omp parallel for
         for (size_t m = 0; m < _hiddenlayers[l]->_noOfNodes; m++)
         {
             Node *tmp = _hiddenlayers[l]->getNodebyID(m);
             int dim = _hiddenlayers[l]->_previousLayerNumOfNodes;
-            float* local_weights = new float[dim];
-            std::copy(tmp->_weights, tmp->_weights + dim, local_weights);
-
-            for (int d=0; d < dim;d++){
-                float _t = tmp->_t[d];
-                float Mom = tmp->_adamAvgMom[d];
-                float Vel = tmp->_adamAvgVel[d];
-                Mom = BETA1 * Mom + (1 - BETA1) * _t;
-                Vel = BETA2 * Vel + (1 - BETA2) * _t * _t;
-                local_weights[d] += ratio * tmplr * Mom / (sqrt(Vel) + EPS);
-                tmp->_adamAvgMom[d] = Mom;
-                tmp->_adamAvgVel[d] = Vel;
-                tmp->_t[d] = 0;
-            }
-
-            tmp->_adamAvgMombias = BETA1 * tmp->_adamAvgMombias + (1 - BETA1) * tmp->_tbias;
-            tmp->_adamAvgVelbias = BETA2 * tmp->_adamAvgVelbias + (1 - BETA2) * tmp->_tbias * tmp->_tbias;
-            tmp->_bias += ratio*tmplr * tmp->_adamAvgMombias / (sqrt(tmp->_adamAvgVelbias) + EPS);
-            tmp->_tbias = 0;
-            std::copy(local_weights, local_weights + dim, tmp->_weights);
-            if (tmpRehash) {
-                int *hashes = _hiddenlayers[l]->_dwtaHasher->getHashEasy(local_weights, dim, TOPK);
-                lsh_hashes_to_indices_add(n->_hiddenlayers[l]->_hashTables, hashes, m+1);
-                delete[] hashes;
-            }
-
-            delete[] local_weights;
+            node_adam(tmp, dim, tmplr, 1);
+            if (tmpRehash) layer_addToHashTable(n->_hiddenlayers[l], tmp->_weights, dim, m+1);
         }
     }
 
     if (DEBUG&rehash) {
         cout << "Avg sample size = " << avg_retrieval[0]*1.0/_currentBatchSize<<" "<<avg_retrieval[1]*1.0/_currentBatchSize << endl;
     }
-    return logloss;
 }
 
