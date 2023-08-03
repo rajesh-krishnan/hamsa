@@ -18,7 +18,7 @@ Network *network_new(int *sizesOfLayers, NodeType *layersTypes, int noOfLayers, 
 
 void network_delete(Network *n) {
     for (int i = 0; i < n->_numberOfLayers; i++) layer_delete(n->_hiddenlayers[i]);
-    mymap(n->_hiddenlayers, n->numberOfLayers * sizeof(Layer *));
+    myunmap(n->_hiddenlayers, n->numberOfLayers * sizeof(Layer *));
     myunmap(n, sizeof(Network));
 }
 
