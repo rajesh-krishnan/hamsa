@@ -1,14 +1,14 @@
 #include "lsh.h"
 
-static int logbinsize = (int)floor(log2(BINSIZE));  /* XXX: original code used log, not log2 */
+static int logbinsize = (int)floor(log2(BINSIZE));  /* XXX: original used natural log, check */
 
 inline static void __attribute__((always_inline)) bucket_reset(Bucket *b) { b->count = 0; }
 
 inline static int __attribute__((always_inline)) bucket_add_to(Bucket *b, int id) {
-    int index = b->count & (BUCKETSIZE - 1);  /* place index in [0, BUCKETSIZE), cheaper than modulo */
+    int index = b->count & (BUCKETSIZE - 1);  /* place in [0, BUCKETSIZE), cheaper than modulo */
     b->arr[index] = id;
     b->count++;
-    assert (b->count > 0);                    /* check for overflow */
+    assert (b->count > 0); /* check for overflow */
     return index;
 }
 
@@ -21,9 +21,9 @@ LSH *lsh_new(int K, int L, int RangePow) {
     assert (K * logbinsize == RangePow);
     Bucket *b;
     size_t sz  = 1 << RangePow;
-    LSH *l     = (LSH *) mymap(sizeof(LSH));
-    l->_bucket = (Bucket **) mymap(L * sizeof(Bucket *));
-    b = (Bucket *) mymap(L * sz * sizeof(Bucket));            /* this is really large */
+    LSH *l     = (LSH *) malloc(sizeof(LSH));
+    l->_bucket = (Bucket **) malloc(L * sizeof(Bucket *));
+    b = (Bucket *) mymap(L * sz * sizeof(Bucket));
     for (int i = 0; i < L; i++) l->_bucket[i] = &b[i * sz];
     l->_K = K;
     l->_L = L;
@@ -35,18 +35,17 @@ void lsh_delete(LSH *l) {
     size_t sz  = 1 << l->_RangePow;
     Bucket *b  = l->_bucket[0];
     myunmap(b, l->_L * sz * sizeof(Bucket));
-    myunmap(l->_bucket, l->_L * sizeof(Bucket *));
-    myunmap(l, sizeof(LSH));
+    free(l->_bucket);
+    free(l);
 }
 
 void lsh_clear(LSH *l) {
     size_t totsz = (1 << l->_RangePow) * l->_L;
     Bucket *b    = l->_bucket[0];
-#pragma omp parallel for 
     for (int i = 0; i < totsz; i++) bucket_reset(&b[i]);
 }
 
-static unsigned int ith_index(LSH *l, int *hashes, int i) {
+inline static unsigned int __attribute__((always_inline)) ith_index(LSH *l, int *hashes, int i) {
     unsigned int index = 0;
     for (int j = 0; j < l->_K; j++) {
         unsigned int h = hashes[l->_K*i + j];
