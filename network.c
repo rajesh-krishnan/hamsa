@@ -50,9 +50,9 @@ int network_infer(Network *n, int **inputIndices, float **inputValues, int *leng
 
         //inference
         for (int j = 0; j < _numberOfLayers; j++) {
-            _hiddenlayers[j]->queryActiveNodeandComputeActivations(activenodesperlayer, activeValuesperlayer, sizes, j, i, labels[i], 0,
-                    _Sparsity[_numberOfLayers+j], -1); // XXX: second half of sparsity array used for inference?
-                                                       // XXX: why not just record in layer?
+            layer_queryActiveNodeandComputeActivations(n->_hiddenlayers[j], 
+                activenodesperlayer, activeValuesperlayer, sizes, j, i, labels[i], 
+                0, _Sparsity[_numberOfLayers+j], -1); // XXX: second half of sparsity array used for inference?
         }
 
         //compute softmax
@@ -116,7 +116,6 @@ int network_train(Network *n, int **inputIndices, float **inputValues, int *leng
         activeValuesperlayer[0] = inputValues[i];
         sizes[0] = lengths[i];
         int in;
-        //auto t1 = std::chrono::high_resolution_clock::now();
         for (int j = 0; j < _numberOfLayers; j++) {
             in = _hiddenlayers[j]->queryActiveNodeandComputeActivations(activenodesperlayer, activeValuesperlayer, sizes, j, i, labels[i], labelsize[i],
                     _Sparsity[j], iter*_currentBatchSize+i);
@@ -159,7 +158,6 @@ int network_train(Network *n, int **inputIndices, float **inputValues, int *leng
     delete[] sizesPerBatch;
 
 
-    auto t1 = std::chrono::high_resolution_clock::now();
     bool tmpRehash;
     bool tmpRebuild;
 

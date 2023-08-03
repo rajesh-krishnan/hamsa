@@ -123,10 +123,33 @@ void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
 }
 
 #if 0
+
+/* Does too many things in spaghetti fashion */
+/* Need to understand purpose of each argument */
+
+/* looks like this is implementing forward propagation */
+/* computes activenodesperLayer for next layer -- based on which nodes are active in current layer */
+
+/* the list is all nodes if sparsity = 1 */
+/* otherwise nodes that are in the hashtable */
+/* if last layer / softmax, ensure label node is in candidates */
+/* if too few retrieved from hash table, add some radom ones */
+/* if too few adds random nodes to get some arbitrary count */
+/* however, save how many were retrieved so you can return it */
+/* counts are extracted for use in hard thresholding, need to add that back in */
+
+/* computes activeValuesperLayer for the next layer */
+/* compute activation based for RelU or Softmax */
+/* ought to move this to node? */
+
+/* ought to allocate memory outside */
+/* ought to keep layer index confusion outside this function */
+/* we deal with: # nodes of this layer, active values 
+
 int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlayer, float **activeValuesperlayer, 
     int *lengths, int layerIndex, int inputID,  int *label, int labelsize, float Sparsity, int iter) {
 
-// replace sparsity arg with tORq?
+    // replace sparsity arg with tORq?
     //LSH QueryLogic
 
     //Beidi. Query out all the candidate nodes
@@ -144,10 +167,13 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlay
     }
     else
     {
+
             int *hashes = _dwtaHasher->getHash(activenodesperlayer[layerIndex], activeValuesperlayer[layerIndex],
                                               lengths[layerIndex]);
-            int *hashIndices = _hashTables->hashesToIndex(hashes);
-            int **actives = _hashTables->retrieveRaw(hashIndices);
+            int **actives = // XXX: allocate here
+            lsh_hashes_to_indices_retrieve_raw(l->_hashTables, hashes, actives); 
+            free(hashes);
+
             // we now have a sparse array of indices of active nodes
 
             // Get candidates from hashtable
@@ -159,6 +185,9 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlay
                 }
             }
 
+            /* logic should be in LSH */
+            /* -1 terminated bucket array should not be exposed */
+            /* basically returns a dict of IDs (-1) in buckets and count */
             for (int i = 0; i < _L; i++) {
                 // copy sparse array into (dense) map
                 for (int j = 0; j < BUCKETSIZE; j++) {
@@ -167,6 +196,7 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlay
                     counts[tempID] += 1;
                 }
             }
+            delete[] actives;
 
             in = counts.size();
             if (counts.size()<1500){
@@ -204,9 +234,6 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlay
                 i++;
             }
 
-            delete[] hashes;
-            delete[] hashIndices;
-            delete[] actives;
 
     }
 
@@ -238,3 +265,4 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlay
 }
 
 #endif
+

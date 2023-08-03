@@ -1,5 +1,33 @@
 #include "network.h"
 
+/*
+void test_bucket() {
+    int i, *x;
+    Bucket tmp;
+    Bucket *b = &tmp;
+    bucket_reset(b);
+    bucket_add_to(b,3);
+    bucket_add_to(b,2);
+    bucket_add_to(b,4);
+    bucket_add_to(b,9);
+    printf("\nSize: %d In-buckets:\n", b->count);
+    x = bucket_get_array(b);
+    for (i = 0; i <= b->count; i++) {
+        printf("%d", x[i]);
+        printf("%s", (i%10==9) ? "\n" : " ");
+    }
+    printf("\n");
+    bucket_reset(b);
+    x = bucket_get_array(b);
+    printf("\nSize: %d In-buckets:\n", b->count);
+    for (i = 0; i <= b->count; i++) {
+        printf("%d", x[i]);
+        printf("%s", (i%10==9) ? "\n" : " ");
+    }
+    printf("\n");
+}
+*/
+
 void test_wrnpy() {
     float ifarr[20];
     float ofarr[20];
@@ -71,31 +99,6 @@ void test_myshuffle() {
     printf("\n");
 }
 
-void test_bucket() {
-    int i, *x;
-    Bucket tmp;
-    Bucket *b = &tmp;
-    bucket_reset(b);
-    bucket_add_to(b,3);
-    bucket_add_to(b,2);
-    bucket_add_to(b,4);
-    bucket_add_to(b,9);
-    printf("\nSize: %d In-buckets:\n", b->count);
-    x = bucket_get_array(b);
-    for (i = 0; i <= b->count; i++) {
-        printf("%d", x[i]);
-        printf("%s", (i%10==9) ? "\n" : " ");
-    }
-    printf("\n");
-    bucket_reset(b);
-    x = bucket_get_array(b);
-    printf("\nSize: %d In-buckets:\n", b->count);
-    for (i = 0; i <= b->count; i++) {
-        printf("%d", x[i]);
-        printf("%s", (i%10==9) ? "\n" : " ");
-    }
-    printf("\n");
-}
 
 void test_dwtahash() {
     printf("\nTesting Densified Winner Take All Hashing\n");
@@ -125,7 +128,6 @@ int main(int argc, char *argv[]) {
     test_mt();
     test_norm();
     test_myshuffle();
-    test_bucket();
     test_dwtahash();
     test_lsh(6,50,18);
     test_layer();
