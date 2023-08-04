@@ -9,7 +9,7 @@ all: hamsa
 slib: libhamsa.so
 
 hamsa: main.c libhamsa.a
-	gcc -o $@ -fopenmp $< libhamsa.a -lm -lomp
+	gcc -o $@ -fopenmp $< libhamsa.a -lm
 
 libhamsa.a: $(OBJECTS)
 	ar r $@ $^
