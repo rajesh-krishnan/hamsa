@@ -1,34 +1,5 @@
 #include "network.h"
 
-/*
-Keep this until the counts capture code is tested
-void test_bucket() {
-    int i, *x;
-    Bucket tmp;
-    Bucket *b = &tmp;
-    bucket_reset(b);
-    bucket_add_to(b,3);
-    bucket_add_to(b,2);
-    bucket_add_to(b,4);
-    bucket_add_to(b,9);
-    printf("\nSize: %d In-buckets:\n", b->count);
-    x = bucket_get_array(b);
-    for (i = 0; i <= b->count; i++) {
-        printf("%d", x[i]);
-        printf("%s", (i%10==9) ? "\n" : " ");
-    }
-    printf("\n");
-    bucket_reset(b);
-    x = bucket_get_array(b);
-    printf("\nSize: %d In-buckets:\n", b->count);
-    for (i = 0; i <= b->count; i++) {
-        printf("%d", x[i]);
-        printf("%s", (i%10==9) ? "\n" : " ");
-    }
-    printf("\n");
-}
-*/
-
 void test_wrnpy() {
     float ifarr[20];
     float ofarr[20];
@@ -98,8 +69,6 @@ void test_myshuffle() {
 void test_dwtahash() {
     printf("\nTesting Densified Winner Take All Hashing\n");
     DWTAHash *d = dwtahash_new(300, 128);
-    printf("Get Random: %d\n", dwtahash_getRandDoubleHash(d, 10, 5));
-    printf("Get Random: %d\n", dwtahash_getRandDoubleHash(d, 10, 5));
     dwtahash_delete(d);
 }
 

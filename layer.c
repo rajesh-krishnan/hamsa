@@ -145,93 +145,69 @@ void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
 
 int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlayer, float **activeValuesperlayer, 
     int *lengths, int layerIndex, int inputID,  int *label, int labelsize, float Sparsity, int iter) {
-
-    // replace sparsity arg with tORq?
-    //LSH QueryLogic
-
-    //Beidi. Query out all the candidate nodes
     int len;
     int in = 0;
-
-    if(Sparsity == 1.0){
+    if(Sparsity == 1.0) {
         len = _noOfNodes;
         lengths[layerIndex + 1] = len;
         activenodesperlayer[layerIndex + 1] = new int[len]; //assuming not intitialized;
-        for (int i = 0; i < len; i++)
-        {
-            activenodesperlayer[layerIndex + 1][i] = i;
-        }
+        for (int i = 0; i < len; i++) activenodesperlayer[layerIndex + 1][i] = i;
     }
-    else
-    {
+    else {
+        int *hashes = _dwtaHasher->getHash(activenodesperlayer[layerIndex], activeValuesperlayer[layerIndex],
+            lengths[layerIndex]);
+        int **actives = // XXX: allocate here
+        lsh_hashes_to_indices_retrieve_raw(l->_hashTables, hashes, actives); 
+        free(hashes);
 
-            int *hashes = _dwtaHasher->getHash(activenodesperlayer[layerIndex], activeValuesperlayer[layerIndex],
-                                              lengths[layerIndex]);
-            int **actives = // XXX: allocate here
-            lsh_hashes_to_indices_retrieve_raw(l->_hashTables, hashes, actives); 
-            free(hashes);
+        // we now have a sparse array of indices of active nodes
+        // Get candidates from hashtable
+        std::map<int, size_t> counts;
+        // Make sure that the true label node is in candidates
+        if (_type == NodeType::Softmax && labelsize > 0) {
+            for (int i = 0; i < labelsize ;i++) counts[label[i]] = _L;
+        }
 
-            // we now have a sparse array of indices of active nodes
+        /* logic should be in LSH */
+        /* -1 terminated bucket array should not be exposed */
+        /* basically returns a dict of IDs (-1) in buckets and count */
+        for (int i = 0; i < _L; i++) {
+            // copy sparse array into (dense) map
+            for (int j = 0; j < BUCKETSIZE; j++) {
+                int tempID = actives[i][j] - 1;
+                if (tempID < 0) break;
+                counts[tempID] += 1;
+            }
+        }
+        delete[] actives;
 
-            // Get candidates from hashtable
-            std::map<int, size_t> counts;
-            // Make sure that the true label node is in candidates
-            if (_type == NodeType::Softmax && labelsize > 0) {
-                for (int i = 0; i < labelsize ;i++){
-                    counts[label[i]] = _L;
-                }
+        in = counts.size();
+        if (counts.size()<1500){
+            srand(time(NULL));
+            size_t start = rand() % _noOfNodes;
+            for (size_t i = start; i < _noOfNodes; i++) {
+                if (counts.size() >= 1000) break;
+                if (counts.count(_randNode[i]) == 0) counts[_randNode[i]] = 0;
             }
 
-            /* logic should be in LSH */
-            /* -1 terminated bucket array should not be exposed */
-            /* basically returns a dict of IDs (-1) in buckets and count */
-            for (int i = 0; i < _L; i++) {
-                // copy sparse array into (dense) map
-                for (int j = 0; j < BUCKETSIZE; j++) {
-                    int tempID = actives[i][j] - 1;
-                    if (tempID < 0) break;
-                    counts[tempID] += 1;
+            if (counts.size() < 1000) {
+                for (size_t i = 0; i < _noOfNodes; i++) {
+                    if (counts.size() >= 1000) break;
+                    if (counts.count(_randNode[i]) == 0) counts[_randNode[i]] = 0;
                 }
             }
-            delete[] actives;
+        }
 
-            in = counts.size();
-            if (counts.size()<1500){
-                srand(time(NULL));
-                size_t start = rand() % _noOfNodes;
-                for (size_t i = start; i < _noOfNodes; i++) {
-                    if (counts.size() >= 1000) {
-                        break;
-                    }
-                    if (counts.count(_randNode[i]) == 0) {
-                        counts[_randNode[i]] = 0;
-                    }
-                }
+        len = counts.size();
+        lengths[layerIndex + 1] = len;
+        activenodesperlayer[layerIndex + 1] = new int[len];
 
-                if (counts.size() < 1000) {
-                    for (size_t i = 0; i < _noOfNodes; i++) {
-                        if (counts.size() >= 1000) {
-                            break;
-                        }
-                        if (counts.count(_randNode[i]) == 0) {
-                            counts[_randNode[i]] = 0;
-                        }
-                    }
-                }
-            }
-
-            len = counts.size();
-            lengths[layerIndex + 1] = len;
-            activenodesperlayer[layerIndex + 1] = new int[len];
-
-            // copy map into new array
-            int i=0;
-            for (auto &&x : counts) {
-                activenodesperlayer[layerIndex + 1][i] = x.first;
-                i++;
-            }
-
-
+        // copy map into new array
+        int i=0;
+        for (auto &&x : counts) {
+            activenodesperlayer[layerIndex + 1][i] = x.first;
+            i++;
+        }
     }
 
     //***********************************
@@ -241,10 +217,9 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlay
         _normalizationConstants[inputID] = 0;
 
     // find activation for all ACTIVE nodes in layer
-    for (int i = 0; i < len; i++)
-    {
+    for (int i = 0; i < len; i++) {
         activeValuesperlayer[layerIndex + 1][i] = _Nodes[activenodesperlayer[layerIndex + 1][i]].getActivation(activenodesperlayer[layerIndex], activeValuesperlayer[layerIndex], lengths[layerIndex], inputID);
-        if(_type == NodeType::Softmax && activeValuesperlayer[layerIndex + 1][i] > maxValue){
+        if(_type == NodeType::Softmax && activeValuesperlayer[layerIndex + 1][i] > maxValue) {
             maxValue = activeValuesperlayer[layerIndex + 1][i];
         }
     }
@@ -257,7 +232,6 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlay
             _normalizationConstants[inputID] += realActivation;
         }
     }
-
     return in;
 }
 
