@@ -33,6 +33,7 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     if (type == Softmax) l->_normalizationConstants = mymap(batchsize * sizeof(float));
     (load) ?  layer_load(l, path) : layer_randinit(l);
 
+#pragma omp parallel for
     for (size_t i = 0; i < noOfNodes; i++) {
         size_t index = previousLayerNumOfNodes * i;
         node_update(&l->_Nodes[i], i, type, batchsize,
@@ -60,9 +61,12 @@ void layer_delete(Layer *l) {
 }
 
 void layer_randinit(Layer *l) {
-    size_t fano = l->_noOfNodes * l->_previousLayerNumOfNodes;
-    for (size_t i = 0; i < fano; i++) l->_weights[i] = randnorm(0.0,0.01);
-    for (size_t i = 0; i < l->_noOfNodes; i++) l->_bias[i] = randnorm(0.0,0.01);
+#pragma omp parallel for
+    for (size_t i = 0; i < l->_noOfNodes; i++) {
+        size_t fano = i * l->_previousLayerNumOfNodes;
+        l->_bias[i] = randnorm(0.0,0.01);
+        for (size_t j = 0; j < l->_previousLayerNumOfNodes; j++) l->_weights[fano+j] = randnorm(0.0,0.01);
+    }
 }
 
 static void layer_rw(Layer *l, char *path, bool load) {

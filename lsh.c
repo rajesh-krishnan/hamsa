@@ -40,11 +40,7 @@ void lsh_delete(LSH *l) {
     free(l);
 }
 
-void lsh_clear(LSH *l) {
-    size_t totsz = (1 << l->_RangePow) * l->_L;
-    Bucket *b    = l->_bucket[0];
-    for (int i = 0; i < totsz; i++) bucket_reset(&b[i]);
-}
+void lsh_clear(LSH *l) { memset(l->_bucket[0], 0, (1 << l->_RangePow) * l->_L * sizeof(Bucket)); }
 
 inline static unsigned int __attribute__((always_inline)) ith_index(LSH *l, int *hashes, int i) {
     unsigned int index = 0;
