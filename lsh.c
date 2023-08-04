@@ -28,6 +28,7 @@ LSH *lsh_new(int K, int L, int RangePow) {
     l->_K = K;
     l->_L = L;
     l->_RangePow = RangePow;
+    lsh_clear(l);
     return l;
 }
 

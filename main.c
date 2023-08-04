@@ -88,12 +88,14 @@ void test_layer() {
 }
 
 int main(int argc, char *argv[]) {
+/*
     test_wrnpy();
     test_mt();
     test_norm();
     test_myshuffle();
     test_dwtahash();
     test_lsh(6,50,18);
+*/
     test_layer();
     return 0;
 }

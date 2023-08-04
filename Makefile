@@ -1,13 +1,13 @@
 SOURCES = mt19937/mt19937ar.c myhelper.c lsh.c dwtahash.c node.c layer.c
 #network.c
 
-CFLAGS  = -fPIC -fopenmp -shared -O3 -march=native
+CFLAGS  = -fPIC -fopenmp -shared -O3 -march=native -mavx512f
 OBJECTS = $(SOURCES:.c=.o)
 
 all: hamsa libhamsa.so
 
 hamsa: main.c libhamsa.a
-	gcc -o $@ -fopenmp $< libhamsa.a -lm
+	gcc -o $@ -fopenmp $< libhamsa.a -lm -lomp
 	strip $@
 
 libhamsa.a: $(OBJECTS)

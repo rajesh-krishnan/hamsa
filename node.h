@@ -24,7 +24,7 @@ typedef struct _struct_node {
     float _tbias;
     float _adamAvgMombias;
     float _adamAvgVelbias;
-} Node;
+} __attribute__ ((aligned (64))) Node;
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
     float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, 
