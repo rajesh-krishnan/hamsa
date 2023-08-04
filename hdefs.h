@@ -6,9 +6,9 @@
 #define BUCKETSIZE 128
 #define BINSIZE 8
 
-#define TOPK 30
-#define THRESH 2
+#define MINACTIVE 1000
+#define THRESH 0
+
 #define LOADWEIGHT 0
 #define MAPLEN 325056
-
 #define DEBUG 1

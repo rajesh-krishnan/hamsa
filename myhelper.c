@@ -14,25 +14,10 @@ void *mymap(size_t size) {
 
 void myunmap(void *ptr, size_t size) { munmap(ptr, size); }
 
-void myrnginit() {
-    static int inited = 0;
-    int rd;
-    unsigned long init[] = {0x123, 0x234, 0x345, 0x456};
-    if (inited) return;
-    if((rd = open("/dev/urandom", O_RDONLY)) < 0) {
-        fprintf(stderr, "Could not open /dev/urandom\n");
-    }
-    else {
-        if(read(rd, init, 4) < 0) fprintf(stderr, "Read from /dev/urandom failed\n");
-    }
-    init_by_array(init, 4);
-    inited = 1;
-}
-
 void myshuffle(int *array, int n) {
     if (n <= 1) return;
     for (int i = 0; i < n - 1; i++) {
-        int j = i + (genrand_int31() % (n - i));
+        int j = i + (myrand_unif() % (n - i));
         assert(j >= 0 && j < n);
         int t = array[j];
         array[j] = array[i];
@@ -40,30 +25,39 @@ void myshuffle(int *array, int n) {
     }
 }
 
-float randnorm (double mu, double sigma) {
-    double U1, U2, W, mult;
+float myrand_norm(double mu, double sigma) { /* Box-Muller truncates at ~6 sigma */
+    static double scale = (1.0/0x7fffffff); 
     static double X1, X2;
     static int call = 0;
- 
-    if (call) {
-      call = !call;
-      return (mu + sigma * X2);
-    }
- 
-    do { 
-        U1 = -1 + genrand_real1() * 2;
-        U2 = -1 + genrand_real1() * 2;
-        W = pow (U1, 2) + pow (U2, 2);
-    } while (W >= 1 || W == 0);
- 
-    mult = sqrt ((-2 * log (W)) / W);
-    X1 = U1 * mult;
-    X2 = U2 * mult;
+    double U1, U2;
     call = !call;
-    return (float) (mu + sigma * X1);
+    if (!call) return X2;
+    U1 = sqrt(-2 * log(myrand_unif() * scale));
+    U2 = 2 * MY_PI * myrand_unif() * scale;
+    X1 = mu + U1 * cos(U2) * sigma;
+    X2 = mu + U1 * sin(U2) * sigma;
+    return (float) X1;
 }
 
-void save_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
+inline int __attribute__((always_inline)) myrand_unif() { 
+    static sfmt_t sfmt;
+    static int inited = 0;
+    int rd;
+    unsigned int init[] = {0x123, 0x234, 0x345, 0x456};
+    if (!inited) {
+        if((rd = open("/dev/urandom", O_RDONLY)) < 0) {
+            fprintf(stderr, "Could not open /dev/urandom\n");
+        }
+        else {
+            if(read(rd, init, 4) < 0) fprintf(stderr, "Read from /dev/urandom failed\n");
+        }
+        sfmt_init_by_array(&sfmt, init, 4);
+        inited = 1;
+    }
+    return(sfmt_genrand_uint32(&sfmt)>>1);
+}
+
+void mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   cnpy_array a;
   size_t index[2];
 
@@ -89,7 +83,7 @@ void save_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   }
 }
 
-void load_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
+void myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   cnpy_array a;
   size_t index[2];
 

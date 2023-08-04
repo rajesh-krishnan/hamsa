@@ -4,7 +4,6 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     int K, int L, int RangePow, bool load, char *path) {
     Layer *l = mymap(sizeof(Layer));
 
-    myrnginit();
     l->_noOfNodes = noOfNodes;
     l->_previousLayerNumOfNodes = previousLayerNumOfNodes;
     l->_layerID = layerID;
@@ -64,8 +63,8 @@ void layer_randinit(Layer *l) {
 #pragma omp parallel for
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t fano = i * l->_previousLayerNumOfNodes;
-        l->_bias[i] = randnorm(0.0,0.01);
-        for (size_t j = 0; j < l->_previousLayerNumOfNodes; j++) l->_weights[fano+j] = randnorm(0.0,0.01);
+        l->_bias[i] = myrand_norm(0.0,0.01);
+        for (size_t j = 0; j < l->_previousLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,0.01);
     }
 }
 
@@ -75,7 +74,7 @@ static void layer_rw(Layer *l, char *path, bool load) {
     assert(len < 1000);
     strcpy(fn, path);
     void (*rwfn)(float*,bool,size_t,size_t,char*);
-    rwfn = load ? load_fnpy : save_fnpy;
+    rwfn = load ? myload_fnpy : mysave_fnpy;
     sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_bias, false, l->_noOfNodes, 1, fn);
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
@@ -88,9 +87,9 @@ static void layer_rw(Layer *l, char *path, bool load) {
     fprintf(stderr, "%s parameters for layer %d\n", load ? "Loaded" : "Saved", l->_layerID);
 }
 
-void layer_load(Layer *l, char *path) { layer_rw(l, path, true); }
+inline void __attribute__((always_inline)) layer_load(Layer *l, char *path) { layer_rw(l, path, true); }
 
-void layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
+inline void __attribute__((always_inline)) layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
 
 Node *layer_getNodebyID(Layer *l, size_t nodeID) {
     assert((nodeID >= 0) && (nodeID < l->_noOfNodes));
@@ -115,103 +114,96 @@ void layer_updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes);
 
 void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
     int *hashes = dwtahash_getHashEasy(l->_dwtaHasher, weights, length);
-    lsh_hashes_to_indices_add(l->_hashTables, hashes, id + 1);
+    lsh_add(l->_hashTables, hashes, id + 1);
     free(hashes);
 }
 
-#if 0
+/* ought to allocate memory outside */
+/* ought to keep layer index confusion outside this function */
 
-/* Does too many things in spaghetti fashion */
-/* Need to understand purpose of each argument */
-
-/* looks like this is implementing forward propagation */
-/* computes activenodesperLayer for next layer -- based on which nodes are active in current layer */
-
-/* the list is all nodes if sparsity = 1 */
-/* otherwise nodes that are in the hashtable */
-/* if last layer / softmax, ensure label node is in candidates */
-/* if too few retrieved from hash table, add some radom ones */
-/* if too few adds random nodes to get some arbitrary count */
-/* however, save how many were retrieved so you can return it */
-/* counts are extracted for use in hard thresholding, need to add that back in */
+/* we deal with: # nodes of this layer, active values  */
 
 /* computes activeValuesperLayer for the next layer */
 /* compute activation based for RelU or Softmax */
 /* ought to move this to node? */
 
-/* ought to allocate memory outside */
-/* ought to keep layer index confusion outside this function */
-/* we deal with: # nodes of this layer, active values 
+int layer_forwardPropagate(Layer *l, 
+    int **activenodesperlayer, float **activeValuesperlayer, 
+    int *lengths, int layerIndex, 
+    int inputID, int *label, int labelsize, 
+    float Sparsity, int iter) {
 
-int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlayer, float **activeValuesperlayer, 
-    int *lengths, int layerIndex, int inputID,  int *label, int labelsize, float Sparsity, int iter) {
     int len;
-    int in = 0;
+    int retrievals = 0;
+
     if(Sparsity == 1.0) {
-        len = _noOfNodes;
+        len = l->_noOfNodes;
         lengths[layerIndex + 1] = len;
-        activenodesperlayer[layerIndex + 1] = new int[len]; //assuming not intitialized;
+
+#if 0
+        activenodesperlayer[layerIndex + 1] = new int[len]; // XXX :assuming not intitialized;
+#endif
         for (int i = 0; i < len; i++) activenodesperlayer[layerIndex + 1][i] = i;
     }
     else {
-        int *hashes = _dwtaHasher->getHash(activenodesperlayer[layerIndex], activeValuesperlayer[layerIndex],
-            lengths[layerIndex]);
-        int **actives = // XXX: allocate here
-        lsh_hashes_to_indices_retrieve_raw(l->_hashTables, hashes, actives); 
-        free(hashes);
+        int isnew;
+        khiter_t k;
+        khash_t(hist) *h = kh_init(hist);                  /* to store active candidates with counts */
 
-        // we now have a sparse array of indices of active nodes
-        // Get candidates from hashtable
-        std::map<int, size_t> counts;
-        // Make sure that the true label node is in candidates
-        if (_type == NodeType::Softmax && labelsize > 0) {
-            for (int i = 0; i < labelsize ;i++) counts[label[i]] = _L;
-        }
-
-        /* logic should be in LSH */
-        /* -1 terminated bucket array should not be exposed */
-        /* basically returns a dict of IDs (-1) in buckets and count */
-        for (int i = 0; i < _L; i++) {
-            // copy sparse array into (dense) map
-            for (int j = 0; j < BUCKETSIZE; j++) {
-                int tempID = actives[i][j] - 1;
-                if (tempID < 0) break;
-                counts[tempID] += 1;
-            }
-        }
-        delete[] actives;
-
-        in = counts.size();
-        if (counts.size()<1500){
-            srand(time(NULL));
-            size_t start = rand() % _noOfNodes;
-            for (size_t i = start; i < _noOfNodes; i++) {
-                if (counts.size() >= 1000) break;
-                if (counts.count(_randNode[i]) == 0) counts[_randNode[i]] = 0;
-            }
-
-            if (counts.size() < 1000) {
-                for (size_t i = 0; i < _noOfNodes; i++) {
-                    if (counts.size() >= 1000) break;
-                    if (counts.count(_randNode[i]) == 0) counts[_randNode[i]] = 0;
-                }
+        if (l->_type == Softmax && labelsize > 0) {        /* ensure label node is in candidates */
+            for (int i = 0; i < labelsize; i++) {
+                k = kh_put(hist, h, i, &isnew);
+                kh_value(h, k) = l->_L;
             }
         }
 
-        len = counts.size();
-        lengths[layerIndex + 1] = len;
-        activenodesperlayer[layerIndex + 1] = new int[len];
+        int *hashes = dwtahash_getHash(l->_dwtaHasher, activenodesperlayer[layerIndex], 
+            activeValuesperlayer[layerIndex], lengths[layerIndex]);
 
-        // copy map into new array
+        lsh_retrieve_histogram(l->_hashTables, hashes, h); /* get candidates from hashtable */
+
+        assert(((MINACTIVE > 0) && (THRESH == 0)) || ((THRESH > 0) && (MINACTIVE == 0)));
+
+        if (THRESH > 1) {                                  /* drop candidates with counts < THRESH */
+            for (k = kh_begin(h); k != kh_end(h); ++k) 
+                if (kh_exist(h, k) && (kh_value(h, k) < THRESH)) kh_del(hist, h, k);
+        }
+        retrievals = kh_size(h);                           /* retrieved actives after any thresholding */
+
+        if (MINACTIVE > 0) {                               /* add randomly to get min(l->_noOfNodes,MINACTIVE) */
+            size_t st = myrand_unif() % l->_noOfNodes; 
+            for (size_t i = st; i < l->_noOfNodes; i++) {  /* pick starting from a random index each time */
+                if (kh_size(h) >= MINACTIVE) break;
+                k = kh_put(hist, h, i, &isnew);
+                if (isnew) kh_value(h, k) = 0;
+            }
+            for (size_t i = 0; i < st; i++) {           /* loop around to pick more if needed */
+                if (kh_size(h) >= MINACTIVE) break;
+                k = kh_put(hist, h, i, &isnew);
+                if (isnew) kh_value(h, k) = 0;
+            }
+        }
+        len = kh_size(h);                                 /* actives after adding any randomly */
+
+        lengths[layerIndex + 1] = len;                      // assert less than nunber of nodes?
+#if 0
+        activenodesperlayer[layerIndex + 1] = new int[len]; // XXX: ought to alloc outside
+#endif
+
         int i=0;
-        for (auto &&x : counts) {
-            activenodesperlayer[layerIndex + 1][i] = x.first;
-            i++;
+        for (k = kh_begin(h); k != kh_end(h); ++k) {
+            if (kh_exist(h, k)) {
+                activenodesperlayer[layerIndex + 1][i] = k;
+                i++;
+            }
         }
+        kh_destroy(hist, h);
     }
 
+#if 0
+//fix
     //***********************************
-    activeValuesperlayer[layerIndex + 1] = new float[len]; //assuming its not initialized else memory leak;
+    activeValuesperlayer[layerIndex + 1] = new float[len]; // XXX: assuming its not initialized else memory leak;
     float maxValue = 0;
     if (_type == NodeType::Softmax)
         _normalizationConstants[inputID] = 0;
@@ -224,7 +216,7 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlay
         }
     }
 
-    if(_type == NodeType::Softmax) {
+    if(_type == Softmax) {
         for (int i = 0; i < len; i++) {
             float realActivation = exp(activeValuesperlayer[layerIndex + 1][i] - maxValue);
             activeValuesperlayer[layerIndex + 1][i] = realActivation;
@@ -232,8 +224,9 @@ int layer_queryActiveNodeandComputeActivations(Layer *l, int **activenodesperlay
             _normalizationConstants[inputID] += realActivation;
         }
     }
-    return in;
+#endif
+
+    return retrievals;
 }
 
-#endif
 

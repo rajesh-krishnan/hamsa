@@ -16,5 +16,6 @@ typedef struct _struct_lsh {
 LSH *lsh_new(int K, int L, int RangePow);
 void lsh_delete(LSH *l);
 void lsh_clear(LSH *l);
-void lsh_hashes_to_indices_add(LSH *l, int *hashes, int id);
-void lsh_hashes_to_indices_retrieve_raw(LSH *l, int *hashes, int **rawResults);
+void lsh_add(LSH *l, int *hashes, int id);
+void lsh_retrieve_raw(LSH *l, int *hashes, int **rawResults);
+void lsh_retrieve_histogram(LSH *l, int *hashes, khash_t(hist) *h);

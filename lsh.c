@@ -51,17 +51,31 @@ inline static unsigned int __attribute__((always_inline)) ith_index(LSH *l, int 
     return index;
 }
 
-void lsh_hashes_to_indices_add(LSH *l, int *hashes, int id) {
+void lsh_add(LSH *l, int *hashes, int id) {
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = ith_index(l, hashes, i);
 	bucket_add_to(&l->_bucket[i][index], id);
     }
 }
 
-void lsh_hashes_to_indices_retrieve_raw(LSH *l, int *hashes, int **rawResults) {
+void lsh_retrieve_raw(LSH *l, int *hashes, int **rawResults) {
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = ith_index(l, hashes, i);
         rawResults[i] = bucket_get_array(&l->_bucket[i][index]);
     }
 }
 
+/* Collect items and their counts across all retrieves buckets, put in hashtable */
+void lsh_retrieve_histogram(LSH *l, int *hashes, khash_t(hist) *h) {
+    int isnew, *arr;
+    khiter_t k;
+    for (int i = 0; i < l->_L; i++) {
+        unsigned int index = ith_index(l, hashes, i);
+        arr = bucket_get_array(&l->_bucket[i][index]);
+        for (int j = 0; j < BUCKETSIZE; j++) {
+           if (arr[j] < 0) break;                               /* bucket array terminated by -1 */
+           k = kh_put(hist, h, arr[j], &isnew);                 /* add to h, isnew is 1 if new else 0 */
+           kh_value(h, k) = (isnew) ? 1 : (kh_value(h, k) + 1); /* if new set to 1, else increment by 1 */
+        }
+    }
+}

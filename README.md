@@ -5,18 +5,27 @@ aided by hash algorithms without requiring hardware accelerators such as
 Graphics Processor Unit (GPU), Field Programmable Gate Array (FPGA), or
 neuromorphic computing architectures. A high-end x86 server with solid state
 disk (SSD) and adequate random access memory (RAM) running Linux with HugeTLB
-Pages enabled should suffice.  
+Pages enabled, with gcc compiler and OpenMP support should suffice. Our development
+servers 
 
-This implementation in C with minimal dependencies is based on the SLIDE paper 
-referenced below. We have implemented only the Densified Winner Take All hash, 
-first-in-first-out sampling, and Adaptive Moment Estimation gradient descent.
-We reduce dynamic memory allocation where possible. We import/export to `.npy`
-files and not the `.npz` archives (so zlib and C++ cnpy are not needed).
+This implementation follows the SLIDE paper referenced below and the author's
+original implementation in C++.  Our implementation is in C with minimal external 
+dependencies; included third-party dependencies include klib, jsmn, mt19937ar, 
+and cnpy.  We have refactored the code considerably, included code to replace 
+C++ std functions, eliminated code repetition, and dependency on C++ cnpy and 
+zlib. We import/export to `.npy` files instead of the `.npz` archives. Based
+on the results reported in the paper, we have chosen to implement only the
+Densified Winner Take All Hash, First-In-First-Out sampling, and Adaptive
+Moment Estimation gradient descent. Either thresholding or minimum active nodes
+per layer can be chosen at compilation. We reduce the number of places dynamic
+memory allocation is done, and furthermore we use mmap for the larger
+allocations systematically (in layers and lsh).  Instead of the custom config 
+file, we use JSON from which the network can be loaded; the config can also be
+saved.  We also build a shared library to allow calling from Python.
 
-In the future, we will explore: (i) speeding up random number genration usinf
-the SIMD Focused Mersenne Twister (SFTP) implementation; (ii) speeding up
-vector operations using AVX instructions; and (iii) speeding up processing
-through OpenMP multi-processor parallelism.
+In the future, we will explore: (i) speeding up random number generation usinf
+the SIMD Focused Mersenne Twister (SFTP) implementation; and (ii) speeding up
+vector operations using AVX512 instructions.
 
 Once the core capability is built and tested, we plan to focus on two problem
 domains: (i) natural language processing using large language models and (ii)

@@ -2,8 +2,8 @@
 
 Network *network_new(int *sizesOfLayers, NodeType *layersTypes, int noOfLayers, int batchSize, float lr, 
     int inputdim, int *K, int *L, int *RangePow, float *Sparsity, bool load, char *path) {
-    Network *n = malloc(sizeof(Network));
-    n->_hiddenlayers = malloc(noOfLayers * sizeof(Layer *));
+    Network *n = (Network *) malloc(sizeof(Network));
+    n->_hiddenlayers = (Layer **) malloc(noOfLayers * sizeof(Layer *));
     n->_numberOfLayers = noOfLayers;
     n->_learningRate = lr;
     n->_currentBatchSize = batchSize;
@@ -48,11 +48,10 @@ int network_infer(Network *n, int **inputIndices, float **inputValues, int *leng
         activeValuesperlayer[0] = inputValues[i];
         sizes[0] = length[i];
 
-        //inference
+        // inference
         for (int j = 0; j < _numberOfLayers; j++) {
-            layer_queryActiveNodeandComputeActivations(n->_hiddenlayers[j], 
-                activenodesperlayer, activeValuesperlayer, sizes, j, i, labels[i], 
-                0, _Sparsity[_numberOfLayers+j], -1); // XXX: second half of sparsity array used for inference?
+            layer_forwardPropagate(n->_hiddenlayers[j], activenodesperlayer, activeValuesperlayer, 
+                sizes, j, i, labels[i], 0, _Sparsity[_numberOfLayers+j], -1); // XXX: second half of sparsity arr?
         }
 
         //compute softmax
@@ -119,8 +118,8 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
         // forward propagate
         int in;
         for (int j = 0; j < _numberOfLayers; j++) {
-            in = _hiddenlayers[j]->queryActiveNodeandComputeActivations(activenodesperlayer, activeValuesperlayer, sizes, j, i, labels[i], labelsize[i],
-                    _Sparsity[j], iter*_currentBatchSize+i);
+            in = layer_forwardPropagate(n->_hiddenlayers[j], activenodesperlayer, activeValuesperlayer, 
+                sizes, j, i, labels[i], labelsize[i], _Sparsity[j], iter*_currentBatchSize+i);
             avg_retrieval[j] += in;
         }
 

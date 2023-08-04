@@ -3,18 +3,20 @@
 DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     int *n_array;
     DWTAHash *d = (DWTAHash *) malloc(sizeof(DWTAHash));
-    myrnginit();
     d->_numhashes = numHashes;
     d->_rangePow = noOfBitsToHash;
     d->_permute = (int) ceil(numHashes * BINSIZE * 1.0 / noOfBitsToHash);
     d->_lognumhash = (int) ceil(log2(numHashes));
-    d->_indices = (int *) malloc(d->_rangePow * d->_permute * sizeof(int));
-    d->_pos = (int *) malloc(d->_rangePow * d->_permute * sizeof(int));
-    d->_randHash[0] = genrand_int31();
-    d->_randHash[1] = genrand_int31();
+    d->_randHash[0] = myrand_unif();
+    d->_randHash[1] = myrand_unif();
     if (d->_randHash[0] % 2 == 0) d->_randHash[0]++;
     if (d->_randHash[1] % 2 == 0) d->_randHash[1]++;
+    d->_indices = (int *) malloc(d->_rangePow * d->_permute * sizeof(int));
+    d->_pos = (int *) malloc(d->_rangePow * d->_permute * sizeof(int));
     n_array = (int *) malloc(d->_rangePow * sizeof(int));
+    if(d->_indices == NULL || d->_pos == NULL || n_array == NULL) {
+        fprintf(stderr, "Memory allocation failure\n");
+    }
     for (int i = 0; i < d->_rangePow; i++) n_array[i] = i;
     for (int p = 0; p < d->_permute ;p++) {
         myshuffle(n_array, d->_rangePow);
@@ -40,9 +42,9 @@ inline static int __attribute__((always_inline)) dwtahash_getRandDoubleHash(DWTA
 }
 
 inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float* data, int dLen, int *xidx, bool easy) {
-    int *hashes = malloc(d->_numhashes * sizeof(int));
-    float *values = malloc(d->_numhashes * sizeof(float));
-    int *hashArray = malloc(d->_numhashes * sizeof(int));
+    int *hashes = (int *) malloc(d->_numhashes * sizeof(int));
+    float *values = (float *) malloc(d->_numhashes * sizeof(float));
+    int *hashArray = (int *) malloc(d->_numhashes * sizeof(int));
     for (int i = 0; i < d->_numhashes; i++) hashes[i] = values[i] = INT_MIN;
     memset(hashArray, 0, sizeof(int) * d->_numhashes);
 
