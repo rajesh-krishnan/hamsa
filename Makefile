@@ -4,20 +4,17 @@ SOURCES = mt19937/mt19937ar.c myhelper.c lsh.c dwtahash.c node.c layer.c
 CFLAGS  = -fPIC -fopenmp -shared -O3 -march=native
 OBJECTS = $(SOURCES:.c=.o)
 
-all: hamsa
+all: hamsa libhamsa.so
 
-hamsa: main.c libs
+hamsa: main.c libhamsa.a
 	gcc -o $@ -fopenmp $< libhamsa.a -lm
 	strip $@
 
-libs: libhamsa.so libhamsa.a
-	@rm -f $(OBJECTS)
+libhamsa.a: $(OBJECTS)
+	ar r $@ $^
 
 libhamsa.so: $(OBJECTS)
 	gcc $(CFLAGS) -o $@ $^
-
-libhamsa.a: $(OBJECTS)
-	ar r $@ $^
 
 clean:
 	rm -f main libhamsa.* $(OBJECTS)
