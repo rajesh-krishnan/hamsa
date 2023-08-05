@@ -3,6 +3,7 @@
 DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     int *n_array;
     DWTAHash *d = (DWTAHash *) malloc(sizeof(DWTAHash));
+    assert(d != NULL);
     d->_numhashes = numHashes;
     d->_rangePow = noOfBitsToHash;
     d->_permute = (int) ceil(numHashes * BINSIZE * 1.0 / noOfBitsToHash);
@@ -43,6 +44,7 @@ inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float* da
     int *hashes = (int *) malloc(d->_numhashes * sizeof(int));
     float *values = (float *) malloc(d->_numhashes * sizeof(float));
     int *hashArray = (int *) malloc(d->_numhashes * sizeof(int));
+    assert((hashes != NULL) && (values != NULL) && (hashArray != NULL));
     for (int i = 0; i < d->_numhashes; i++) hashes[i] = values[i] = INT_MIN;
     memset(hashArray, 0, sizeof(int) * d->_numhashes);
 

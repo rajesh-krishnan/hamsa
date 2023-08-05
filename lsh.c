@@ -23,6 +23,7 @@ LSH *lsh_new(int K, int L, int RangePow) {
     size_t sz  = 1 << RangePow;
     LSH *l     = (LSH *) malloc(sizeof(LSH));
     l->_bucket = (Bucket **) malloc(L * sizeof(Bucket *));
+    assert((l != NULL) && (l->_bucket !=NULL));
     b = (Bucket *) mymap(L * sz * sizeof(Bucket));
     for (int i = 0; i < L; i++) l->_bucket[i] = &b[i * sz];
     l->_K = K;

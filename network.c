@@ -4,16 +4,18 @@ Network *network_new(int *sizesOfLayers, NodeType *layersTypes, int noOfLayers, 
     int inputdim, int *K, int *L, int *RangePow, float *Sparsity, bool load, char *path) {
     Network *n = (Network *) malloc(sizeof(Network));
     n->_hiddenlayers = (Layer **) malloc(noOfLayers * sizeof(Layer *));
+    assert((n != NULL) && (n->_hiddenlayers != NULL));
     n->_numberOfLayers = noOfLayers;
     n->_learningRate = lr;
     n->_currentBatchSize = batchSize;
 
 #pragma omp parallel for
     for (int i = 0; i < noOfLayers; i++) {
-        int sizes = (i != 0) ?  sizesOfLayers[i - 1] : inputdim;
-        n->_hiddenlayers[i] = layer_new(sizesOfLayers[i], sizes, i, layersTypes[i], batchSize,
-            K[i], L[i], RangePow[i], Sparsity[i], Sparsity[noOfLayers+i] load, path);
+        int lsize = (i != 0) ?  sizesOfLayers[i - 1] : inputdim;
+        n->_hiddenlayers[i] = layer_new(sizesOfLayers[i], lsize, i, layersTypes[i], batchSize,
+            K[i], L[i], RangePow[i], load, path);
     }
+    return n;
 }
 
 void network_delete(Network *n) {
@@ -28,11 +30,11 @@ Layer *getLayer(Network *n, int LayerID) {
 }
 
 void network_save(Network *n, char *path) {
-    for (int i = 0; i < n->_numberOfLayers; i++) n->_hiddenlayers[i]->layer_save(path);
+    for (int i = 0; i < n->_numberOfLayers; i++) layer_save(n->_hiddenlayers[i], path);
 }
 
 void network_load(Network *n, char *path) {
-    for (int i = 0; i < n->_numberOfLayers; i++) n->_hiddenlayers[i]->layer_load(path);
+    for (int i = 0; i < n->_numberOfLayers; i++) layer_save(n->_hiddenlayers[i], path);
 }
 
 #if 0
