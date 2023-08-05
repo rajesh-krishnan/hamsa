@@ -110,20 +110,31 @@ void myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   }
 }
 
-char *load_file(char * filename) {
+void mysave_file(char *filename, char *buffer) {
+    FILE *f = fopen(filename, "w");
+    size_t length = strlen(buffer);
+    if (f) {
+        int x = fwrite(buffer, 1, length, f);
+        assert(x == length);
+    }
+    fclose(f);
+}
+
+char *myload_file(char *filename) {
     char *buffer = 0;
-    long length;
-    FILE *f = fopen (filename, "rb");
+    size_t length;
+    FILE *f = fopen(filename, "rb");
 
     if (f) {
-        fseek (f, 0, SEEK_END);
-        length = ftell (f);
+        fseek(f, 0, SEEK_END);
+        length = ftell(f);
         fseek (f, 0, SEEK_SET);
         buffer = malloc(length);
         if (buffer) {
-           int x = fread (buffer, 1, length, f);
+            int x = fread(buffer, 1, length, f);
+            assert(x == length);
         }
-        fclose (f);
+        fclose(f);
    }
    return buffer;
 }

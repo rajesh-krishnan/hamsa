@@ -1,5 +1,6 @@
 #pragma once
 #include "layer.h"
+#include "configfile.h"
 
 typedef struct _struct_network {
     Layer **_hiddenlayers;

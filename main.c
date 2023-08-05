@@ -109,15 +109,14 @@ void test_hashtable() {
     kh_destroy(hist, h);
 }
 
-void test_json() {
-    char *jstr = load_file("config.json");
-    puts(jstr);
-    json_t mem[100000];
-    json_t const* json = json_create( jstr, mem, sizeof mem / sizeof *mem );
-    if ( !json ) {
-        puts("Error json create.");
-        exit(EXIT_FAILURE);
-    }
+void test_config() {
+    char *jstr = myload_file("sampleconfig.json");
+    Config *cfg = config_new();
+    string_to_config(jstr, cfg);
+ 
+    char ostr[10000];      /* config file should not exceed 10KB */
+    config_to_string(cfg, ostr, 10000);
+    mysave_file("/tmp/sampleconfig1.json", ostr);
     free(jstr);
 }
 
@@ -130,8 +129,8 @@ int main(int argc, char *argv[]) {
     test_myshuffle();
     test_dwtahash();
     test_lsh(6,50,18);
-*/
-    test_json();
     test_layer(0);
+*/
+    test_config();
     return 0;
 }

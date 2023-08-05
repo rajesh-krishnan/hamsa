@@ -1,4 +1,4 @@
-SOURCES = sfmt/SFMT.c tiny-json/tiny-json.c myhelper.c lsh.c dwtahash.c node.c layer.c network.c
+SOURCES = sfmt/SFMT.c tiny-json/tiny-json.c myhelper.c configfile.c lsh.c dwtahash.c node.c layer.c network.c
 
 OBJECTS  = $(SOURCES:.c=.o)
 CC       = gcc
