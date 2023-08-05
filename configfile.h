@@ -7,7 +7,7 @@ typedef struct _struct_config {
     int *RangePow;
     int *K;
     int *L;
-    int *Sparsity;
+    float *Sparsity;
     int Batchsize;
     int Rehash;
     int Rebuild;

@@ -16,7 +16,7 @@
   "Stepsize":        1000,
   "trainData":       "../dataset/Amazon/amazon_train.txt",
   "testData":        "../dataset/Amazon/amazon_test.txt",
-  "loadpath":        ".",
+  "loadPath":        ".",
   "savePath":        ".",
   "logFile":         "./log.txt"
 }
