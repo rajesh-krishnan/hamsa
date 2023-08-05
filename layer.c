@@ -30,6 +30,7 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     l->_adamT = mymap(fano * sizeof(float));
 
     if (type == Softmax) l->_normalizationConstants = mymap(batchsize * sizeof(float));
+
     (load) ?  layer_load(l, path) : layer_randinit(l);
 
 #pragma omp parallel for
@@ -59,12 +60,16 @@ void layer_delete(Layer *l) {
     myunmap(l, sizeof(Layer));
 }
 
+/* 
+ * Kaiming initialization preferable for faster covergence in deep networks 
+ */
 void layer_randinit(Layer *l) {
+    float ksd = sqrt(1.0/l->_previousLayerNumOfNodes);
 #pragma omp parallel for
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t fano = i * l->_previousLayerNumOfNodes;
-        l->_bias[i] = myrand_norm(0.0,0.01);
-        for (size_t j = 0; j < l->_previousLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,0.01);
+        for (size_t j = 0; j < l->_previousLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,ksd);
+        l->_bias[i] = 0.0;
     }
 }
 
@@ -201,12 +206,9 @@ int layer_forwardPropagate(Layer *l,
     }
 
 #if 0
-//fix
-    //***********************************
     activeValuesperlayer[layerIndex + 1] = new float[len]; // XXX: assuming its not initialized else memory leak;
     float maxValue = 0;
-    if (_type == NodeType::Softmax)
-        _normalizationConstants[inputID] = 0;
+    if (l->_type == Softmax) l->_normalizationConstants[inputID] = 0;
 
     // find activation for all ACTIVE nodes in layer
     for (int i = 0; i < len; i++) {
@@ -228,5 +230,4 @@ int layer_forwardPropagate(Layer *l,
 
     return retrievals;
 }
-
 
