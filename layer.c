@@ -1,11 +1,12 @@
 #include "layer.h"
 
-Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
+Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
     int K, int L, int RangePow, bool load, char *path) {
-    Layer *l = mymap(sizeof(Layer));
+    size_t fano = noOfNodes * prevLayerNumOfNodes;
+    Layer *l = (Layer *) mymap(sizeof(Layer));
 
     l->_noOfNodes = noOfNodes;
-    l->_previousLayerNumOfNodes = previousLayerNumOfNodes;
+    l->_prevLayerNumOfNodes = prevLayerNumOfNodes;
     l->_layerID = layerID;
     l->_type = type;
     l->_batchsize = batchsize;
@@ -13,39 +14,39 @@ Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, Nod
     l->_L = L;
     l->_RangePow = RangePow;
 
-    l->_Nodes = mymap(noOfNodes * sizeof(Node));
-    l->_hashTables = lsh_new(K, L, RangePow);
-    l->_dwtaHasher = dwtahash_new(K * L, previousLayerNumOfNodes);
-    l->_train_array = mymap(noOfNodes * batchsize * sizeof(Train));
+    l->_Nodes       = (Node *)  mymap(noOfNodes * sizeof(Node));
+    l->_train_array = (Train *) mymap(noOfNodes * batchsize * sizeof(Train));
+    l->_weights     = (float *) mymap(fano * sizeof(float));
+    l->_bias        = (float *) mymap(noOfNodes * sizeof(float));
+    l->_adamAvgMom  = (float *) mymap(fano * sizeof(float));
+    l->_adamAvgVel  = (float *) mymap(fano * sizeof(float));
+    l->_adamT       = (float *) mymap(fano * sizeof(float));
+    l->_randNode    = (int *)   mymap(noOfNodes * sizeof(int));
 
-    l->_randNode = mymap(noOfNodes * sizeof(int));
+    if (type == Softmax) l->_normalizationConstants = (float *) mymap(batchsize * sizeof(float));
+    else                 l->_normalizationConstants = NULL;
+
+    l->_hashTables  = lsh_new(K, L, RangePow);
+    l->_dwtaHasher  = dwtahash_new(K * L, prevLayerNumOfNodes);
+
     for (size_t n = 0; n < noOfNodes; n++) l->_randNode[n] = n;
     myshuffle(l->_randNode, noOfNodes);
-
-    size_t fano = noOfNodes * previousLayerNumOfNodes;
-    l->_weights = mymap(fano * sizeof(float));
-    l->_bias = mymap(noOfNodes * sizeof(float));
-    l->_adamAvgMom = mymap(fano * sizeof(float));
-    l->_adamAvgVel = mymap(fano * sizeof(float));
-    l->_adamT = mymap(fano * sizeof(float));
-
-    if (type == Softmax) l->_normalizationConstants = mymap(batchsize * sizeof(float));
 
     (load) ?  layer_load(l, path) : layer_randinit(l);
 
 #pragma omp parallel for
     for (size_t i = 0; i < noOfNodes; i++) {
-        size_t index = previousLayerNumOfNodes * i;
+        size_t index = prevLayerNumOfNodes * i;
         node_update(&l->_Nodes[i], i, type, batchsize,
             &l->_weights[index], l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
             l->_train_array);
-        layer_addToHashTable(l, &l->_weights[index], previousLayerNumOfNodes, i);
+        layer_addToHashTable(l, &l->_weights[index], prevLayerNumOfNodes, i);
     }
     return l;
 }
 
 void layer_delete(Layer *l) {
-    size_t fano = l->_noOfNodes * l->_previousLayerNumOfNodes;
+    size_t fano = l->_noOfNodes * l->_prevLayerNumOfNodes;
     lsh_delete(l->_hashTables);
     dwtahash_delete(l->_dwtaHasher);
     myunmap(l->_Nodes, l->_noOfNodes * sizeof(Node));
@@ -64,16 +65,16 @@ void layer_delete(Layer *l) {
  * Kaiming initialization preferable for faster covergence in deep networks 
  */
 void layer_randinit(Layer *l) {
-    float ksd = sqrt(1.0/l->_previousLayerNumOfNodes);
+    float ksd = sqrt(1.0/l->_prevLayerNumOfNodes);
 #pragma omp parallel for
     for (size_t i = 0; i < l->_noOfNodes; i++) {
-        size_t fano = i * l->_previousLayerNumOfNodes;
-        for (size_t j = 0; j < l->_previousLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,ksd);
+        size_t fano = i * l->_prevLayerNumOfNodes;
+        for (size_t j = 0; j < l->_prevLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,ksd);
         l->_bias[i] = 0.0;
     }
 }
 
-static void layer_rw(Layer *l, char *path, bool load) {
+inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path, bool load) {
     char fn[1024];
     size_t len = strlen(path);
     assert(len < 1000);
@@ -84,21 +85,21 @@ static void layer_rw(Layer *l, char *path, bool load) {
     (*rwfn)(l->_bias, false, l->_noOfNodes, 1, fn);
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
 
-    (*rwfn)(l->_weights, true, l->_noOfNodes, l->_previousLayerNumOfNodes, fn);
+    (*rwfn)(l->_weights, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
     sprintf(fn+len, "/am_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_adamAvgMom, true, l->_noOfNodes, l->_previousLayerNumOfNodes, fn);
+    (*rwfn)(l->_adamAvgMom, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
     sprintf(fn+len, "/av_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_adamAvgVel, true, l->_noOfNodes, l->_previousLayerNumOfNodes, fn);
+    (*rwfn)(l->_adamAvgVel, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
     fprintf(stderr, "%s parameters for layer %d\n", load ? "Loaded" : "Saved", l->_layerID);
 }
 
-inline void __attribute__((always_inline)) layer_load(Layer *l, char *path) { layer_rw(l, path, true); }
+void layer_load(Layer *l, char *path) { layer_rw(l, path, true); }
 
-inline void __attribute__((always_inline)) layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
+void layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
 
 void layer_updateTable(Layer *l) {
     dwtahash_delete(l->_dwtaHasher);
-    l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_previousLayerNumOfNodes);
+    l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_prevLayerNumOfNodes);
 }
 
 void layer_updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes); }
@@ -109,28 +110,19 @@ void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
     free(hashes);
 }
 
-/* ought to allocate memory outside */
-/* ought to keep layer index confusion outside this function */
+/* Expects output arrays of size l->_noOfNodes, even if not all are not used */
+int layer_forwardPropagate(Layer *l, 
+    int *activeNodesIn, float *activeValuesIn, int lengthIn,        /* from previous layer */
+    int *activeNodesOut, float *activeValuesOut, int *lengthOut,    /* to next layer */
+    int inputID, int *label, int labelsize, float Sparsity) {
 
-/* we deal with: # nodes of this layer, active values  */
-
-/* computes activeValuesperLayer for the next layer */
-/* compute activation based for RelU or Softmax */
-/* ought to move this to node? */
-
-int layer_forwardPropagate(Layer *l, int **activeNodes, float **activeValues, int *lengths, 
-    int layerIndex, int inputID, int *label, int labelsize, float Sparsity, int iter) {
-
-    int len;
     int retrievals = 0;
+    int len;
 
     if(Sparsity == 1.0) {
         len = l->_noOfNodes;
-        lengths[layerIndex + 1] = len;
-#if 0
-        activeNodes[layerIndex + 1] = new int[len]; // XXX :assuming not intitialized;
-#endif
-        for (int i = 0; i < len; i++) activeNodes[layerIndex + 1][i] = i;
+        *lengthOut = len;
+        for (int i = 0; i < len; i++) activeNodesOut[i] = i;
     }
     else {
         int isnew;
@@ -144,9 +136,7 @@ int layer_forwardPropagate(Layer *l, int **activeNodes, float **activeValues, in
             }
         }
 
-        int *hashes = dwtahash_getHash(l->_dwtaHasher, activeNodes[layerIndex], 
-            activeValues[layerIndex], lengths[layerIndex]);
-
+        int *hashes = dwtahash_getHash(l->_dwtaHasher, activeNodesIn, activeValuesIn, lengthIn);
         lsh_retrieve_histogram(l->_hashTables, hashes, h); /* get candidates from hashtable */
 
         assert(((MINACTIVE > 0) && (THRESH == 0)) || ((THRESH > 0) && (MINACTIVE == 0)));
@@ -170,51 +160,39 @@ int layer_forwardPropagate(Layer *l, int **activeNodes, float **activeValues, in
                 if (isnew) kh_value(h, k) = 0;
             }
         }
-        len = kh_size(h);                                  /* actives after adding any randomly */
 
-        lengths[layerIndex + 1] = len;
-#if 0
-        activeNodes[layerIndex + 1] = new int[len]; // XXX: ought to alloc outside
-#endif
+        len = kh_size(h);                                  /* actives after adding any randomly */
+        *lengthOut = len;
 
         int i=0;
         for (k = kh_begin(h); k != kh_end(h); ++k) {
             if (kh_exist(h, k)) {
-                activeNodes[layerIndex + 1][i] = k;
+                activeNodesOut[i] = k;
                 i++;
             }
         }
+        assert(i == len);
         kh_destroy(hist, h);
     }
 
-#if 0
-    activeValues[layerIndex + 1] = new float[len]; // XXX: assuming its not initialized else memory leak;
-#endif
-
-    // find activation for all ACTIVE nodes in layer
-    for (int i = 0; i < len; i++) {
-        activeValues[layerIndex + 1][i] = 
-            node_get_activation(&l->_Nodes[activeNodes[layerIndex + 1][i]], 
-                activeNodes[layerIndex], activeValues[layerIndex], 
-                lengths[layerIndex], inputID);
+    for (int i = 0; i < len; i++) {     /* get activation for all active nodes in layer */
+        activeValuesOut[i] = node_get_activation(&l->_Nodes[activeNodesOut[i]], 
+            activeNodesIn, activeValuesIn, lengthIn, inputID);
     }
 
     if(l->_type == Softmax) {
         float maxValue = 0;
         l->_normalizationConstants[inputID] = 0;
         for (int i = 0; i < len; i++) {
-            if(activeValues[layerIndex + 1][i] > maxValue) {
-                maxValue = activeValues[layerIndex + 1][i];
-            }
+            if(activeValuesOut[i] > maxValue) maxValue = activeValuesOut[i];
         }
         for (int i = 0; i < len; i++) {
-            float realActivation = exp(activeValues[layerIndex + 1][i] - maxValue);
-            activeValues[layerIndex + 1][i] = realActivation;
-            node_set_last_activation(&l->_Nodes[activeNodes[layerIndex + 1][i]], inputID, realActivation);
+            float realActivation = exp(activeValuesOut[i] - maxValue);
+            activeValuesOut[i] = realActivation;
+            node_set_last_activation(&l->_Nodes[activeNodesOut[i]], inputID, realActivation);
             l->_normalizationConstants[inputID] += realActivation;
         }
     }
 
     return retrievals;
 }
-

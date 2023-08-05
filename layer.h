@@ -5,7 +5,7 @@
 
 typedef struct _struct_layer {
     size_t _noOfNodes;
-    int _previousLayerNumOfNodes;
+    int _prevLayerNumOfNodes;
     int _layerID;
     NodeType _type;
     int _batchsize;
@@ -25,7 +25,7 @@ typedef struct _struct_layer {
     float *_normalizationConstants;
 } Layer;
 
-Layer *layer_new(size_t noOfNodes, int previousLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
+Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
     int K, int L, int RangePow, bool load, char *path);
 void layer_delete(Layer *l);
 void layer_randinit(Layer *l);
@@ -35,5 +35,7 @@ void layer_save(Layer *l, char *path);
 void layer_updateTable(Layer *l);
 void layer_updateRandomNodes(Layer *l);
 void layer_addToHashTable(Layer *l, float* weights, int length, int id);
-int layer_forwardPropagate(Layer *l, int **activeNodes, float **activeValues, int *lengths, 
-    int layerIndex, int inputID, int *label, int labelsize, float Sparsity, int iter);
+int layer_forwardPropagate(Layer *l, 
+    int *activeNodesIn, float *activeValuesIn, int lengthIn, 
+    int *activeNodesOut, float *activeValuesOut, int *lengthOut, 
+    int inputID, int *label, int labelsize, float Sparsity);
