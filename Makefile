@@ -4,7 +4,7 @@ SOURCES = sfmt/SFMT.c myhelper.c lsh.c dwtahash.c node.c layer.c
 OBJECTS  = $(SOURCES:.c=.o)
 CC       = gcc
 INCLUDES = -I . -I ./sfmt
-CFLAGS   = -O3 -finline-functions -DNDEBUG -fno-strict-aliasing \
+CFLAGS   = -O3 -finline-functions -fno-strict-aliasing \
            --param max-inline-insns-single=1800 -Wall -std=c99 \
            -Wno-missing-prototypes -Wno-unused-variable -Wno-unused-function \
            -fPIC -finline-functions -fopenmp \
