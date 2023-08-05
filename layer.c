@@ -96,20 +96,6 @@ inline void __attribute__((always_inline)) layer_load(Layer *l, char *path) { la
 
 inline void __attribute__((always_inline)) layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
 
-Node *layer_getNodebyID(Layer *l, size_t nodeID) {
-    assert((nodeID >= 0) && (nodeID < l->_noOfNodes));
-    return &l->_Nodes[nodeID];
-}
-
-Node *layer_getAllNodes(Layer *l) { return l->_Nodes; }
-
-int layer_getNodeCount(Layer *l) { return l->_noOfNodes; }
-
-float layer_getNormalizationConstant(Layer *l, int inputID) {
-    assert(l->_type == Softmax);
-    return l->_normalizationConstants[inputID];
-}
-
 void layer_updateTable(Layer *l) {
     dwtahash_delete(l->_dwtaHasher);
     l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_previousLayerNumOfNodes);
@@ -132,11 +118,8 @@ void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
 /* compute activation based for RelU or Softmax */
 /* ought to move this to node? */
 
-int layer_forwardPropagate(Layer *l, 
-    int **activenodesperlayer, float **activeValuesperlayer, 
-    int *lengths, int layerIndex, 
-    int inputID, int *label, int labelsize, 
-    float Sparsity, int iter) {
+int layer_forwardPropagate(Layer *l, int **activeNodes, float **activeValues, int *lengths, 
+    int layerIndex, int inputID, int *label, int labelsize, float Sparsity, int iter) {
 
     int len;
     int retrievals = 0;
@@ -144,11 +127,10 @@ int layer_forwardPropagate(Layer *l,
     if(Sparsity == 1.0) {
         len = l->_noOfNodes;
         lengths[layerIndex + 1] = len;
-
 #if 0
-        activenodesperlayer[layerIndex + 1] = new int[len]; // XXX :assuming not intitialized;
+        activeNodes[layerIndex + 1] = new int[len]; // XXX :assuming not intitialized;
 #endif
-        for (int i = 0; i < len; i++) activenodesperlayer[layerIndex + 1][i] = i;
+        for (int i = 0; i < len; i++) activeNodes[layerIndex + 1][i] = i;
     }
     else {
         int isnew;
@@ -162,8 +144,8 @@ int layer_forwardPropagate(Layer *l,
             }
         }
 
-        int *hashes = dwtahash_getHash(l->_dwtaHasher, activenodesperlayer[layerIndex], 
-            activeValuesperlayer[layerIndex], lengths[layerIndex]);
+        int *hashes = dwtahash_getHash(l->_dwtaHasher, activeNodes[layerIndex], 
+            activeValues[layerIndex], lengths[layerIndex]);
 
         lsh_retrieve_histogram(l->_hashTables, hashes, h); /* get candidates from hashtable */
 
@@ -182,23 +164,23 @@ int layer_forwardPropagate(Layer *l,
                 k = kh_put(hist, h, i, &isnew);
                 if (isnew) kh_value(h, k) = 0;
             }
-            for (size_t i = 0; i < st; i++) {           /* loop around to pick more if needed */
+            for (size_t i = 0; i < st; i++) {              /* loop around to pick more if needed */
                 if (kh_size(h) >= MINACTIVE) break;
                 k = kh_put(hist, h, i, &isnew);
                 if (isnew) kh_value(h, k) = 0;
             }
         }
-        len = kh_size(h);                                 /* actives after adding any randomly */
+        len = kh_size(h);                                  /* actives after adding any randomly */
 
-        lengths[layerIndex + 1] = len;                      // assert less than nunber of nodes?
+        lengths[layerIndex + 1] = len;
 #if 0
-        activenodesperlayer[layerIndex + 1] = new int[len]; // XXX: ought to alloc outside
+        activeNodes[layerIndex + 1] = new int[len]; // XXX: ought to alloc outside
 #endif
 
         int i=0;
         for (k = kh_begin(h); k != kh_end(h); ++k) {
             if (kh_exist(h, k)) {
-                activenodesperlayer[layerIndex + 1][i] = k;
+                activeNodes[layerIndex + 1][i] = k;
                 i++;
             }
         }
@@ -206,27 +188,32 @@ int layer_forwardPropagate(Layer *l,
     }
 
 #if 0
-    activeValuesperlayer[layerIndex + 1] = new float[len]; // XXX: assuming its not initialized else memory leak;
-    float maxValue = 0;
-    if (l->_type == Softmax) l->_normalizationConstants[inputID] = 0;
+    activeValues[layerIndex + 1] = new float[len]; // XXX: assuming its not initialized else memory leak;
+#endif
 
     // find activation for all ACTIVE nodes in layer
     for (int i = 0; i < len; i++) {
-        activeValuesperlayer[layerIndex + 1][i] = _Nodes[activenodesperlayer[layerIndex + 1][i]].getActivation(activenodesperlayer[layerIndex], activeValuesperlayer[layerIndex], lengths[layerIndex], inputID);
-        if(_type == NodeType::Softmax && activeValuesperlayer[layerIndex + 1][i] > maxValue) {
-            maxValue = activeValuesperlayer[layerIndex + 1][i];
-        }
+        activeValues[layerIndex + 1][i] = 
+            node_get_activation(&l->_Nodes[activeNodes[layerIndex + 1][i]], 
+                activeNodes[layerIndex], activeValues[layerIndex], 
+                lengths[layerIndex], inputID);
     }
 
-    if(_type == Softmax) {
+    if(l->_type == Softmax) {
+        float maxValue = 0;
+        l->_normalizationConstants[inputID] = 0;
         for (int i = 0; i < len; i++) {
-            float realActivation = exp(activeValuesperlayer[layerIndex + 1][i] - maxValue);
-            activeValuesperlayer[layerIndex + 1][i] = realActivation;
-            _Nodes[activenodesperlayer[layerIndex + 1][i]].SetlastActivation(inputID, realActivation);
-            _normalizationConstants[inputID] += realActivation;
+            if(activeValues[layerIndex + 1][i] > maxValue) {
+                maxValue = activeValues[layerIndex + 1][i];
+            }
+        }
+        for (int i = 0; i < len; i++) {
+            float realActivation = exp(activeValues[layerIndex + 1][i] - maxValue);
+            activeValues[layerIndex + 1][i] = realActivation;
+            node_set_last_activation(&l->_Nodes[activeNodes[layerIndex + 1][i]], inputID, realActivation);
+            l->_normalizationConstants[inputID] += realActivation;
         }
     }
-#endif
 
     return retrievals;
 }

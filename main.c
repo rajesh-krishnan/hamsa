@@ -119,7 +119,6 @@ int main(int argc, char *argv[]) {
     test_dwtahash();
     test_lsh(6,50,18);
 */
-    test_norm();
     test_layer(0);
     return 0;
 }

@@ -23,7 +23,7 @@ void network_delete(Network *n) {
 }
 
 Layer *getLayer(Network *n, int LayerID) {
-    assert(LayerID >= 0 && LayerID < _numberOfLayers);
+    assert(LayerID >= 0 && LayerID < n->_numberOfLayers);
     return n->_hiddenlayers[LayerID];
 }
 
@@ -35,6 +35,7 @@ void network_load(Network *n, char *path) {
     for (int i = 0; i < n->_numberOfLayers; i++) n->_hiddenlayers[i]->layer_load(path);
 }
 
+#if 0
 int network_infer(Network *n, int **inputIndices, float **inputValues, int *length, int **labels, int *labelsize) {
     int correctPred = 0;
 
@@ -131,7 +132,7 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
                 Node* node = layer->getNodebyID(activeNodesPerBatch[i][j + 1][k]);
                 if (j == _numberOfLayers - 1) {
                     //TODO: Compute Extra stats: labels[i]; XXX: check LNS
-                    node->ComputeExtaStatsForSoftMax(layer->getNormalizationConstant(i), i, labels[i], labelsize[i]);
+                    node->ComputeExtaStatsForSoftMax(layer->_normalizationConstant[i], i, labels[i], labelsize[i]);
                 }
                 if (j != 0) {
                     node->backPropagate(prev_layer->getAllNodes(), activeNodesPerBatch[i][j], sizesPerBatch[i][j], tmplr, i);
@@ -180,3 +181,4 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
     }
 }
 
+#endif
