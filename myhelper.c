@@ -25,14 +25,15 @@ void myshuffle(int *array, int n) {
     }
 }
 
-float myrand_norm(double mu, double sigma) { /* Box-Muller truncates at ~6 sigma */
+inline float __attribute__((always_inline)) myrand_norm(double mu, double sigma) { /* Box-Muller */
     static double scale = (1.0/0x7fffffff); 
     static double X1, X2;
     static int call = 0;
     double U1, U2;
     call = !call;
-    if (!call) return X2;
-    U1 = sqrt(-2 * log(myrand_unif() * scale));
+    if (!call) return (float) X2;
+    do { U1 = myrand_unif() * scale; } while (U1 == 0); /* Avoid log (0) */
+    U1 = sqrt(-2 * log(U1));
     U2 = 2 * MY_PI * myrand_unif() * scale;
     X1 = mu + U1 * cos(U2) * sigma;
     X2 = mu + U1 * sin(U2) * sigma;
