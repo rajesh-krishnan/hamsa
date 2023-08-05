@@ -14,9 +14,7 @@ DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     d->_indices = (int *) malloc(d->_rangePow * d->_permute * sizeof(int));
     d->_pos = (int *) malloc(d->_rangePow * d->_permute * sizeof(int));
     n_array = (int *) malloc(d->_rangePow * sizeof(int));
-    if(d->_indices == NULL || d->_pos == NULL || n_array == NULL) {
-        fprintf(stderr, "Memory allocation failure\n");
-    }
+    assert((d->_indices != NULL) && (d->_pos != NULL) && (n_array != NULL));
     for (int i = 0; i < d->_rangePow; i++) n_array[i] = i;
     for (int p = 0; p < d->_permute ;p++) {
         myshuffle(n_array, d->_rangePow);
@@ -48,7 +46,6 @@ inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float* da
     for (int i = 0; i < d->_numhashes; i++) hashes[i] = values[i] = INT_MIN;
     memset(hashArray, 0, sizeof(int) * d->_numhashes);
 
-#pragma omp parallel for
     for (int p=0; p < d->_permute; p++) {
         int bin_index = p * d->_rangePow;
         for (int i = 0; i < dLen; i++) {
