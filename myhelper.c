@@ -119,7 +119,7 @@ char *load_file(char * filename) {
         fseek (f, 0, SEEK_END);
         length = ftell (f);
         fseek (f, 0, SEEK_SET);
-        buffer = malloc (length);
+        buffer = malloc(length);
         if (buffer) {
            int x = fread (buffer, 1, length, f);
         }

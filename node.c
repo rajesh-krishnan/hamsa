@@ -92,17 +92,17 @@ void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputI
     }
 }
 
-void node_backprop(Node *n, Node* previousNodes, int* previousLayerActiveNodeIds, int previousLayerActiveNodeSize, 
+void node_backprop(Node *n, Node* prevLayerNodes, int* prevLayerActiveNodeIds, int prevLayerActiveNodeSize, 
     float learningRate, int inputID) {
     assert(n->_train[inputID]._ActiveinputIds == 1);
-    for (int i = 0; i < previousLayerActiveNodeSize; i++)
+    for (int i = 0; i < prevLayerActiveNodeSize; i++)
     {
         // Update delta before updating weights
-        Node* prev_node = &(previousNodes[previousLayerActiveNodeIds[i]]);
+        Node* prev_node = &(prevLayerNodes[prevLayerActiveNodeIds[i]]);
         node_increment_delta(prev_node, inputID, 
-            n->_train[inputID]._lastDeltaforBPs * n->_weights[previousLayerActiveNodeIds[i]]);
+            n->_train[inputID]._lastDeltaforBPs * n->_weights[prevLayerActiveNodeIds[i]]);
         float grad_t = n->_train[inputID]._lastDeltaforBPs * node_get_last_activation(prev_node, inputID);
-        n->_t[previousLayerActiveNodeIds[i]] += grad_t;
+        n->_t[prevLayerActiveNodeIds[i]] += grad_t;
     }
     n->_tbias += n->_train[inputID]._lastDeltaforBPs;
     n->_train[inputID]._ActiveinputIds = 0;

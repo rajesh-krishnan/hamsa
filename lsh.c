@@ -1,6 +1,6 @@
 #include "lsh.h"
 
-static int logbinsize = (int)floor(log2(BINSIZE));  /* XXX: original used natural log, check */
+static int logbinsize = (int)floor(log2(BINSIZE));  /* original used natural log, check */
 
 inline static void __attribute__((always_inline)) bucket_reset(Bucket *b) { b->count = 0; }
 

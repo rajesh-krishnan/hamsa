@@ -43,17 +43,19 @@ int network_infer(Network *n, int **inputIndices, float **inputValues, int *leng
 
 #pragma omp parallel for reduction(+:correctPred)
     for (int i = 0; i < _currentBatchSize; i++) {
-        int **activenodesperlayer = new int *[_numberOfLayers + 1]();
-        float **activeValuesperlayer = new float *[_numberOfLayers + 1]();
+        int **activeNodes = new int *[_numberOfLayers + 1]();
+        float **activeValues= new float *[_numberOfLayers + 1]();
+        // allocate activeNodes and activeValues for relevant layers
         int *sizes = new int[_numberOfLayers + 1]();
 
-        activenodesperlayer[0] = inputIndices[i];
-        activeValuesperlayer[0] = inputValues[i];
+        activeNodes[0] = inputIndices[i];
+        activeValues[0] = inputValues[i];
         sizes[0] = length[i];
 
         // inference
         for (int j = 0; j < _numberOfLayers; j++) {
-            layer_forwardPropagate(n->_hiddenlayers[j], activenodesperlayer, activeValuesperlayer, 
+            layer_forwardPropagate(n->_hiddenlayers[j], 
+                activeNodes, activeValues, 
                 sizes, j, i, labels[i], 0, _Sparsity[_numberOfLayers+j], -1); // XXX: second half of sparsity arr?
         }
 
@@ -62,10 +64,10 @@ int network_infer(Network *n, int **inputIndices, float **inputValues, int *leng
         float max_act = -222222222;
         int predict_class = -1;
         for (int k = 0; k < noOfClasses; k++) {
-            float cur_act = _hiddenlayers[_numberOfLayers - 1]->getNodebyID(activenodesperlayer[_numberOfLayers][k])->getLastActivation(i);
+            float cur_act = _hiddenlayers[_numberOfLayers - 1]->getNodebyID(activeNodes[_numberOfLayers][k])->getLastActivation(i);
             if (max_act < cur_act) {
                 max_act = cur_act;
-                predict_class = activenodesperlayer[_numberOfLayers][k];
+                predict_class = activeNodes[_numberOfLayers][k];
             }
         }
 
@@ -75,11 +77,11 @@ int network_infer(Network *n, int **inputIndices, float **inputValues, int *leng
 
         delete[] sizes;
         for (int j = 1; j < _numberOfLayers + 1; j++) {
-            delete[] activenodesperlayer[j];
-            delete[] activeValuesperlayer[j];
+            delete[] activeNodes[j];
+            delete[] activeValues[j];
         }
-        delete[] activenodesperlayer;
-        delete[] activeValuesperlayer;
+        delete[] activeNodes;
+        delete[] activeValues;
     }
     return correctPred;
 }
@@ -106,22 +108,23 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
 
 #pragma omp parallel for
     for (int i = 0; i < _currentBatchSize; i++) {
-        int **activenodesperlayer = new int *[_numberOfLayers + 1]();
-        float **activeValuesperlayer = new float *[_numberOfLayers + 1]();
+        int **activeNodes = new int *[_numberOfLayers + 1]();
+        float **activeValues= new float *[_numberOfLayers + 1]();
+        // allocate activeNodes and activeValues for relevant layers
         int *sizes = new int[_numberOfLayers + 1]();
 
-        activeNodesPerBatch[i] = activenodesperlayer;
-        activeValuesPerBatch[i] = activeValuesperlayer;
+        activeNodesPerBatch[i] = activeNodes ;
+        activeValuesPerBatch[i] = activeValues;
         sizesPerBatch[i] = sizes;
 
-        activenodesperlayer[0] = inputIndices[i];  // inputs parsed from training data file
-        activeValuesperlayer[0] = inputValues[i];
+        activeNodes [0] = inputIndices[i];  // inputs parsed from training data file
+        activeValues[0] = inputValues[i];
         sizes[0] = lengths[i];
 
         // forward propagate
         int in;
         for (int j = 0; j < _numberOfLayers; j++) {
-            in = layer_forwardPropagate(n->_hiddenlayers[j], activenodesperlayer, activeValuesperlayer, 
+            in = layer_forwardPropagate(n->_hiddenlayers[j], activeNodes , activeValues, 
                 sizes, j, i, labels[i], labelsize[i], _Sparsity[j], iter*_currentBatchSize+i);
             avg_retrieval[j] += in;
         }
@@ -172,7 +175,7 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
         for (size_t m = 0; m < _hiddenlayers[l]->_noOfNodes; m++)
         {
             Node *tmp = _hiddenlayers[l]->getNodebyID(m);
-            int dim = _hiddenlayers[l]->_previousLayerNumOfNodes;
+            int dim = _hiddenlayers[l]->_prevLayerNumOfNodes;
             node_adam(tmp, dim, tmplr, 1);
             if (tmpRehash) layer_addToHashTable(n->_hiddenlayers[l], tmp->_weights, dim, m+1);
         }
