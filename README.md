@@ -10,7 +10,7 @@ servers
 
 This implementation follows the SLIDE paper referenced below and the author's
 original implementation in C++.  Our implementation is in C with minimal external 
-dependencies; included third-party dependencies include klib, jsmn, mt19937ar, 
+dependencies; included third-party dependencies include klib, tiny-json, SFMT,
 and cnpy.  We have refactored the code considerably, included code to replace 
 C++ std functions, eliminated code repetition, and dependency on C++ cnpy and 
 zlib. We import/export to `.npy` files instead of the `.npz` archives. Based
@@ -22,10 +22,6 @@ memory allocation is done, and furthermore we use mmap for the larger
 allocations systematically (in layers and lsh).  Instead of the custom config 
 file, we use JSON from which the network can be loaded; the config can also be
 saved.  We also build a shared library to allow calling from Python.
-
-In the future, we will explore: (i) speeding up random number generation usinf
-the SIMD Focused Mersenne Twister (SFTP) implementation; and (ii) speeding up
-vector operations using AVX512 instructions.
 
 Once the core capability is built and tested, we plan to focus on two problem
 domains: (i) natural language processing using large language models and (ii)

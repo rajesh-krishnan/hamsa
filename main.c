@@ -109,6 +109,18 @@ void test_hashtable() {
     kh_destroy(hist, h);
 }
 
+void test_json() {
+    char *jstr = load_file("config.json");
+    puts(jstr);
+    json_t mem[100000];
+    json_t const* json = json_create( jstr, mem, sizeof mem / sizeof *mem );
+    if ( !json ) {
+        puts("Error json create.");
+        exit(EXIT_FAILURE);
+    }
+    free(jstr);
+}
+
 int main(int argc, char *argv[]) {
 /*
     test_hashtable();
@@ -119,6 +131,7 @@ int main(int argc, char *argv[]) {
     test_dwtahash();
     test_lsh(6,50,18);
 */
+    test_json();
     test_layer(0);
     return 0;
 }

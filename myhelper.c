@@ -110,3 +110,21 @@ void myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   }
 }
 
+char *load_file(char * filename) {
+    char *buffer = 0;
+    long length;
+    FILE *f = fopen (filename, "rb");
+
+    if (f) {
+        fseek (f, 0, SEEK_END);
+        length = ftell (f);
+        fseek (f, 0, SEEK_SET);
+        buffer = malloc (length);
+        if (buffer) {
+           int x = fread (buffer, 1, length, f);
+        }
+        fclose (f);
+   }
+   return buffer;
+}
+

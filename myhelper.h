@@ -18,6 +18,7 @@
 #include "hdefs.h"
 #include "klib/khash.h"
 #include "sfmt/SFMT.h"
+#include "tiny-json/tiny-json.h"
 
 #define MY_PI 3.14159265358979323846 /* pi */
 
@@ -30,3 +31,4 @@ float myrand_norm(double mu, double sigma);
 int   myrand_unif();
 void  mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
 void  myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
+char *load_file(char * filename);
