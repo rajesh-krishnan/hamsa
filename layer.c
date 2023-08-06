@@ -106,7 +106,7 @@ void layer_updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes);
 
 void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
     int *hashes = dwtahash_getHashEasy(l->_dwtaHasher, weights, length);
-    lsht_add(l->_hashTables, hashes, id + 1);
+    lsht_add(l->_hashTables, hashes, id);
     free(hashes);
 }
 

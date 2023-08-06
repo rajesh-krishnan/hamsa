@@ -44,7 +44,6 @@ LSHT *lsht_new(int K, int L, int RangePow);
 void lsht_delete(LSHT *l);
 void lsht_clear(LSHT *l);
 void lsht_add(LSHT *l, int *hashes, int id);
-void lsht_retrieve_raw(LSHT *l, int *hashes, int **rawResults);
 void lsht_retrieve_histogram(LSHT *l, int *hashes, khash_t(hist) *h);
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, 

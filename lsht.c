@@ -5,10 +5,10 @@ static int logbinsize = (int)floor(log2(BINSIZE));  /* original used natural log
 inline static void __attribute__((always_inline)) bucket_reset(Bucket *b) { b->count = 0; }
 
 inline static int __attribute__((always_inline)) bucket_add_to(Bucket *b, int id) {
-    int index = b->count & (BUCKETSIZE - 1);  /* place in [0, BUCKETSIZE), cheaper than modulo */
+    int index = b->count & (BUCKETSIZE - 1);        /* place in [0, BUCKETSIZE), cheaper than modulo */
     b->arr[index] = id;
     b->count++;
-    assert (b->count > 0); /* check for overflow */
+    assert ((id > 0) && (b->count > 0));            /* only positive values, and no integer overflow */
     return index;
 }
 
@@ -55,15 +55,8 @@ inline static unsigned int __attribute__((always_inline)) ith_index(LSHT *l, int
 void lsht_add(LSHT *l, int *hashes, int id) {
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = ith_index(l, hashes, i);
-	bucket_add_to(&l->_bucket[i][index], id);
-    }
-}
-
-void lsht_retrieve_raw(LSHT *l, int *hashes, int **rawResults) {
-    for (int i = 0; i < l->_L; i++) {
-        unsigned int index = ith_index(l, hashes, i);
-        rawResults[i] = bucket_get_array(&l->_bucket[i][index]);
-    }
+	bucket_add_to(&l->_bucket[i][index], id + 1);           /* incr 1, 0 is bad for densification */
+    }                                                           /* reverse upon retrieval */
 }
 
 /* Collect items and their counts across all retrieves buckets, put in hashtable */
@@ -75,8 +68,9 @@ void lsht_retrieve_histogram(LSHT *l, int *hashes, khash_t(hist) *h) {
         arr = bucket_get_array(&l->_bucket[i][index]);
         for (int j = 0; j < BUCKETSIZE; j++) {
            if (arr[j] < 0) break;                               /* bucket array terminated by -1 */
-           k = kh_put(hist, h, arr[j], &isnew);                 /* add to h, isnew is 1 if new else 0 */
-           kh_value(h, k) = (isnew) ? 1 : (kh_value(h, k) + 1); /* if new set to 1, else increment by 1 */
+           k = kh_put(hist, h, arr[j] - 1, &isnew);             /* add to h, isnew is 1 if new else 0 */
+                                                                /* -1 to get index, reverse +1 from lsht_add */
+           kh_value(h, k) = (isnew) ? 1 : (kh_value(h, k) + 1); /* count set to 1 if new, else incremented by 1 */
         }
     }
 }
