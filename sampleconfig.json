@@ -15,9 +15,9 @@
   "Lr":              0.0001,
   "Epoch":           10,
   "Stepsize":        1000,
-  "trainData":       "../dataset/Amazon/amazon_train.txt",
-  "testData":        "../dataset/Amazon/amazon_test.txt",
-  "loadPath":        ".",
-  "savePath":        ".",
-  "logFile":         "./log.txt"
+  "trainData":       "./data/Amazon670K.bow/train.txt",
+  "testData":        "./data/Amazon670K.bow/test.txt",
+  "loadPath":        "./model",
+  "savePath":        "./model",
+  "logFile":         "./log/log.txt"
 }
