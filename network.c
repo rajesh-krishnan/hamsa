@@ -1,40 +1,32 @@
 #include "network.h"
 
-Network *network_new(int *sizesOfLayers, NodeType *layersTypes, int noOfLayers, int batchSize, float lr, 
-    int inputdim, int *K, int *L, int *RangePow, float *Sparsity, bool load, char *path) {
+Network *network_new(Config *cfg, bool loadParams) {
     Network *n = (Network *) malloc(sizeof(Network));
-    n->_hiddenlayers = (Layer **) malloc(noOfLayers * sizeof(Layer *));
+    n->_cfg = cfg;
+    n->_hiddenlayers = (Layer **) malloc(cfg->numLayer * sizeof(Layer *));
     assert((n != NULL) && (n->_hiddenlayers != NULL));
-    n->_numberOfLayers = noOfLayers;
-    n->_learningRate = lr;
-    n->_currentBatchSize = batchSize;
-
+    
 #pragma omp parallel for
-    for (int i = 0; i < noOfLayers; i++) {
-        int lsize = (i != 0) ?  sizesOfLayers[i - 1] : inputdim;
-        n->_hiddenlayers[i] = layer_new(sizesOfLayers[i], lsize, i, layersTypes[i], batchSize,
-            K[i], L[i], RangePow[i], load, path);
+    for (int i = 0; i < cfg->numLayer; i++) {
+        int lsize = (i != 0) ?  cfg->sizesOfLayers[i - 1] : cfg->InputDim;
+        n->_hiddenlayers[i] = layer_new(cfg->sizesOfLayers[i], lsize, i, cfg->layersTypes[i], cfg->Batchsize,
+            cfg->K[i], cfg->L[i], cfg->RangePow[i], loadParams, cfg->loadPath);
     }
     return n;
 }
 
 void network_delete(Network *n) {
-    for (int i = 0; i < n->_numberOfLayers; i++) layer_delete(n->_hiddenlayers[i]);
+    for (int i = 0; i < n->_cfg->numLayer; i++) layer_delete(n->_hiddenlayers[i]);
     free(n->_hiddenlayers);
     free(n);
 }
 
-Layer *getLayer(Network *n, int LayerID) {
-    assert(LayerID >= 0 && LayerID < n->_numberOfLayers);
-    return n->_hiddenlayers[LayerID];
+void network_save_params(Network *n) {
+    for (int i = 0; i < n->_cfg->numLayer; i++) layer_save(n->_hiddenlayers[i], n->_cfg->savePath);
 }
 
-void network_save(Network *n, char *path) {
-    for (int i = 0; i < n->_numberOfLayers; i++) layer_save(n->_hiddenlayers[i], path);
-}
-
-void network_load(Network *n, char *path) {
-    for (int i = 0; i < n->_numberOfLayers; i++) layer_save(n->_hiddenlayers[i], path);
+void network_load_params(Network *n) {
+    for (int i = 0; i < n->_cfg->numLayer; i++) layer_load(n->_hiddenlayers[i], n->_cfg->loadPath);
 }
 
 #if 0

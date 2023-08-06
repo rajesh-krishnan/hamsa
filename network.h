@@ -4,17 +4,13 @@
 
 typedef struct _struct_network {
     Layer **_hiddenlayers;
-    int _numberOfLayers;
-    float _learningRate;
-    int _currentBatchSize;
+    Config *_cfg;
 } Network;
 
-Network *network_new(int *sizesOfLayers, NodeType *layersTypes, int noOfLayers, int batchSize, float lr, 
-    int inputdim, int *K, int *L, int *RangePow, float *Sparsity, bool load, char *path);
+Network *network_new(Config *cfg, bool loadParams);
 void network_delete(Network *n);
-void network_save(Network *n, char *path);
-void network_load(Network *n, char *path);
-Layer *network_getLayer(Network *n, int LayerID);
+void network_load_params(Network *n);
+void network_save_params(Network *n);
 int network_infer(Network *n, int **inputIndices, float **inputValues, int *length, int **labels, int *labelsize);
 void network_train(Network *n, int **inputIndices, float **inputValues, int *lengths, int **label, int *labelsize, 
     int iter, bool rehash, bool rebuild);
