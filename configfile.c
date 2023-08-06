@@ -31,100 +31,103 @@ void config_delete(Config *cfg) {
 #undef FREE_IF_NOT_NULL
 }
 
-void config_to_string(Config *cfg, char *jstr, int maxlen) {
+void config_to_string(Config *cfg, char *ostr, int maxlen) {
     int tmp, curlen = 0;
     char buffer[10000];
 
-#define ADD_ITEM(X) tmp=strlen((X));assert((curlen+tmp)<maxlen);memcpy(jstr+curlen,(X),tmp);curlen+=tmp;
+#define ADD_ITEM(X) tmp=strlen((X));assert((curlen+tmp)<maxlen);memcpy(ostr+curlen,(X),tmp);curlen+=tmp;
 
     ADD_ITEM("{\n");
     ADD_ITEM("  \"numLayer\":        ");
-    sprintf(buffer, "%d", cfg->numLayer);
+    sprintf(buffer, "%d%s", cfg->numLayer, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"sizesOfLayers\":   [");
+    for (int i=0; i < cfg->numLayer; i++) {
+        sprintf(buffer, "%d%s", cfg->sizesOfLayers[i], (i==cfg->numLayer-1)?"],\n":",");
+        ADD_ITEM(buffer);
+    }
 
-    ADD_ITEM("],\n");
     ADD_ITEM("  \"RangePow\":        [");
+    for (int i=0; i < cfg->numLayer; i++) {
+        sprintf(buffer, "%d%s", cfg->RangePow[i], (i==cfg->numLayer-1)?"],\n":",");
+        ADD_ITEM(buffer);
+    }
 
-    ADD_ITEM("],\n");
     ADD_ITEM("  \"K\":               [");
+    for (int i=0; i < cfg->numLayer; i++) {
+        sprintf(buffer, "%d%s", cfg->K[i], (i==cfg->numLayer-1)?"],\n":",");
+        ADD_ITEM(buffer);
+    }
 
-    ADD_ITEM("],\n");
     ADD_ITEM("  \"L\":               [");
+    for (int i=0; i < cfg->numLayer; i++) {
+        sprintf(buffer, "%d%s", cfg->L[i], (i==cfg->numLayer-1)?"],\n":",");
+        ADD_ITEM(buffer);
+    }
 
-    ADD_ITEM("],\n");
     ADD_ITEM("  \"Sparsity\":        [");
+    for (int i=0; i < 2*cfg->numLayer; i++) {
+        sprintf(buffer, "%g%s", cfg->Sparsity[i], (i==2*cfg->numLayer-1)?"],\n":",");
+        ADD_ITEM(buffer);
+    }
 
-    ADD_ITEM("],\n");
     ADD_ITEM("  \"Batchsize\":       ");
-    sprintf(buffer, "%d", cfg->Batchsize);
+    sprintf(buffer, "%d%s", cfg->Batchsize, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"Rehash\":          ");
-    sprintf(buffer, "%d", cfg->Rehash);
+    sprintf(buffer, "%d%s", cfg->Rehash, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"Rebuild\":         ");
-    sprintf(buffer, "%d", cfg->Rebuild);
+    sprintf(buffer, "%d%s", cfg->Rebuild, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"InputDim\":        ");
-    sprintf(buffer, "%d", cfg->InputDim);
+    sprintf(buffer, "%d%s", cfg->InputDim, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"totRecords\":      ");
-    sprintf(buffer, "%d", cfg->totRecords);
+    sprintf(buffer, "%d%s", cfg->totRecords, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"totRecordsTest\":  ");
-    sprintf(buffer, "%d", cfg->totRecordsTest);
+    sprintf(buffer, "%d%s", cfg->totRecordsTest, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"Lr\":              ");
-    sprintf(buffer, "%g", cfg->Lr);
+    sprintf(buffer, "%g%s", cfg->Lr, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"Epoch\":           ");
-    sprintf(buffer, "%d", cfg->Epoch);
+    sprintf(buffer, "%d%s", cfg->Epoch, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"Stepsize\":        ");
-    sprintf(buffer, "%d", cfg->Stepsize);
+    sprintf(buffer, "%d%s", cfg->Stepsize, ",\n");
     ADD_ITEM(buffer);
 
-    ADD_ITEM(",\n");
     ADD_ITEM("  \"trainData\":       \"");
     ADD_ITEM(cfg->trainData);
-
-
     ADD_ITEM("\",\n");
+
     ADD_ITEM("  \"testData\":        \"");
     ADD_ITEM(cfg->testData);
-
     ADD_ITEM("\",\n");
+
     ADD_ITEM("  \"loadPath\":        \"");
     ADD_ITEM(cfg->loadPath);
-
     ADD_ITEM("\",\n");
+
     ADD_ITEM("  \"savePath\":        \"");
     ADD_ITEM(cfg->savePath);
-
     ADD_ITEM("\",\n");
+
     ADD_ITEM("  \"logFile\":         \"");
     ADD_ITEM(cfg->logFile);
-
     ADD_ITEM("\"\n}\n");
-    ADD_ITEM("\0");
+    ostr[curlen]='\0';
 #undef ADD_ITEM
 }
 
@@ -274,7 +277,6 @@ void string_to_config(char *jstr, Config *cfg) {
     x = json_getProperty(json, "logFile");
     assert((x != NULL) && (json_getType(x) == JSON_TEXT));
     cfg->logFile = dupstr(json_getValue(x));
-
 
     // sanity check values
 
