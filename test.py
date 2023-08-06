@@ -15,9 +15,10 @@ n   = hamsa.network_new(cfg, False);
 elapsed = timeit.default_timer() - start_time
 print(elapsed)
 
-print("Saving configuration and layer parameters");
-hamsa.config_save(cfg, b'./data/config.json')
-hamsa.network_save_params(n);
+#print("Saving configuration and layer parameters");
+#hamsa.config_save(cfg, b'./data/config.json')
+#hamsa.network_save_params(n);
+
 hamsa.network_delete(n);
 hamsa.config_delete(cfg);
 

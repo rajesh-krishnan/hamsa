@@ -99,7 +99,7 @@ static void test_lsh(int K, int L, int R) {
     lsh_delete(l);
 }
 
-static void test_layer(int io) {
+static void test_layer(bool io) {
     printf("\nTesting Layer \n");
     Layer *l = layer_new(670091, 128, 1, ReLU, 1024, 6, 50, 18, false, NULL);
     if (io) {
@@ -109,16 +109,19 @@ static void test_layer(int io) {
     layer_delete(l);
 }
 
-static void test_network(bool reload) {
+static void test_network(bool save, bool reload) {
     printf("\nBuilding network from scratch \n");
     Config *cfg = config_new("sampleconfig.json");
     Network *n = network_new(cfg, false);
 
     // training here
 
-    printf("Saving configuration and layer parameters\n");
-    config_save(n->_cfg, "./data/config.json");
-    network_save_params(n);
+    if (save) {
+       printf("Saving configuration and layer parameters\n");
+       config_save(n->_cfg, "./data/config.json");
+       network_save_params(n);
+    }
+
     network_delete(n);
     config_delete(cfg);
 
@@ -140,8 +143,9 @@ int main(int argc, char *argv[]) {
     test_wrnpy();
     test_dwtahash();
     test_lsh(6,50,18);
-    test_layer(0);
+    test_layer(true);
+    test_network(true, true);
 */
-    test_network(0);
+    test_network(false, false);
     return 0;
 }

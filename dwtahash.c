@@ -48,9 +48,10 @@ inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float* da
     for (int i = 0; i < d->_numhashes; i++) hashes[i] = values[i] = INT_MIN;
     memset(hashArray, 0, sizeof(int) * d->_numhashes);
 
+#pragma omp parallel for collapse(2)
     for (int p=0; p < d->_permute; p++) {
-        int bin_index = p * d->_rangePow;
         for (int i = 0; i < dLen; i++) {
+            int bin_index = p * d->_rangePow;
             int inner_index = bin_index + (easy ? i : xidx[i]);
             int binid = d->_indices[inner_index];
             float loc_data = data[i];
@@ -61,6 +62,7 @@ inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float* da
         }
     }
 
+#pragma omp parallel for
     for (int i = 0; i < d->_numhashes; i++) {
         int next = hashes[i];
         if (next != INT_MIN) {

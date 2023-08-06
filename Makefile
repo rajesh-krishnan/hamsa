@@ -2,16 +2,16 @@ SOURCES = sfmt/SFMT.c tiny-json/tiny-json.c myhelper.c configfile.c lsh.c dwtaha
 
 OBJECTS  = $(SOURCES:.c=.o)
 CC       = gcc
-INCLUDES = -I . -I ./sfmt
 CFLAGS   = -O3 -finline-functions -fno-strict-aliasing \
            --param max-inline-insns-single=1800 -Wall -std=c99 \
            -Wno-missing-prototypes -Wno-unused-variable -Wno-unused-function \
            -fPIC -finline-functions -fopenmp \
            -march=native -mtune=intel \
-           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 # -pg 
+           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 -pg 
 
-all: hamsa libhamsa.so
-	@rm -f $(OBJECTS)
+all: hamsa 
+
+slib: libhamsa.so
 
 hamsa: main.c libhamsa.a
 	gcc $(INCLUDES) $(CFLAGS) -o $@ -fopenmp $< libhamsa.a -lm

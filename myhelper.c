@@ -62,7 +62,6 @@ inline int __attribute__((always_inline)) myrand_unif() {
 void mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   cnpy_array a;
   size_t index[2];
-
   index[0] = d0;
   index[1] = (twoD ? d1 : 1);
   unlink(fn);
@@ -71,11 +70,14 @@ void mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
     abort();
   }
 
-  float *t = farr;
-  for (index[0] = 0; index[0] < d0; index[0]++) {
-      for (index[1] = 0; index[1] < d1; index[1]++) {
-          cnpy_set_f4(a, index, *t);
-          t++;
+#pragma omp parallel for collapse(2)
+  for(int i = 0; i < index[0]; i++) {
+      for(int j = 0; j < index[1]; j++) {
+          size_t tidx[2];
+          size_t cur = i * index[1] + j;
+          tidx[0] = i;
+          tidx[1] = j;
+          cnpy_set_f4(a, tidx, farr[cur]);
       }
   }
 
@@ -97,11 +99,17 @@ void myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   assert(a.n_dim == (twoD ? 2 : 1));
   assert(a.dims[0] == d0);
   if (a.n_dim==2) assert(a.dims[1] == d1);
+  index[0] = d0;
+  index[1] = (twoD ? d1 : 1);
 
-  for (index[0] = 0; index[0] < d0; index[0]++) {
-      for (index[1] = 0; index[1] < (twoD ? d1 : 1); index[1]++) {
-          *farr = cnpy_get_f4(a, index);
-          farr++;
+#pragma omp parallel for collapse(2)
+  for(int i = 0; i < index[0]; i++) {
+      for(int j = 0; j < index[1]; j++) {
+          size_t tidx[2];
+          size_t cur = i * index[1] + j;
+          tidx[0] = i;
+          tidx[1] = j;
+          farr[cur] = cnpy_get_f4(a, tidx);
       }
   }
 
