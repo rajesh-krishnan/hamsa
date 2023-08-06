@@ -20,11 +20,12 @@ static char *load_file(char *filename) {
         fseek(f, 0, SEEK_END);
         length = ftell(f);
         fseek (f, 0, SEEK_SET);
-        buffer = malloc(length);
+        buffer = malloc(length+1);
         if (buffer) {
             int x = fread(buffer, 1, length, f);
             assert(x == length);
         }
+        buffer[length] = '\0';
         fclose(f);
    }
    return buffer;
