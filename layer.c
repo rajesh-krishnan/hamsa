@@ -110,6 +110,20 @@ void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
     free(hashes);
 }
 
+int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID) {
+    assert(l->_type == Softmax);
+    int predict_class = -1;
+    float max_act = INT_MIN;
+    for(int k = 0; k < lengthOut; k++) {
+        float cur_act = node_get_last_activation(&l->_Nodes[activeNodesOut[k]], inputID);
+        if (max_act < cur_act) {
+            max_act = cur_act;
+            predict_class = activeNodesOut[k];
+        }
+    }
+    return predict_class;
+}
+
 /* Expects output arrays of size l->_noOfNodes, even if not all are not used */
 int layer_forwardPropagate(Layer *l, 
     int *activeNodesIn, float *activeValuesIn, int lengthIn,        /* from previous layer */

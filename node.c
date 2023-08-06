@@ -1,8 +1,7 @@
 #include "hdefs.h"
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
-    float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, 
-    Train* train_blob) {
+    float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob) {
     n->_IDinLayer = nodeID;
     n->_type = type;
     n->_currentBatchsize = batchsize;

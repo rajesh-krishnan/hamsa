@@ -28,12 +28,12 @@ KHASH_MAP_INIT_INT(hist, size_t)
 #define THRESH 0
 
 void *mymap(size_t size);
-void  myunmap(void *ptr, size_t size);
-void  myshuffle(int *array, int n);
+void myunmap(void *ptr, size_t size);
+void myshuffle(int *array, int n);
 float myrand_norm(double mu, double sigma);
-int   myrand_unif();
-void  mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
-void  myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
+int myrand_unif();
+void mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
+void myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
 
 DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash);
 void dwtahash_delete(DWTAHash *d);
@@ -45,11 +45,10 @@ void lsh_delete(LSH *l);
 void lsh_clear(LSH *l);
 void lsh_add(LSH *l, int *hashes, int id);
 void lsh_retrieve_raw(LSH *l, int *hashes, int **rawResults);
-void  lsh_retrieve_histogram(LSH *l, int *hashes, khash_t(hist) *h);
+void lsh_retrieve_histogram(LSH *l, int *hashes, khash_t(hist) *h);
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
-    float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, 
-    Train* train_blob);
+    float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob);
 float node_get_last_activation(Node *n, int inputID);
 void node_set_last_activation(Node *n, int inputID, float realActivation);
 void node_increment_delta(Node *n, int inputID, float incrementValue);
@@ -72,6 +71,7 @@ void layer_save(Layer *l, char *path);
 void layer_updateTable(Layer *l);
 void layer_updateRandomNodes(Layer *l);
 void layer_addToHashTable(Layer *l, float* weights, int length, int id);
+int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID);
 int layer_forwardPropagate(Layer *l, 
     int *activeNodesIn, float *activeValuesIn, int lengthIn, 
     int *activeNodesOut, float *activeValuesOut, int *lengthOut, 

@@ -16,69 +16,67 @@ Network *network_new(Config *cfg, bool loadParams) {
 }
 
 void network_delete(Network *n) {
+#pragma omp parallel for
     for (int i = 0; i < n->_cfg->numLayer; i++) layer_delete(n->_hiddenlayers[i]);
     free(n->_hiddenlayers);
     free(n);
 }
 
 void network_save_params(Network *n) {
+#pragma omp parallel for
     for (int i = 0; i < n->_cfg->numLayer; i++) layer_save(n->_hiddenlayers[i], n->_cfg->savePath);
 }
 
 void network_load_params(Network *n) {
+#pragma omp parallel for
     for (int i = 0; i < n->_cfg->numLayer; i++) layer_load(n->_hiddenlayers[i], n->_cfg->loadPath);
 }
 
-#if 0
-int network_infer(Network *n, int **inputIndices, float **inputValues, int *length, int **labels, int *labelsize) {
+int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, int **blabels, int *blabelsize) {
     int correctPred = 0;
-
 #pragma omp parallel for reduction(+:correctPred)
-    for (int i = 0; i < _currentBatchSize; i++) {
-        int **activeNodes = new int *[_numberOfLayers + 1]();
-        float **activeValues= new float *[_numberOfLayers + 1]();
-        // allocate activeNodes and activeValues for relevant layers
-        int *sizes = new int[_numberOfLayers + 1]();
+    for (int i = 0; i < n->_cfg->Batchsize; i++) {
+        int predict_class = -1; 
+        for (int j = 0; j < n->_cfg->numLayer; j++) {
+            int lengthIn, lengthOut=0;
+            int *activeNodesIn, *activeNodesOut;
+            float *activeValuesIn, *activeValuesOut;
+            Layer *thisLay  = n->_hiddenlayers[j];
+            int *label      = blabels[i];
+            int labelsize   = blabelsize[i];
+            float Sparsity  = n->_cfg->Sparsity[n->_cfg->numLayer + j];  /* use second half for infer */
+            int maxlenOut   = thisLay->_noOfNodes;                       /* max active <= layer size */
+            bool last       = (j == n->_cfg->numLayer);
+            bool first      = (j == 0);
 
-        activeNodes[0] = inputIndices[i];
-        activeValues[0] = inputValues[i];
-        sizes[0] = length[i];
+            activeNodesIn   = first ? inIndices[i] : activeNodesOut;
+            activeValuesIn  = first ? inValues[i]  : activeValuesOut;
+            lengthIn        = first ? inLength[i]  : lengthOut;
+      
+            activeNodesOut  = (int *)   malloc(maxlenOut * sizeof(int));   
+            activeValuesOut = (float *) malloc(maxlenOut * sizeof(float));
+            assert((activeNodesOut != NULL) && (activeValuesOut != NULL));
 
-        // inference
-        for (int j = 0; j < _numberOfLayers; j++) {
             layer_forwardPropagate(n->_hiddenlayers[j], 
-                activeNodes, activeValues, 
-                sizes, j, i, labels[i], 0, _Sparsity[_numberOfLayers+j], -1); // XXX: second half of sparsity arr?
-        }
+                activeNodesIn, activeValuesIn, lengthIn,
+                activeNodesOut, activeValuesOut, &lengthOut,
+                i, label, labelsize, Sparsity);
 
-        //compute softmax
-        int noOfClasses = sizes[_numberOfLayers];
-        float max_act = -222222222;
-        int predict_class = -1;
-        for (int k = 0; k < noOfClasses; k++) {
-            float cur_act = _hiddenlayers[_numberOfLayers - 1]->getNodebyID(activeNodes[_numberOfLayers][k])->getLastActivation(i);
-            if (max_act < cur_act) {
-                max_act = cur_act;
-                predict_class = activeNodes[_numberOfLayers][k];
+            if (!first) { free(activeNodesIn);  free(activeValuesIn); }
+            if (last)   {
+                 predict_class = layer_get_prediction(thisLay, activeNodesOut, lengthOut, i);
+                 free(activeNodesOut); free(activeValuesOut); break; 
             }
         }
 
-        if (std::find (labels[i], labels[i]+labelsize[i], predict_class)!= labels[i]+labelsize[i]) {
-            correctPred++;
-        }
-
-        delete[] sizes;
-        for (int j = 1; j < _numberOfLayers + 1; j++) {
-            delete[] activeNodes[j];
-            delete[] activeValues[j];
-        }
-        delete[] activeNodes;
-        delete[] activeValues;
+        for(int k=0; k < blabelsize[i]; k++) 
+            if(blabels[i][k] == predict_class) { correctPred += 1; break; }
     }
     return correctPred;
 }
 
-void network_train(Network *n, int **inputIndices, float **inputValues, int *lengths, int **labels, int *labelsize, 
+#if 0
+void network_train(Network *n, int **inputIndices, float **inputValues, int *lengths, int **label, int *labelsize, 
     int iter, bool rehash, bool rebuild) {
 
     int* avg_retrieval = new int[_numberOfLayers]();
@@ -155,13 +153,13 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
     delete[] activeValuesPerBatch;
     delete[] sizesPerBatch;
 
-    // gradient descent
+    // gradient descent XXX: mode logic to layer ?
     bool tmpRehash;
     bool tmpRebuild;
     for (int l=0; l < _numberOfLayers; l++) {
         tmpRehash = (rehash & _Sparsity[l] < 1) ? true : false;
         tmpRebuild = (rebuild & _Sparsity[l] < 1) ? true : false;
-        if (tmpRehash) _hiddenlayers[l]->_hashTables->clear();
+        if (tmpRehash) _hiddenlayers[l]->_hashTables->clear(); // lsh_clear XXX: move to Layer
         if (tmpRebuild) _hiddenlayers[l]->updateTable();
 #pragma omp parallel for
         for (size_t m = 0; m < _hiddenlayers[l]->_noOfNodes; m++)
