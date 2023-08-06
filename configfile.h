@@ -1,9 +1,11 @@
 #pragma once
 #include "myhelper.h"
+#include "node.h"
 
 typedef struct _struct_config {
     int numLayer;
     int *sizesOfLayers;
+    NodeType *layersTypes;
     int *RangePow;
     int *K;
     int *L;

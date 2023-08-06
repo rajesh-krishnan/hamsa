@@ -1,6 +1,7 @@
 {
   "numLayer":        2,
   "sizesOfLayers":   [128,670091],
+  "layersTypes":     [1,2],
   "RangePow":        [6,18],
   "K":               [2,6],
   "L":               [20,50],

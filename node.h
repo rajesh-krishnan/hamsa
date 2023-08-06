@@ -1,7 +1,7 @@
 #pragma once
 #include "myhelper.h"
 
-typedef enum { ReLU, Softmax} NodeType;
+typedef enum { ReLU = 1, Softmax = 2 } NodeType;
 
 typedef struct _struct_train {
     float _lastDeltaforBPs;

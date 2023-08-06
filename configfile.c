@@ -3,6 +3,7 @@
 Config *config_new() {
     Config *cfg = (Config *) malloc(sizeof(Config));
     cfg->sizesOfLayers = NULL;
+    cfg->layersTypes = NULL;
     cfg->RangePow = NULL;
     cfg->K = NULL;
     cfg->L = NULL;
@@ -18,6 +19,7 @@ Config *config_new() {
 void config_delete(Config *cfg) {
 #define FREE_IF_NOT_NULL(X) if (X) free(X)
     FREE_IF_NOT_NULL(cfg->sizesOfLayers);
+    FREE_IF_NOT_NULL(cfg->layersTypes);
     FREE_IF_NOT_NULL(cfg->RangePow);
     FREE_IF_NOT_NULL(cfg->K);
     FREE_IF_NOT_NULL(cfg->L);
@@ -45,6 +47,12 @@ void config_to_string(Config *cfg, char *ostr, int maxlen) {
     ADD_ITEM("  \"sizesOfLayers\":   [");
     for (int i=0; i < cfg->numLayer; i++) {
         sprintf(buffer, "%d%s", cfg->sizesOfLayers[i], (i==cfg->numLayer-1)?"],\n":",");
+        ADD_ITEM(buffer);
+    }
+
+    ADD_ITEM("  \"layersTypes\":     [");
+    for (int i=0; i < cfg->numLayer; i++) {
+        sprintf(buffer, "%d%s", cfg->layersTypes[i], (i==cfg->numLayer-1)?"],\n":",");
         ADD_ITEM(buffer);
     }
 
@@ -178,6 +186,7 @@ static int *dupints(json_t const *x, int *count) {
 }
 
 void string_to_config(char *jstr, Config *cfg) {
+    int retr;
     size_t len = strlen(jstr) + 1;
     char *tmp = (char *) malloc(len * sizeof(char));
 
@@ -188,7 +197,6 @@ void string_to_config(char *jstr, Config *cfg) {
         puts("Error json create.");
         exit(EXIT_FAILURE);
     }
-
     assert(json_getType(json) == JSON_OBJ);
     json_t const *x;
 
@@ -196,10 +204,14 @@ void string_to_config(char *jstr, Config *cfg) {
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->numLayer = (int) json_getInteger(x);
 
-    int retr;
     x = json_getProperty(json, "sizesOfLayers");
     assert((x != NULL) && (json_getType(x) == JSON_ARRAY));
     cfg->sizesOfLayers = dupints(x, &retr);
+    assert(retr == cfg->numLayer);
+
+    x = json_getProperty(json, "layersTypes");
+    assert((x != NULL) && (json_getType(x) == JSON_ARRAY));
+    cfg->layersTypes = (NodeType *) dupints(x, &retr);
     assert(retr == cfg->numLayer);
 
     x = json_getProperty(json, "RangePow");
@@ -277,8 +289,6 @@ void string_to_config(char *jstr, Config *cfg) {
     x = json_getProperty(json, "logFile");
     assert((x != NULL) && (json_getType(x) == JSON_TEXT));
     cfg->logFile = dupstr(json_getValue(x));
-
-    // sanity check values
 
     free(tmp);
 }
