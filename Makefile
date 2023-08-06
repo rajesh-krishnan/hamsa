@@ -11,6 +11,7 @@ CFLAGS   = -O3 -finline-functions -fno-strict-aliasing \
            -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 # -pg 
 
 all: hamsa libhamsa.so
+	@rm -f $(OBJECTS)
 
 hamsa: main.c libhamsa.a
 	gcc $(INCLUDES) $(CFLAGS) -o $@ -fopenmp $< libhamsa.a -lm
@@ -22,5 +23,5 @@ libhamsa.so: $(OBJECTS)
 	gcc $(INCLUDES) $(CFLAGS) -shared -o $@ $^
 
 clean:
-	rm -f hamsa libhamsa.* $(OBJECTS)
+	rm -f hamsa libhamsa.a libhmasa.so $(OBJECTS)
 
