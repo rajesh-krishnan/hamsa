@@ -15,7 +15,6 @@ static char *load_file(char *filename) {
     char *buffer = 0;
     size_t length;
     FILE *f = fopen(filename, "rb");
-
     if (f) {
         fseek(f, 0, SEEK_END);
         length = ftell(f);
@@ -78,104 +77,82 @@ static int *dupints(json_t const *x, int *count) {
 }
 
 static void config_to_string(Config *cfg, char *ostr, int maxlen) {
+#define ADD_ITEM(X) tmp=strlen((X));assert((curlen+tmp)<maxlen);memcpy(ostr+curlen,(X),tmp);curlen+=tmp;
     int tmp, curlen = 0;
     char buffer[10000];
-
-#define ADD_ITEM(X) tmp=strlen((X));assert((curlen+tmp)<maxlen);memcpy(ostr+curlen,(X),tmp);curlen+=tmp;
-
     ADD_ITEM("{\n");
     ADD_ITEM("  \"numLayer\":        ");
     sprintf(buffer, "%d%s", cfg->numLayer, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"sizesOfLayers\":   [");
     for (int i=0; i < cfg->numLayer; i++) {
         sprintf(buffer, "%d%s", cfg->sizesOfLayers[i], (i==cfg->numLayer-1)?"],\n":",");
         ADD_ITEM(buffer);
     }
-
     ADD_ITEM("  \"layersTypes\":     [");
     for (int i=0; i < cfg->numLayer; i++) {
         sprintf(buffer, "%d%s", cfg->layersTypes[i], (i==cfg->numLayer-1)?"],\n":",");
         ADD_ITEM(buffer);
     }
-
     ADD_ITEM("  \"RangePow\":        [");
     for (int i=0; i < cfg->numLayer; i++) {
         sprintf(buffer, "%d%s", cfg->RangePow[i], (i==cfg->numLayer-1)?"],\n":",");
         ADD_ITEM(buffer);
     }
-
     ADD_ITEM("  \"K\":               [");
     for (int i=0; i < cfg->numLayer; i++) {
         sprintf(buffer, "%d%s", cfg->K[i], (i==cfg->numLayer-1)?"],\n":",");
         ADD_ITEM(buffer);
     }
-
     ADD_ITEM("  \"L\":               [");
     for (int i=0; i < cfg->numLayer; i++) {
         sprintf(buffer, "%d%s", cfg->L[i], (i==cfg->numLayer-1)?"],\n":",");
         ADD_ITEM(buffer);
     }
-
     ADD_ITEM("  \"Sparsity\":        [");
     for (int i=0; i < 2*cfg->numLayer; i++) {
         sprintf(buffer, "%g%s", cfg->Sparsity[i], (i==2*cfg->numLayer-1)?"],\n":",");
         ADD_ITEM(buffer);
     }
-
     ADD_ITEM("  \"Batchsize\":       ");
     sprintf(buffer, "%d%s", cfg->Batchsize, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"Rehash\":          ");
     sprintf(buffer, "%d%s", cfg->Rehash, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"Rebuild\":         ");
     sprintf(buffer, "%d%s", cfg->Rebuild, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"InputDim\":        ");
     sprintf(buffer, "%d%s", cfg->InputDim, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"totRecords\":      ");
     sprintf(buffer, "%d%s", cfg->totRecords, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"totRecordsTest\":  ");
     sprintf(buffer, "%d%s", cfg->totRecordsTest, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"Lr\":              ");
     sprintf(buffer, "%g%s", cfg->Lr, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"Epoch\":           ");
     sprintf(buffer, "%d%s", cfg->Epoch, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"Stepsize\":        ");
     sprintf(buffer, "%d%s", cfg->Stepsize, ",\n");
     ADD_ITEM(buffer);
-
     ADD_ITEM("  \"trainData\":       \"");
     ADD_ITEM(cfg->trainData);
     ADD_ITEM("\",\n");
-
     ADD_ITEM("  \"testData\":        \"");
     ADD_ITEM(cfg->testData);
     ADD_ITEM("\",\n");
-
     ADD_ITEM("  \"loadPath\":        \"");
     ADD_ITEM(cfg->loadPath);
     ADD_ITEM("\",\n");
-
     ADD_ITEM("  \"savePath\":        \"");
     ADD_ITEM(cfg->savePath);
     ADD_ITEM("\",\n");
-
     ADD_ITEM("  \"logFile\":         \"");
     ADD_ITEM(cfg->logFile);
     ADD_ITEM("\"\n}\n");
@@ -201,93 +178,72 @@ static void string_to_config(char *jstr, Config *cfg) {
     x = json_getProperty(json, "numLayer");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->numLayer = (int) json_getInteger(x);
-
     x = json_getProperty(json, "sizesOfLayers");
     assert((x != NULL) && (json_getType(x) == JSON_ARRAY));
     cfg->sizesOfLayers = dupints(x, &retr);
     assert(retr == cfg->numLayer);
-
     x = json_getProperty(json, "layersTypes");
     assert((x != NULL) && (json_getType(x) == JSON_ARRAY));
     cfg->layersTypes = (NodeType *) dupints(x, &retr);
     assert(retr == cfg->numLayer);
-
     x = json_getProperty(json, "RangePow");
     assert((x != NULL) && (json_getType(x) == JSON_ARRAY));
     cfg->RangePow = dupints(x, &retr);
     assert(retr == cfg->numLayer);
-
     x = json_getProperty(json, "K");
     assert((x != NULL) && (json_getType(x) == JSON_ARRAY));
     cfg->K = dupints(x, &retr);
     assert(retr == cfg->numLayer);
-
     x = json_getProperty(json, "L");
     assert((x != NULL) && (json_getType(x) == JSON_ARRAY));
     cfg->L = dupints(x, &retr);
     assert(retr == cfg->numLayer);
-
     x = json_getProperty(json, "Sparsity");
     assert((x != NULL) && (json_getType(x) == JSON_ARRAY));
     cfg->Sparsity = dupfloats(x, &retr);
     assert(retr == 2*cfg->numLayer);
-
     x = json_getProperty(json, "Batchsize");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->Batchsize = (int) json_getInteger(x);
-
     x = json_getProperty(json, "Rehash");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->Rehash = (int) json_getInteger(x);
-
     x = json_getProperty(json, "Rebuild");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->Rebuild = (int) json_getInteger(x);
-
     x = json_getProperty(json, "InputDim");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->InputDim = (int) json_getInteger(x);
-
     x = json_getProperty(json, "totRecords");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->totRecords = (int) json_getInteger(x);
-
     x = json_getProperty(json, "totRecordsTest");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->totRecordsTest = (int) json_getInteger(x);
-
     x = json_getProperty(json, "Lr");
     assert((x != NULL) && (json_getType(x) == JSON_REAL));
     cfg->Lr = (float) json_getReal(x);
-
     x = json_getProperty(json, "Epoch");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->Epoch = (int) json_getInteger(x);
-
     x = json_getProperty(json, "Stepsize");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->Stepsize = (int) json_getInteger(x);
-
     x = json_getProperty(json, "trainData");
     assert((x != NULL) && (json_getType(x) == JSON_TEXT));
     cfg->trainData = dupstr(json_getValue(x));
-
     x = json_getProperty(json, "testData");
     assert((x != NULL) && (json_getType(x) == JSON_TEXT));
     cfg->testData = dupstr(json_getValue(x));
-
     x = json_getProperty(json, "loadPath");
     assert((x != NULL) && (json_getType(x) == JSON_TEXT));
     cfg->loadPath = dupstr(json_getValue(x));
-
     x = json_getProperty(json, "savePath");
     assert((x != NULL) && (json_getType(x) == JSON_TEXT));
     cfg->savePath = dupstr(json_getValue(x));
-
     x = json_getProperty(json, "logFile");
     assert((x != NULL) && (json_getType(x) == JSON_TEXT));
     cfg->logFile = dupstr(json_getValue(x));
-
     free(tmp);
 }
 
