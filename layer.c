@@ -26,7 +26,7 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
     if (type == Softmax) l->_normalizationConstants = (float *) mymap(batchsize * sizeof(float));
     else                 l->_normalizationConstants = NULL;
 
-    l->_hashTables  = lsh_new(K, L, RangePow);
+    l->_hashTables  = lsht_new(K, L, RangePow);
     l->_dwtaHasher  = dwtahash_new(K * L, prevLayerNumOfNodes);
 
     for (size_t n = 0; n < noOfNodes; n++) l->_randNode[n] = n;
@@ -47,7 +47,7 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
 
 void layer_delete(Layer *l) {
     size_t fano = l->_noOfNodes * l->_prevLayerNumOfNodes;
-    lsh_delete(l->_hashTables);
+    lsht_delete(l->_hashTables);
     dwtahash_delete(l->_dwtaHasher);
     myunmap(l->_Nodes, l->_noOfNodes * sizeof(Node));
     myunmap(l->_train_array, l->_noOfNodes * l->_batchsize * sizeof(Train));
@@ -106,7 +106,7 @@ void layer_updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes);
 
 void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
     int *hashes = dwtahash_getHashEasy(l->_dwtaHasher, weights, length);
-    lsh_add(l->_hashTables, hashes, id + 1);
+    lsht_add(l->_hashTables, hashes, id + 1);
     free(hashes);
 }
 
@@ -151,7 +151,7 @@ int layer_forwardPropagate(Layer *l,
         }
 
         int *hashes = dwtahash_getHash(l->_dwtaHasher, activeNodesIn, activeValuesIn, lengthIn);
-        lsh_retrieve_histogram(l->_hashTables, hashes, h); /* get candidates from hashtable */
+        lsht_retrieve_histogram(l->_hashTables, hashes, h); /* get candidates from hashtable */
 
         assert(((MINACTIVE > 0) && (THRESH == 0)) || ((THRESH > 0) && (MINACTIVE == 0)));
 

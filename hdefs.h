@@ -40,12 +40,12 @@ void dwtahash_delete(DWTAHash *d);
 int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dLen);
 int *dwtahash_getHash(DWTAHash *d, int *xndx, float* data, int dLen);
 
-LSH *lsh_new(int K, int L, int RangePow);
-void lsh_delete(LSH *l);
-void lsh_clear(LSH *l);
-void lsh_add(LSH *l, int *hashes, int id);
-void lsh_retrieve_raw(LSH *l, int *hashes, int **rawResults);
-void lsh_retrieve_histogram(LSH *l, int *hashes, khash_t(hist) *h);
+LSHT *lsht_new(int K, int L, int RangePow);
+void lsht_delete(LSHT *l);
+void lsht_clear(LSHT *l);
+void lsht_add(LSHT *l, int *hashes, int id);
+void lsht_retrieve_raw(LSHT *l, int *hashes, int **rawResults);
+void lsht_retrieve_histogram(LSHT *l, int *hashes, khash_t(hist) *h);
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
     float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob);

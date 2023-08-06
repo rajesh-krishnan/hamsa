@@ -94,9 +94,9 @@ static void test_dwtahash() {
 
 static void test_lsh(int K, int L, int R) {
     printf("\nTesting Locality Sensitive Hashing\n");
-    LSH *l = lsh_new(K,L,R);
-    lsh_clear(l);
-    lsh_delete(l);
+    LSHT *l = lsht_new(K,L,R);
+    lsht_clear(l);
+    lsht_delete(l);
 }
 
 static void test_layer(bool io) {

@@ -17,11 +17,11 @@ inline static int __attribute__((always_inline)) *bucket_get_array(Bucket *b) {
     return b->arr;
 }
 
-LSH *lsh_new(int K, int L, int RangePow) {
+LSHT *lsht_new(int K, int L, int RangePow) {
     assert (K * logbinsize == RangePow);
     Bucket *b;
     size_t sz  = 1 << RangePow;
-    LSH *l     = (LSH *) malloc(sizeof(LSH));
+    LSHT *l     = (LSHT *) malloc(sizeof(LSHT));
     l->_bucket = (Bucket **) malloc(L * sizeof(Bucket *));
     assert((l != NULL) && (l->_bucket !=NULL));
     b = (Bucket *) mymap(L * sz * sizeof(Bucket));
@@ -29,11 +29,11 @@ LSH *lsh_new(int K, int L, int RangePow) {
     l->_K = K;
     l->_L = L;
     l->_RangePow = RangePow;
-    lsh_clear(l);
+    lsht_clear(l);
     return l;
 }
 
-void lsh_delete(LSH *l) {
+void lsht_delete(LSHT *l) {
     size_t sz  = 1 << l->_RangePow;
     Bucket *b  = l->_bucket[0];
     myunmap(b, l->_L * sz * sizeof(Bucket));
@@ -41,9 +41,9 @@ void lsh_delete(LSH *l) {
     free(l);
 }
 
-void lsh_clear(LSH *l) { memset(l->_bucket[0], 0, (1 << l->_RangePow) * l->_L * sizeof(Bucket)); }
+void lsht_clear(LSHT *l) { memset(l->_bucket[0], 0, (1 << l->_RangePow) * l->_L * sizeof(Bucket)); }
 
-inline static unsigned int __attribute__((always_inline)) ith_index(LSH *l, int *hashes, int i) {
+inline static unsigned int __attribute__((always_inline)) ith_index(LSHT *l, int *hashes, int i) {
     unsigned int index = 0;
     for (int j = 0; j < l->_K; j++) {
         unsigned int h = hashes[l->_K*i + j];
@@ -52,14 +52,14 @@ inline static unsigned int __attribute__((always_inline)) ith_index(LSH *l, int 
     return index;
 }
 
-void lsh_add(LSH *l, int *hashes, int id) {
+void lsht_add(LSHT *l, int *hashes, int id) {
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = ith_index(l, hashes, i);
 	bucket_add_to(&l->_bucket[i][index], id);
     }
 }
 
-void lsh_retrieve_raw(LSH *l, int *hashes, int **rawResults) {
+void lsht_retrieve_raw(LSHT *l, int *hashes, int **rawResults) {
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = ith_index(l, hashes, i);
         rawResults[i] = bucket_get_array(&l->_bucket[i][index]);
@@ -67,7 +67,7 @@ void lsh_retrieve_raw(LSH *l, int *hashes, int **rawResults) {
 }
 
 /* Collect items and their counts across all retrieves buckets, put in hashtable */
-void lsh_retrieve_histogram(LSH *l, int *hashes, khash_t(hist) *h) {
+void lsht_retrieve_histogram(LSHT *l, int *hashes, khash_t(hist) *h) {
     int isnew, *arr;
     khiter_t k;
     for (int i = 0; i < l->_L; i++) {

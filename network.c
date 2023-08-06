@@ -159,7 +159,7 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
     for (int l=0; l < _numberOfLayers; l++) {
         tmpRehash = (rehash & _Sparsity[l] < 1) ? true : false;
         tmpRebuild = (rebuild & _Sparsity[l] < 1) ? true : false;
-        if (tmpRehash) _hiddenlayers[l]->_hashTables->clear(); // lsh_clear XXX: move to Layer
+        if (tmpRehash) _hiddenlayers[l]->_hashTables->clear(); // lsht_clear XXX: move to Layer
         if (tmpRebuild) _hiddenlayers[l]->updateTable();
 #pragma omp parallel for
         for (size_t m = 0; m < _hiddenlayers[l]->_noOfNodes; m++)

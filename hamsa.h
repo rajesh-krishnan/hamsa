@@ -17,12 +17,12 @@ typedef struct _struct_bucket {
   int arr[BUCKETSIZE];
 } Bucket;
 
-typedef struct _struct_lsh {
+typedef struct _struct_lsht {
     Bucket ** _bucket;
     int _K;
     int _L;
     int _RangePow;
-} LSH;
+} LSHT;
 
 typedef enum { ReLU = 1, Softmax = 2 } NodeType;
 
@@ -59,7 +59,7 @@ typedef struct _struct_layer {
     int _L;
     int _RangePow;
     Node *_Nodes;
-    LSH *_hashTables;
+    LSHT *_hashTables;
     DWTAHash *_dwtaHasher;
     Train *_train_array;
     int *_randNode;
