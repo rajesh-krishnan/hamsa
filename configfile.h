@@ -26,7 +26,7 @@ typedef struct _struct_config {
     char *logFile;
 } Config;
 
-Config *config_new();
+Config *config_new(char *cfgFile);
 void config_delete(Config *cfg);
-void string_to_config(char *jstr, Config *cfg);
-void config_to_string(Config *cfg, char *ostr, int maxlen);
+void config_save(Config *cfg, char *cfgFile);
+

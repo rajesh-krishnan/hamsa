@@ -31,5 +31,3 @@ float myrand_norm(double mu, double sigma);
 int   myrand_unif();
 void  mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
 void  myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
-char *myload_file(char *filename);
-void mysave_file(char *filename, char *buffer);

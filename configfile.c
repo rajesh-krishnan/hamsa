@@ -1,39 +1,81 @@
 #include "configfile.h"
 
-Config *config_new() {
-    Config *cfg = (Config *) malloc(sizeof(Config));
-    cfg->sizesOfLayers = NULL;
-    cfg->layersTypes = NULL;
-    cfg->RangePow = NULL;
-    cfg->K = NULL;
-    cfg->L = NULL;
-    cfg->Sparsity = NULL;
-    cfg->trainData = NULL;
-    cfg->testData = NULL;
-    cfg->loadPath = NULL;
-    cfg->savePath = NULL;
-    cfg->logFile = NULL;
-    return cfg;
+static void save_file(char *filename, char *buffer) {
+    FILE *f = fopen(filename, "w");
+    size_t length = strlen(buffer);
+    if (f) {
+        int x = fwrite(buffer, 1, length, f);
+        assert(x == length);
+    }
+    fclose(f);
 }
 
-void config_delete(Config *cfg) {
-#define FREE_IF_NOT_NULL(X) if (X) free(X)
-    FREE_IF_NOT_NULL(cfg->sizesOfLayers);
-    FREE_IF_NOT_NULL(cfg->layersTypes);
-    FREE_IF_NOT_NULL(cfg->RangePow);
-    FREE_IF_NOT_NULL(cfg->K);
-    FREE_IF_NOT_NULL(cfg->L);
-    FREE_IF_NOT_NULL(cfg->Sparsity);
-    FREE_IF_NOT_NULL(cfg->trainData);
-    FREE_IF_NOT_NULL(cfg->testData);
-    FREE_IF_NOT_NULL(cfg->loadPath);
-    FREE_IF_NOT_NULL(cfg->savePath);
-    FREE_IF_NOT_NULL(cfg->logFile);
-    free(cfg);
-#undef FREE_IF_NOT_NULL
+static char *load_file(char *filename) {
+    char *buffer = 0;
+    size_t length;
+    FILE *f = fopen(filename, "rb");
+
+    if (f) {
+        fseek(f, 0, SEEK_END);
+        length = ftell(f);
+        fseek (f, 0, SEEK_SET);
+        buffer = malloc(length);
+        if (buffer) {
+            int x = fread(buffer, 1, length, f);
+            assert(x == length);
+        }
+        fclose(f);
+   }
+   return buffer;
 }
 
-void config_to_string(Config *cfg, char *ostr, int maxlen) {
+static char *dupstr(const char* s) {
+  size_t slen = strlen(s);
+  char *result = malloc(slen + 1);
+  if(result == NULL) return NULL;
+  memcpy(result, s, slen+1);
+  return result;
+}
+
+static float *dupfloats(json_t const *x, int *count) {
+    float buf[10000];
+    int c = 0;
+    for(json_t const *child = json_getChild(x); child != 0; child = json_getSibling(child)) {
+        if (json_getType(child) == JSON_REAL) {
+            buf[c] = (float) json_getReal(child);
+        } 
+        else if (json_getType(child) == JSON_INTEGER) {
+            buf[c] = (float) json_getInteger(child);
+        }
+        else assert(1 == 0); /* force error */
+        c++;
+        assert (c < 10000);
+    }
+    *count = c;
+
+    float *tmp = malloc(c * sizeof(float));
+    assert(tmp != NULL);
+    memcpy(tmp, buf, c*sizeof(float));
+    return tmp;
+}
+
+static int *dupints(json_t const *x, int *count) {
+    int buf[10000];
+    int c = 0;
+    for(json_t const *child = json_getChild(x); child != 0; child = json_getSibling(child)) {
+        assert (json_getType(child) == JSON_INTEGER);
+        buf[c] = (int) json_getInteger(child);
+        c++;
+    }
+    *count = c;
+
+    int *tmp = malloc(c * sizeof(int));
+    assert(tmp != NULL);
+    memcpy(tmp, buf, c*sizeof(int));
+    return tmp;
+}
+
+static void config_to_string(Config *cfg, char *ostr, int maxlen) {
     int tmp, curlen = 0;
     char buffer[10000];
 
@@ -139,53 +181,7 @@ void config_to_string(Config *cfg, char *ostr, int maxlen) {
 #undef ADD_ITEM
 }
 
-static char *dupstr(const char* s) {
-  size_t slen = strlen(s);
-  char *result = malloc(slen + 1);
-  if(result == NULL) return NULL;
-  memcpy(result, s, slen+1);
-  return result;
-}
-
-static float *dupfloats(json_t const *x, int *count) {
-    float buf[10000];
-    int c = 0;
-    for(json_t const *child = json_getChild(x); child != 0; child = json_getSibling(child)) {
-        if (json_getType(child) == JSON_REAL) {
-            buf[c] = (float) json_getReal(child);
-        } 
-        else if (json_getType(child) == JSON_INTEGER) {
-            buf[c] = (float) json_getInteger(child);
-        }
-        else assert(1 == 0); /* force error */
-        c++;
-        assert (c < 10000);
-    }
-    *count = c;
-
-    float *tmp = malloc(c * sizeof(float));
-    assert(tmp != NULL);
-    memcpy(tmp, buf, c*sizeof(float));
-    return tmp;
-}
-
-static int *dupints(json_t const *x, int *count) {
-    int buf[10000];
-    int c = 0;
-    for(json_t const *child = json_getChild(x); child != 0; child = json_getSibling(child)) {
-        assert (json_getType(child) == JSON_INTEGER);
-        buf[c] = (int) json_getInteger(child);
-        c++;
-    }
-    *count = c;
-
-    int *tmp = malloc(c * sizeof(int));
-    assert(tmp != NULL);
-    memcpy(tmp, buf, c*sizeof(int));
-    return tmp;
-}
-
-void string_to_config(char *jstr, Config *cfg) {
+static void string_to_config(char *jstr, Config *cfg) {
     int retr;
     size_t len = strlen(jstr) + 1;
     char *tmp = (char *) malloc(len * sizeof(char));
@@ -291,5 +287,36 @@ void string_to_config(char *jstr, Config *cfg) {
     cfg->logFile = dupstr(json_getValue(x));
 
     free(tmp);
+}
+
+Config *config_new(char *cfgFile) {
+    Config *cfg = (Config *) malloc(sizeof(Config));
+    char *jstr = load_file(cfgFile);
+    string_to_config(jstr, cfg);
+    free(jstr);
+    return cfg;
+}
+
+void config_save(Config *cfg, char *cfgFile) {
+    char ostr[10000];
+    config_to_string(cfg, ostr, 10000);
+    save_file(cfgFile, ostr);
+}
+
+void config_delete(Config *cfg) {
+#define FREE_IF_NOT_NULL(X) if (X) free(X)
+    FREE_IF_NOT_NULL(cfg->sizesOfLayers);
+    FREE_IF_NOT_NULL(cfg->layersTypes);
+    FREE_IF_NOT_NULL(cfg->RangePow);
+    FREE_IF_NOT_NULL(cfg->K);
+    FREE_IF_NOT_NULL(cfg->L);
+    FREE_IF_NOT_NULL(cfg->Sparsity);
+    FREE_IF_NOT_NULL(cfg->trainData);
+    FREE_IF_NOT_NULL(cfg->testData);
+    FREE_IF_NOT_NULL(cfg->loadPath);
+    FREE_IF_NOT_NULL(cfg->savePath);
+    FREE_IF_NOT_NULL(cfg->logFile);
+    free(cfg);
+#undef FREE_IF_NOT_NULL
 }
 
