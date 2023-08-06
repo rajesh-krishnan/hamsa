@@ -53,9 +53,10 @@ inline static unsigned int __attribute__((always_inline)) ith_index(LSHT *l, int
 }
 
 void lsht_add(LSHT *l, int *hashes, int id) {
+    assert ((id >= 0) && (id < 0x7fffffff));
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = ith_index(l, hashes, i);
-	bucket_add_to(&l->_bucket[i][index], id + 1);           /* incr 1, 0 is bad for densification */
+	bucket_add_to(&l->_bucket[i][index], id + 1);           /* incr 1, 0 bad for hashing? */
     }                                                           /* reverse upon retrieval */
 }
 
@@ -69,7 +70,7 @@ void lsht_retrieve_histogram(LSHT *l, int *hashes, khash_t(hist) *h) {
         for (int j = 0; j < BUCKETSIZE; j++) {
            if (arr[j] < 0) break;                               /* bucket array terminated by -1 */
            k = kh_put(hist, h, arr[j] - 1, &isnew);             /* add to h, isnew is 1 if new else 0 */
-                                                                /* -1 to get index, reverse +1 from lsht_add */
+                                                                /* decr 1, reverse incr 1 in lsht_add */
            kh_value(h, k) = (isnew) ? 1 : (kh_value(h, k) + 1); /* count set to 1 if new, else incremented by 1 */
         }
     }
