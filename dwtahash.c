@@ -1,4 +1,4 @@
-#include "dwtahash.h"
+#include "hdefs.h"
 
 DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     int *n_array;

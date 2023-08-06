@@ -1,4 +1,4 @@
-#include "layer.h"
+#include "hdefs.h"
 
 Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
     int K, int L, int RangePow, bool load, char *path) {

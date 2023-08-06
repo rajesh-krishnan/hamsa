@@ -1,4 +1,5 @@
-#include "configfile.h"
+#include "hdefs.h"
+#include "tiny-json/tiny-json.h"
 
 static void save_file(char *filename, char *buffer) {
     FILE *f = fopen(filename, "w");

@@ -1,4 +1,4 @@
-#include "network.h"
+#include "hdefs.h"
 
 Network *network_new(Config *cfg, bool loadParams) {
     Network *n = (Network *) malloc(sizeof(Network));

@@ -1,4 +1,4 @@
-#include "network.h"
+#include "hdefs.h"
 
 static void test_mt() {
     int i,N = 10000;
@@ -109,20 +109,26 @@ static void test_layer(int io) {
     layer_delete(l);
 }
 
-static void test_network() {
-    printf("\nTesting Network \n");
-
+static void test_network(bool reload) {
+    printf("\nBuilding network from scratch \n");
     Config *cfg = config_new("sampleconfig.json");
     Network *n = network_new(cfg, false);
 
+    // training here
+
+    printf("Saving configuration and layer parameters\n");
     config_save(n->_cfg, "./model/config.json");
     network_save_params(n);
     network_delete(n);
     config_delete(cfg);
 
-    // n = network_new(cfg, true);
-    // network_delete(n);
-    // config_delete(cfg);
+    if (reload) {
+        printf("Loading network from saved configuration and layer parameters\n");
+        cfg = config_new("./model/config.json");
+        n = network_new(cfg, true);
+        network_delete(n);
+        config_delete(cfg);
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -136,6 +142,6 @@ int main(int argc, char *argv[]) {
     test_lsh(6,50,18);
     test_layer(0);
 */
-    test_network();
+    test_network(0);
     return 0;
 }

@@ -1,4 +1,4 @@
-#include "lsh.h"
+#include "hdefs.h"
 
 static int logbinsize = (int)floor(log2(BINSIZE));  /* original used natural log, check */
 
@@ -80,3 +80,4 @@ void lsh_retrieve_histogram(LSH *l, int *hashes, khash_t(hist) *h) {
         }
     }
 }
+

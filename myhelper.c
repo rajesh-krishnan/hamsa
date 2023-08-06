@@ -1,5 +1,6 @@
-#include "myhelper.h"
+#include "hdefs.h"
 #include "cnpy/cnpy.h"
+#include "sfmt/SFMT.h"
 
 void *mymap(size_t size) {
     void *ptr;

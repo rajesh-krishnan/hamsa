@@ -8,11 +8,9 @@ CFLAGS   = -O3 -finline-functions -fno-strict-aliasing \
            -Wno-missing-prototypes -Wno-unused-variable -Wno-unused-function \
            -fPIC -finline-functions -fopenmp \
            -march=native -mtune=intel \
-           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 -pg 
+           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 # -pg 
 
-all: hamsa 
-
-slib: libhamsa.so
+all: hamsa libhamsa.so
 
 hamsa: main.c libhamsa.a
 	gcc $(INCLUDES) $(CFLAGS) -o $@ -fopenmp $< libhamsa.a -lm
