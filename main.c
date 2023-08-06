@@ -117,14 +117,14 @@ static void test_network(bool reload) {
     // training here
 
     printf("Saving configuration and layer parameters\n");
-    config_save(n->_cfg, "./model/config.json");
+    config_save(n->_cfg, "./data/config.json");
     network_save_params(n);
     network_delete(n);
     config_delete(cfg);
 
     if (reload) {
         printf("Loading network from saved configuration and layer parameters\n");
-        cfg = config_new("./model/config.json");
+        cfg = config_new("./data/config.json");
         n = network_new(cfg, true);
         network_delete(n);
         config_delete(cfg);

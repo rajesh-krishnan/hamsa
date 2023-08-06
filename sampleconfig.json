@@ -17,7 +17,7 @@
   "Stepsize":        1000,
   "trainData":       "./data/Amazon670K.bow/train.txt",
   "testData":        "./data/Amazon670K.bow/test.txt",
-  "loadPath":        "./model",
-  "savePath":        "./model",
-  "logFile":         "./log/log.txt"
+  "loadPath":        "./data",
+  "savePath":        "./data",
+  "logFile":         "./data/log.txt"
 }
