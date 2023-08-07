@@ -3,10 +3,9 @@
 This project seeks to enable machine intelligence based on neural networks
 aided by hash algorithms without requiring hardware accelerators such as
 Graphics Processor Unit (GPU), Field Programmable Gate Array (FPGA), or
-neuromorphic computing architectures. A high-end x86 server with solid state
-disk (SSD) and adequate random access memory (RAM) running Linux with HugeTLB
-Pages enabled, with gcc compiler and OpenMP support should suffice. Our development
-servers 
+neuromorphic computing architectures. An x86-64 server with solid state
+disk (SSD) and adequate random access memory (RAM) running Linux with 
+HugeTLB Pages enabled, with gcc compiler and OpenMP should suffice.
 
 This implementation follows the SLIDE paper referenced below and the author's
 original implementation in C++.  Our implementation is in C with minimal external 
@@ -23,10 +22,16 @@ allocations systematically (in layers and lsh).  Instead of the custom config
 file, we use JSON from which the network can be loaded; the config can also be
 saved.  We also build a shared library to allow calling from Python.
 
+The code is research-grade, and requires extensive analysis and testing for 
+overflows, corner cases, and thread safety where omp pragmas are used.
+
 Once the core capability is built and tested, we plan to focus on two problem
 domains: (i) natural language processing using large language models and (ii)
-stochatic planning on continuous domains using RDDL.
+stochatic planning on continuous domains using RDDL (see reference 2).
 
 ## References
-   1. Beidi Chen, Tharun Medini, James Farwell, Gobrial Sameh, Charlie Tai, and Anshumali Shrivastava, "SLIDE : In Defense of Smart Algorithms over Hardware Acceleration for Large Scale Deep Learning Systems," MLSys 2020
-   2. Wu Ga, Buser Say, and Scott Sanner, "Scalable Planning with Tensorflow for Hybrid Nonlinear Domains," NeurIPS 2017
+   1. Beidi Chen, Tharun Medini, James Farwell, Gobrial Sameh, Charlie Tai, and
+      Anshumali Shrivastava, "SLIDE : In Defense of Smart Algorithms over Hardware
+      Acceleration for Large Scale Deep Learning Systems," MLSys 2020
+   2. Wu Ga, Buser Say, and Scott Sanner, "Scalable Planning with Tensorflow
+      for Hybrid Nonlinear Domains," NeurIPS 2017
