@@ -9,7 +9,7 @@ DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     d->_permute = (int) ceil(numHashes * BINSIZE * 1.0 / noOfBitsToHash);
     d->_lognumhash = (int) ceil(log2(numHashes));
     d->_randHash[0] = myrand_unif();
-    d->_randHash[1] = myrand_unif();
+    d->_randHash[1] = myrand_unif();                              /* XXX: what is this for? */
     if (d->_randHash[0] % 2 == 0) d->_randHash[0]++;
     if (d->_randHash[1] % 2 == 0) d->_randHash[1]++;
     d->_indices = (int *) malloc(d->_rangePow * d->_permute * sizeof(int));
@@ -63,10 +63,6 @@ inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float* da
 
     for (int i = 0; i < d->_numhashes; i++) {
         int next = hashes[i];
-        if (next != INT_MIN) {
-            hashArray[i] = hashes[i];
-            continue;
-        }
         int count = 0;
         while (next == INT_MIN) {
             count++;
