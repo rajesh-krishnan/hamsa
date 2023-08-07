@@ -22,12 +22,11 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
     l->_adamAvgVel  = (float *) mymap(fano * sizeof(float));
     l->_adamT       = (float *) mymap(fano * sizeof(float));
     l->_randNode    = (int *)   mymap(noOfNodes * sizeof(int));
+    l->_hashTables  = lsht_new(K, L, RangePow);
+    l->_dwtaHasher  = dwtahash_new(K * L, prevLayerNumOfNodes);
 
     if (type == Softmax) l->_normalizationConstants = (float *) mymap(batchsize * sizeof(float));
     else                 l->_normalizationConstants = NULL;
-
-    l->_hashTables  = lsht_new(K, L, RangePow);
-    l->_dwtaHasher  = dwtahash_new(K * L, prevLayerNumOfNodes);
 
     for (size_t n = 0; n < noOfNodes; n++) l->_randNode[n] = n;
     myshuffle(l->_randNode, noOfNodes);
@@ -39,8 +38,9 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
         node_update(&l->_Nodes[i], i, type, batchsize,
             &l->_weights[index], &l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
             l->_train_array);
-        layer_addToHashTable(l, &l->_weights[index], prevLayerNumOfNodes, i);
     }
+
+    layer_rehash(l);
     return l;
 }
 
@@ -60,11 +60,20 @@ void layer_delete(Layer *l) {
     myunmap(l, sizeof(Layer));
 }
 
+void layer_rehash(Layer *l) {
+    lsht_clear(l->_hashTables);
+    for (size_t i = 0; i < l->_noOfNodes; i++) {
+        size_t index = l->_prevLayerNumOfNodes * i;
+        layer_addToHashTable(l, &l->_weights[index], l->_prevLayerNumOfNodes, i);
+    }
+}
+
 /* 
  * Kaiming initialization preferable for faster covergence in deep networks 
  */
 void layer_randinit(Layer *l) {
     float ksd = sqrt(1.0/l->_prevLayerNumOfNodes);
+#pragma omp parallel for
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t fano = i * l->_prevLayerNumOfNodes;
         for (size_t j = 0; j < l->_prevLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,ksd);
@@ -91,7 +100,7 @@ void layer_load(Layer *l, char *path) { layer_rw(l, path, true); }
 
 void layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
 
-void layer_updateTable(Layer *l) {
+void layer_updateHasher(Layer *l) {
     dwtahash_delete(l->_dwtaHasher);
     l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_prevLayerNumOfNodes);
 }
@@ -118,7 +127,14 @@ int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int input
     return predict_class;
 }
 
-/* Expects output arrays of size l->_noOfNodes, even if not all are not used */
+/* Expects output arrays of size l->_noOfNodes, though lengthOut could be smaller */ 
+/* Seems safe to call in parallel, once per inputID in a batch, provided: 
+ *   - no other thread modifies label
+ *   - activeNodesIn/Out, activeValuesIn/Out, and lengthOut are dedicated to this call
+ *   - no other thread reads or modifies l->_normalizationConstants[inputID]
+ *   - no other thread reads or modifies n->_train[inputID]._ActiveinputIds for any node in layer
+ *   - no other thread reads or modifies n->_train[inputID]._lastActivations for any node in layer
+ */
 int layer_forwardPropagate(Layer *l, 
     int *activeNodesIn, float *activeValuesIn, int lengthIn,        /* from previous layer */
     int *activeNodesOut, float *activeValuesOut, int *lengthOut,    /* to next layer */
@@ -203,4 +219,9 @@ int layer_forwardPropagate(Layer *l,
     }
 
     return retrievals;
+}
+
+void layer_adam(Layer *l, float lr, int ratio) {
+#pragma omp parallel for
+    for (size_t m = 0; m < l->_noOfNodes; m++) node_adam(&l->_Nodes[m], l->_prevLayerNumOfNodes, lr, ratio);
 }

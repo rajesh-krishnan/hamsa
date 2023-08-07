@@ -27,6 +27,8 @@ KHASH_MAP_INIT_INT(hist, size_t)
 #define MINACTIVE 1000
 #define THRESH 0
 
+/* Internal functions */
+
 void *mymap(size_t size);
 void myunmap(void *ptr, size_t size);
 void myshuffle(int *array, int n);
@@ -60,19 +62,4 @@ void node_backprop(Node *n, Node* prevLayerNodes, int* prevLayerActiveNodeIds, i
 void node_backprop_firstlayer(Node *n, int* nnzindices, float* nnzvalues, int nnzSize, 
     float learningRate, int inputID);
 void node_adam(Node *n, int dim, float tmplr, int ratio);
-
-Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
-    int K, int L, int RangePow, bool load, char *path);
-void layer_delete(Layer *l);
-void layer_randinit(Layer *l);
-void layer_load(Layer *l, char *path);
-void layer_save(Layer *l, char *path);
-void layer_updateTable(Layer *l);
-void layer_updateRandomNodes(Layer *l);
-void layer_addToHashTable(Layer *l, float* weights, int length, int id);
-int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID);
-int layer_forwardPropagate(Layer *l, 
-    int *activeNodesIn, float *activeValuesIn, int lengthIn, 
-    int *activeNodesOut, float *activeValuesOut, int *lengthOut, 
-    int inputID, int *label, int labelsize, float Sparsity);
 
