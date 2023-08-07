@@ -60,58 +60,56 @@ inline int __attribute__((always_inline)) myrand_unif() {
 }
 
 void mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
-  cnpy_array a;
-  size_t index[2];
-  index[0] = d0;
-  index[1] = (twoD ? d1 : 1);
-  unlink(fn);
-  if (cnpy_create(fn, CNPY_BE, CNPY_F4, CNPY_FORTRAN_ORDER, (twoD?2:1), index, &a) != CNPY_SUCCESS) {
-    cnpy_perror("Unable to create file");
-    abort();
-  }
+    cnpy_array a;
+    size_t index[2];
+    index[0] = d0;
+    index[1] = (twoD ? d1 : 1);
+    unlink(fn);
+    if (cnpy_create(fn, CNPY_BE, CNPY_F4, CNPY_FORTRAN_ORDER, (twoD?2:1), index, &a) != CNPY_SUCCESS) {
+        cnpy_perror("Unable to create file");
+        abort();
+    }
 
-#pragma omp parallel for collapse(2)
-  for(int i = 0; i < index[0]; i++) {
-      for(int j = 0; j < index[1]; j++) {
-          size_t tidx[2];
-          size_t cur = i * index[1] + j;
-          tidx[0] = i;
-          tidx[1] = j;
-          cnpy_set_f4(a, tidx, farr[cur]);
-      }
-  }
+    size_t cur = 0;
+    for(int i = 0; i < index[0]; i++) {
+        for(int j = 0; j < index[1]; j++) {
+            size_t tidx[2];
+            tidx[0] = i;
+            tidx[1] = j;
+            cnpy_set_f4(a, tidx, farr[cur++]);
+        }
+    }
 
-  if (cnpy_close(&a) != CNPY_SUCCESS) {
-    cnpy_perror("Unable to close file");
-    abort();
-  }
+    if (cnpy_close(&a) != CNPY_SUCCESS) {
+        cnpy_perror("Unable to close file");
+        abort();
+    }
 }
 
 void myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
-  cnpy_array a;
-  size_t index[2];
+    cnpy_array a;
+    size_t index[2];
 
-  if (cnpy_open(fn, false, &a) != CNPY_SUCCESS) {
-    cnpy_perror("Unable to load file");
-    abort();
-  }
+    if (cnpy_open(fn, false, &a) != CNPY_SUCCESS) {
+        cnpy_perror("Unable to load file");
+        abort();
+    }
 
-  assert(a.n_dim == (twoD ? 2 : 1));
-  assert(a.dims[0] == d0);
-  if (a.n_dim==2) assert(a.dims[1] == d1);
-  index[0] = d0;
-  index[1] = (twoD ? d1 : 1);
+    assert(a.n_dim == (twoD ? 2 : 1));
+    assert(a.dims[0] == d0);
+    if (a.n_dim==2) assert(a.dims[1] == d1);
+    index[0] = d0;
+    index[1] = (twoD ? d1 : 1);
 
-#pragma omp parallel for collapse(2)
-  for(int i = 0; i < index[0]; i++) {
-      for(int j = 0; j < index[1]; j++) {
-          size_t tidx[2];
-          size_t cur = i * index[1] + j;
-          tidx[0] = i;
-          tidx[1] = j;
-          farr[cur] = cnpy_get_f4(a, tidx);
-      }
-  }
+    size_t cur = 0;
+    for(int i = 0; i < index[0]; i++) {
+        for(int j = 0; j < index[1]; j++) {
+            size_t tidx[2];
+            tidx[0] = i;
+            tidx[1] = j;
+            farr[cur++] = cnpy_get_f4(a, tidx);
+        }
+    }
 
   if (cnpy_close(&a) != CNPY_SUCCESS) {
     cnpy_perror("Unable to close file");

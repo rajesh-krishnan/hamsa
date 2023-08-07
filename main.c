@@ -135,27 +135,40 @@ static void test_layer(bool io) {
 }
 
 static void test_network(bool save, bool reload) {
-    printf("\nBuilding network from scratch \n");
+    time_t t1, t2;
+
+    t1 = time(NULL);
+    printf("\nAllocating and initializing network ...\n"); 
     Config *cfg = config_new("sampleconfig.json");
     Network *n = network_new(cfg, false);
+    t2 = time(NULL);
+    printf("Allocating and initializing took %ld seconds\n", t2 - t1); 
 
     // training here
 
     if (save) {
-       printf("Saving configuration and layer parameters\n");
-       config_save(n->_cfg, "./data/config.json");
-       network_save_params(n);
+        t1 = time(NULL);
+        printf("Saving configuration and layer parameters ...\n");
+        config_save(n->_cfg, "./data/config.json");
+        network_save_params(n);
+        t2 = time(NULL);
+        printf("Saving took %ld seconds\n", t2 - t1); 
     }
 
     network_delete(n);
     config_delete(cfg);
+    printf("Deleted network\n");
 
     if (reload) {
-        printf("Loading network from saved configuration and layer parameters\n");
+        t1 = time(NULL);
+        printf("Allocating and loading network from saved parameters ...\n"); 
         cfg = config_new("./data/config.json");
         n = network_new(cfg, true);
+        t2 = time(NULL);
+        printf("Allocating and loading %ld seconds\n", t2 - t1); 
         network_delete(n);
         config_delete(cfg);
+        printf("Deleted network\n"); fflush(stdout);
     }
 }
 
@@ -170,6 +183,7 @@ int main(int argc, char *argv[]) {
     test_layer(true);
     test_network(true, true);
 */
+    test_wrnpy();
     test_network(true, true);
     return 0;
 }

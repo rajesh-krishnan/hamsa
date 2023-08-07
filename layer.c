@@ -34,7 +34,6 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
 
     (load) ?  layer_load(l, path) : layer_randinit(l);
 
-#pragma omp parallel for
     for (size_t i = 0; i < noOfNodes; i++) {
         size_t index = prevLayerNumOfNodes * i;
         node_update(&l->_Nodes[i], i, type, batchsize,
@@ -66,7 +65,6 @@ void layer_delete(Layer *l) {
  */
 void layer_randinit(Layer *l) {
     float ksd = sqrt(1.0/l->_prevLayerNumOfNodes);
-#pragma omp parallel for
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t fano = i * l->_prevLayerNumOfNodes;
         for (size_t j = 0; j < l->_prevLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,ksd);
