@@ -47,7 +47,7 @@ void lsht_add(LSHT *l, int *hashes, int id);
 void lsht_retrieve_histogram(LSHT *l, int *hashes, khash_t(hist) *h);
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
-    float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob);
+    float *weights, float *bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob);
 float node_get_last_activation(Node *n, int inputID);
 void node_set_last_activation(Node *n, int inputID, float realActivation);
 void node_increment_delta(Node *n, int inputID, float incrementValue);

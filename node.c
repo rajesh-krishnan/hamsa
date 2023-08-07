@@ -1,7 +1,7 @@
 #include "hdefs.h"
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
-    float *weights, float bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob) {
+    float *weights, float *bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob) {
     n->_IDinLayer = nodeID;
     n->_type = type;
     n->_currentBatchsize = batchsize;
@@ -12,6 +12,9 @@ void node_update(Node *n, int nodeID, NodeType type, int batchsize,
     n->_t = adam_t;
     n->_train = train_blob + nodeID * batchsize;
     n->_activeInputs = 0;
+    n->_tbias = 0.;
+    n->_adamAvgMombias = 0.;
+    n->_adamAvgVelbias = 0.;
 }
 
 float node_get_last_activation(Node *n, int inputID) {
@@ -30,7 +33,6 @@ void node_increment_delta(Node *n, int inputID, float incrementValue) {
 float node_get_activation(Node *n, int* indices, float* values, int length, int inputID) {
     assert(inputID <= n->_currentBatchsize);
 
-    /* FUTURE TODO: shrink batchsize and check if input is already active; if so ignore backprop too */
     if (n->_train[inputID]._ActiveinputIds != 1) {
         n->_train[inputID]._ActiveinputIds = 1; //activate input
         n->_activeInputs++;
@@ -40,7 +42,7 @@ float node_get_activation(Node *n, int* indices, float* values, int length, int 
     for (int i = 0; i < length; i++) {
         n->_train[inputID]._lastActivations += n->_weights[indices[i]] * values[i];
     }
-    n->_train[inputID]._lastActivations += n->_bias;
+    n->_train[inputID]._lastActivations += *n->_bias;
 
     switch (n->_type) {
     case ReLU:
@@ -141,7 +143,7 @@ void node_adam(Node *n, int dim, float tmplr, int ratio) {
     }
     n->_adamAvgMombias = BETA1 * n->_adamAvgMombias + (1 - BETA1) * n->_tbias;
     n->_adamAvgVelbias = BETA2 * n->_adamAvgVelbias + (1 - BETA2) * n->_tbias * n->_tbias;
-    n->_bias += ratio*tmplr * n->_adamAvgMombias / (sqrt(n->_adamAvgVelbias) + EPS);
+    *n->_bias += ratio*tmplr * n->_adamAvgMombias / (sqrt(n->_adamAvgVelbias) + EPS);
     n->_tbias = 0;
     memcpy(n->_weights, local_weights, dim * sizeof(float));
     free(local_weights);

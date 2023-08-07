@@ -38,7 +38,7 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
     for (size_t i = 0; i < noOfNodes; i++) {
         size_t index = prevLayerNumOfNodes * i;
         node_update(&l->_Nodes[i], i, type, batchsize,
-            &l->_weights[index], l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
+            &l->_weights[index], &l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
             l->_train_array);
         layer_addToHashTable(l, &l->_weights[index], prevLayerNumOfNodes, i);
     }
@@ -84,12 +84,15 @@ inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path,
     sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_bias, false, l->_noOfNodes, 1, fn);
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
-
     (*rwfn)(l->_weights, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
+
+    /* 
     sprintf(fn+len, "/am_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_adamAvgMom, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
     sprintf(fn+len, "/av_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_adamAvgVel, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
+    */
+
     fprintf(stderr, "%s parameters for layer %d\n", load ? "Loaded" : "Saved", l->_layerID);
 }
 
@@ -181,7 +184,7 @@ int layer_forwardPropagate(Layer *l,
         int i=0;
         for (k = kh_begin(h); k != kh_end(h); ++k) {
             if (kh_exist(h, k)) {
-                activeNodesOut[i] = k;
+                activeNodesOut[i] = kh_key(h, k);
                 i++;
             }
         }
