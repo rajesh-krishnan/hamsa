@@ -120,7 +120,7 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
     // gradient descent after each batch
     for (int j=0; j < numLayer; j++) {
         float Sparsity  = n->_cfg->Sparsity[j];                /* use first half for training */
-        Layer *l        = n->_hiddenlayers[l];
+        Layer *l        = n->_hiddenlayers[j];
         bool last       = (numLayer - 1);
         layer_adam(l, tmplr, 1);
         if (rebuild && (Sparsity < 1)) layer_updateHasher(l);
