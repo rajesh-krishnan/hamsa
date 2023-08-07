@@ -21,7 +21,7 @@ LSHT *lsht_new(int K, int L, int RangePow) {
     assert (K * logbinsize == RangePow);
     Bucket *b;
     size_t sz  = 1 << RangePow;
-    LSHT *l     = (LSHT *) malloc(sizeof(LSHT));
+    LSHT *l    = (LSHT *) malloc(sizeof(LSHT));
     l->_bucket = (Bucket **) malloc(L * sizeof(Bucket *));
     assert((l != NULL) && (l->_bucket !=NULL));
     b = (Bucket *) mymap(L * sz * sizeof(Bucket));

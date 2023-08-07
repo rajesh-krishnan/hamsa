@@ -37,16 +37,16 @@ typedef struct _struct_node {
     size_t _IDinLayer;
     NodeType _type;
     int _currentBatchsize;
+    Train *_train;
     float *_weights;
-    float _bias;
+    float *_bias;
+    float *_t;
     float *_adamAvgMom;
     float *_adamAvgVel;
-    float* _t;
-    Train *_train;
-    int _activeInputs;
     float _tbias;
     float _adamAvgMombias;
     float _adamAvgVelbias;
+    int _activeInputs;
 } Node;
 
 typedef struct _struct_layer {

@@ -85,14 +85,7 @@ inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path,
     (*rwfn)(l->_bias, false, l->_noOfNodes, 1, fn);
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_weights, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
-
-    /* 
-    sprintf(fn+len, "/am_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_adamAvgMom, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
-    sprintf(fn+len, "/av_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_adamAvgVel, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
-    */
-
+    /* could also save ADAM parameters here */
     fprintf(stderr, "%s parameters for layer %d\n", load ? "Loaded" : "Saved", l->_layerID);
 }
 

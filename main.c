@@ -38,11 +38,11 @@ static void test_myshuffle() {
 static void ht_update(khash_t(hist) *h) {
     int isnew;
     khiter_t k;
-    for(size_t i = 2; i<10; i++) {
+    for(int i = 2; i<10; i++) {
        k = kh_put(hist, h, i, &isnew);
        kh_value(h, k) = (isnew) ? 1 : (kh_value(h, k) + 1);
     }
-    for(size_t i = 4; i<8; i++) {
+    for(int i = 4; i<8; i++) {
        k = kh_put(hist, h, i, &isnew);
        kh_value(h, k) = (isnew) ? 1 : (kh_value(h, k) + 1);
     }
@@ -54,7 +54,7 @@ static void test_hashtable() {
     ht_update(h);
     printf("num keys: %d\n", kh_size(h));
     for (k = kh_begin(h); k != kh_end(h); ++k)
-       if (kh_exist(h, k)) printf("key=%d, value=%ld\n", k, kh_value(h, k));
+       if (kh_exist(h, k)) printf("key=%d, value=%ld\n", kh_key(h,k), kh_value(h, k));
     kh_destroy(hist, h);
 }
 
@@ -86,17 +86,42 @@ static void test_wrnpy() {
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
 }
 
-static void test_dwtahash() {
-    printf("\nTesting Densified Winner Take All Hashing\n");
-    DWTAHash *d = dwtahash_new(300, 128);
-    dwtahash_delete(d);
-}
+static void test_dwtahash_lsht() {
+    printf("\nTesting DWTAHash with LSHT\n");
+    int *hashes;
+    DWTAHash *d = dwtahash_new(6*50, 128);
+    LSHT *l = lsht_new(6,50,18);
 
-static void test_lsh(int K, int L, int R) {
-    printf("\nTesting Locality Sensitive Hashing\n");
-    LSHT *l = lsht_new(K,L,R);
-    lsht_clear(l);
+    float weights[10*128];
+    for(int i = 0; i < 10*128; i++) weights[i] = myrand_norm(0,0.01);
+    for(int j = 0; j < 10; j++) {
+        hashes = dwtahash_getHashEasy(d, &weights[j*128], 128);
+        lsht_add(l, hashes, j);
+        free(hashes);
+    }
+
+    int ids[128];
+    float myweights[128];
+    for(int i = 128; i >= 0; i--) ids[i] = i;
+    for(int i = 0; i < 128; i++) myweights[i] = weights[(4*128) + i];
+
+    khiter_t k;
+    khash_t(hist) *h = kh_init(hist);
+
+    hashes = dwtahash_getHash(d, ids, myweights, 128);
+    lsht_retrieve_histogram(l, hashes, h);
+
+    printf("Expecting %d with count %d\n", 4, 50); 
+    for (k = kh_begin(h); k != kh_end(h); ++k) {
+        if (kh_exist(h, k)) {
+            printf("index : %d, count: %ld\n", kh_key(h,k), kh_value(h, k));
+        }
+    }
+    free(hashes);
+    kh_destroy(hist, h);
+
     lsht_delete(l);
+    dwtahash_delete(d);
 }
 
 static void test_layer(bool io) {
@@ -141,11 +166,10 @@ int main(int argc, char *argv[]) {
     test_myshuffle();
     test_hashtable();
     test_wrnpy();
-    test_dwtahash();
-    test_lsh(6,50,18);
+    test_dwtahash_lsht();
     test_layer(true);
     test_network(true, true);
 */
-    test_network(false, false);
+    test_network(true, true);
     return 0;
 }
