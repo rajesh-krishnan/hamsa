@@ -35,6 +35,34 @@ static void test_myshuffle() {
     }
 }
 
+void test_uthash() {
+    Histo *counts = NULL;
+
+    printf("Size at init: %d\n", ht_size(&counts));
+    for(int i = 2; i<10; i++) ht_incr(&counts, i);
+    for(int i = 4; i<8; i++) ht_incr(&counts, i);
+    ht_put(&counts, 29, 42);
+    printf("Size after adding/incrementing items: %d\n", ht_size(&counts));
+    ht_delkey(&counts, 5);
+    printf("Size after deleting key: %d\n", ht_size(&counts));
+
+#define THRESH1 2
+    Histo *cur, *tmp;
+    HASH_ITER(hh, counts, cur, tmp) {
+        if (cur->value < THRESH1) ht_del(&counts, &cur);
+    }
+    printf("Size after deleting if value < %d: %d\n", THRESH1, ht_size(&counts));
+
+    int x;
+    HASH_ITER(hh, counts, cur, tmp) {
+        x = cur->key;
+        printf("Key: %d, Count: %ld\n", x, cur->value);
+    }
+
+    ht_destroy(&counts);
+    printf("Size after destroying: %d\n", ht_size(&counts));
+}
+
 static void test_wrnpy() {
     float ifarr[20];
     float ofarr[20];
@@ -142,34 +170,6 @@ static void test_network(bool save, bool reload) {
         config_delete(cfg);
         printf("Deleted network\n"); fflush(stdout);
     }
-}
-
-void test_uthash() {
-    Histo *counts = NULL;
-
-    printf("Size at init: %d\n", ht_size(&counts));
-    for(int i = 2; i<10; i++) ht_incr(&counts, i);
-    for(int i = 4; i<8; i++) ht_incr(&counts, i);
-    ht_put(&counts, 29, 42);
-    printf("Size after adding/incrementing items: %d\n", ht_size(&counts));
-    ht_delkey(&counts, 5);
-    printf("Size after deleting key: %d\n", ht_size(&counts));
-
-#define THRESH1 2
-    Histo *cur, *tmp;
-    HASH_ITER(hh, counts, cur, tmp) {
-        if (cur->value < THRESH1) ht_del(&counts, &cur);
-    }
-    printf("Size after deleting if value < %d: %d\n", THRESH1, ht_size(&counts));
-
-    int x;
-    HASH_ITER(hh, counts, cur, tmp) {
-        x = cur->key;
-        printf("Key: %d, Count: %ld\n", x, cur->value);
-    }
-
-    ht_destroy(&counts);
-    printf("Size after destroying: %d\n", ht_size(&counts));
 }
 
 int main(int argc, char *argv[]) {
