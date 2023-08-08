@@ -35,29 +35,6 @@ static void test_myshuffle() {
     }
 }
 
-static void ht_update(khash_t(hist) *h) {
-    int isnew;
-    khiter_t k;
-    for(int i = 2; i<10; i++) {
-       k = kh_put(hist, h, i, &isnew);
-       kh_value(h, k) = (isnew) ? 1 : (kh_value(h, k) + 1);
-    }
-    for(int i = 4; i<8; i++) {
-       k = kh_put(hist, h, i, &isnew);
-       kh_value(h, k) = (isnew) ? 1 : (kh_value(h, k) + 1);
-    }
-}
-
-static void test_hashtable() {
-    khiter_t k;
-    khash_t(hist) *h = kh_init(hist);
-    ht_update(h);
-    printf("num keys: %d\n", kh_size(h));
-    for (k = kh_begin(h); k != kh_end(h); ++k)
-       if (kh_exist(h, k)) printf("key=%d, value=%ld\n", kh_key(h,k), kh_value(h, k));
-    kh_destroy(hist, h);
-}
-
 static void test_wrnpy() {
     float ifarr[20];
     float ofarr[20];
@@ -105,21 +82,16 @@ static void test_dwtahash_lsht() {
     for(int i = 128; i >= 0; i--) ids[i] = i;
     for(int i = 0; i < 128; i++) myweights[i] = weights[(4*128) + i];
 
-    khiter_t k;
-    khash_t(hist) *h = kh_init(hist);
-
+    Histo *counts, *cur, *tmp;
     hashes = dwtahash_getHash(d, ids, myweights, 128);
-    lsht_retrieve_histogram(l, hashes, h);
+    lsht_retrieve_histogram(l, hashes, &counts);
 
     printf("Expecting %d with count %d\n", 4, 50); 
-    for (k = kh_begin(h); k != kh_end(h); ++k) {
-        if (kh_exist(h, k)) {
-            printf("index : %d, count: %ld\n", kh_key(h,k), kh_value(h, k));
-        }
+    HASH_ITER(hh, counts, cur, tmp) {
+        printf("index : %d, count: %ld\n", cur->key, cur->value);
     }
     free(hashes);
-    kh_destroy(hist, h);
-
+    ht_destroy(&counts);
     lsht_delete(l);
     dwtahash_delete(d);
 }
@@ -172,18 +144,45 @@ static void test_network(bool save, bool reload) {
     }
 }
 
+void test_uthash() {
+    Histo *counts = NULL;
+
+    printf("Size at init: %d\n", ht_size(&counts));
+    for(int i = 2; i<10; i++) ht_incr(&counts, i);
+    for(int i = 4; i<8; i++) ht_incr(&counts, i);
+    ht_put(&counts, 29, 42);
+    printf("Size after adding/incrementing items: %d\n", ht_size(&counts));
+    ht_delkey(&counts, 5);
+    printf("Size after deleting key: %d\n", ht_size(&counts));
+
+#define THRESH1 2
+    Histo *cur, *tmp;
+    HASH_ITER(hh, counts, cur, tmp) {
+        if (cur->value < THRESH1) ht_del(&counts, &cur);
+    }
+    printf("Size after deleting if value < %d: %d\n", THRESH1, ht_size(&counts));
+
+    int x;
+    HASH_ITER(hh, counts, cur, tmp) {
+        x = cur->key;
+        printf("Key: %d, Count: %ld\n", x, cur->value);
+    }
+
+    ht_destroy(&counts);
+    printf("Size after destroying: %d\n", ht_size(&counts));
+}
+
 int main(int argc, char *argv[]) {
 /*
     test_mt();
     test_norm();
     test_myshuffle();
-    test_hashtable();
+    test_uthash();
     test_wrnpy();
     test_dwtahash_lsht();
     test_layer(true);
     test_network(true, true);
 */
-    test_wrnpy();
-    test_network(true, true);
+    test_network(false, false);
     return 0;
 }

@@ -73,7 +73,6 @@ void layer_rehash(Layer *l) {
  */
 void layer_randinit(Layer *l) {
     float ksd = sqrt(1.0/l->_prevLayerNumOfNodes);
-#pragma omp parallel for
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t fano = i * l->_prevLayerNumOfNodes;
         for (size_t j = 0; j < l->_prevLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,ksd);
@@ -150,53 +149,48 @@ int layer_forwardPropagate(Layer *l,
     }
     else {
         int isnew;
-        khiter_t k;
-        khash_t(hist) *h = kh_init(hist);                  /* to store active candidates with counts */
+
+        Histo *counts;                                     /* to store active candidates with counts */
+        Histo *cur, *tmp;                                  /* for use with HASH_ITER */  
 
         if (l->_type == Softmax && labelsize > 0) {        /* ensure label node is in candidates */
-            for (int i = 0; i < labelsize; i++) {
-                k = kh_put(hist, h, i, &isnew);
-                kh_value(h, k) = l->_L;
-            }
+            for (int i = 0; i < labelsize; i++) ht_put(&counts, i, l->_L);
         }
 
         int *hashes = dwtahash_getHash(l->_dwtaHasher, activeNodesIn, activeValuesIn, lengthIn);
-        lsht_retrieve_histogram(l->_hashTables, hashes, h); /* get candidates from hashtable */
+        lsht_retrieve_histogram(l->_hashTables, hashes, &counts); /* get candidates from lsht */
 
         assert(((MINACTIVE > 0) && (THRESH == 0)) || ((THRESH > 0) && (MINACTIVE == 0)));
 
         if (THRESH > 1) {                                  /* drop candidates with counts < THRESH */
-            for (k = kh_begin(h); k != kh_end(h); ++k) 
-                if (kh_exist(h, k) && (kh_value(h, k) < THRESH)) kh_del(hist, h, k);
+            HASH_ITER(hh, counts, cur, tmp) { 
+                if (cur->value < THRESH) ht_del(&counts, &cur); 
+            }
         }
-        retrievals = kh_size(h);                           /* retrieved actives after any thresholding */
+        retrievals = ht_size(&counts);                     /* retrieved actives after any thresholding */
 
         if (MINACTIVE > 0) {                               /* add randomly to get min(l->_noOfNodes,MINACTIVE) */
             size_t st = myrand_unif() % l->_noOfNodes; 
             for (size_t i = st; i < l->_noOfNodes; i++) {  /* pick starting from a random index each time */
-                if (kh_size(h) >= MINACTIVE) break;
-                k = kh_put(hist, h, i, &isnew);
-                if (isnew) kh_value(h, k) = 0;
+                if (ht_size(&counts) >= MINACTIVE) break;
+                ht_put(&counts, i, 0);
             }
             for (size_t i = 0; i < st; i++) {              /* loop around to pick more if needed */
-                if (kh_size(h) >= MINACTIVE) break;
-                k = kh_put(hist, h, i, &isnew);
-                if (isnew) kh_value(h, k) = 0;
+                if (ht_size(&counts) >= MINACTIVE) break;
+                ht_put(&counts, i, 0);
             }
         }
 
-        len = kh_size(h);                                  /* actives after adding any randomly */
+        len = ht_size(&counts);                              /* actives after adding any randomly */
         *lengthOut = len;
 
         int i=0;
-        for (k = kh_begin(h); k != kh_end(h); ++k) {
-            if (kh_exist(h, k)) {
-                activeNodesOut[i] = kh_key(h, k);
-                i++;
-            }
+        HASH_ITER(hh, counts, cur, tmp) {
+            activeNodesOut[i] = cur->key;
+            i++;
         }
         assert(i == len);
-        kh_destroy(hist, h);
+        ht_destroy(&counts);
     }
 
     for (int i = 0; i < len; i++) {     /* get activation for all active nodes in layer */

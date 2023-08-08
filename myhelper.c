@@ -117,3 +117,51 @@ void myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
   }
 }
 
+inline void __attribute__((always_inline)) ht_put(Histo **counts, int key, size_t value) {
+    Histo *s;
+    HASH_FIND_INT(*counts, &key, s);  
+    if (s == NULL) {
+        s = (Histo *)malloc(sizeof *s);
+        s->key = key;
+        HASH_ADD_INT(*counts, key, s);
+    } 
+    s->value = value;
+}
+
+inline void __attribute__((always_inline)) ht_incr(Histo **counts, int key) {
+    Histo *s;
+    HASH_FIND_INT(*counts, &key, s);  
+    if (s == NULL) {
+        s = (Histo *)malloc(sizeof *s);
+        s->key = key;
+        HASH_ADD_INT(*counts, key, s);
+        s->value = 1;
+    } else {
+        s->value += 1;
+    }
+}
+
+inline void __attribute__((always_inline)) ht_delkey(Histo **counts, int key) {
+    Histo *s;
+    HASH_FIND_INT(*counts, &key, s);  
+    if (s != NULL) {
+        HASH_DEL(*counts, s);
+        free(s);
+    }
+}
+
+inline void __attribute__((always_inline)) ht_del(Histo **counts, Histo **cur) {
+    HASH_DEL(*counts, *cur); 
+    free(*cur);
+}
+
+inline void __attribute__((always_inline)) ht_destroy(Histo **counts) {
+    Histo *cur, *tmp;
+    HASH_ITER(hh, *counts, cur, tmp) {
+        HASH_DEL(*counts, cur);
+        free(cur);
+    }
+}
+
+inline unsigned int __attribute__((always_inline)) ht_size(Histo **counts) { return HASH_COUNT(*counts); }
+

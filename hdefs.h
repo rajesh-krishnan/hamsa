@@ -15,10 +15,14 @@
 #include <linux/mman.h>
 #include <asm-generic/mman-common.h>
 
-#include "klib/khash.h"
+#include "uthash/uthash.h"
 #include "hamsa.h"
 
-KHASH_MAP_INIT_INT(hist, size_t)
+typedef struct _struct_histo {
+    int key;
+    size_t value;
+    UT_hash_handle hh;         /* makes this structure hashable */
+} Histo;
 
 #define MY_PI 3.14159265358979323846 /* pi */
 #define BETA1 0.9
@@ -36,6 +40,12 @@ float myrand_norm(double mu, double sigma);
 int myrand_unif();
 void mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
 void myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn);
+void ht_put(Histo **counts, int key, size_t value);
+void ht_incr(Histo **counts, int key);
+void ht_delkey(Histo **counts, int key);
+void ht_del(Histo **counts, Histo **cur);
+void ht_destroy(Histo **counts);
+unsigned int ht_size(Histo **counts);
 
 DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash);
 void dwtahash_delete(DWTAHash *d);
@@ -46,7 +56,7 @@ LSHT *lsht_new(int K, int L, int RangePow);
 void lsht_delete(LSHT *l);
 void lsht_clear(LSHT *l);
 void lsht_add(LSHT *l, int *hashes, int id);
-void lsht_retrieve_histogram(LSHT *l, int *hashes, khash_t(hist) *h);
+void lsht_retrieve_histogram(LSHT *l, int *hashes, Histo **counts);
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
     float *weights, float *bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob);

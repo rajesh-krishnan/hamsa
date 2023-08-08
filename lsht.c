@@ -61,17 +61,15 @@ void lsht_add(LSHT *l, int *hashes, int id) {
 }
 
 /* Collect items and their counts across all retrieves buckets, put in hashtable */
-void lsht_retrieve_histogram(LSHT *l, int *hashes, khash_t(hist) *h) {
+void lsht_retrieve_histogram(LSHT *l, int *hashes, Histo **counts) {
     int isnew, *arr;
-    khiter_t k;
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = ith_index(l, hashes, i);
         arr = bucket_get_array(&l->_bucket[i][index]);
         for (int j = 0; j < BUCKETSIZE; j++) {
            if (arr[j] < 0) break;                               /* bucket array terminated by -1 */
-           k = kh_put(hist, h, arr[j] - 1, &isnew);             /* add to h, isnew is 1 if new else 0 */
-                                                                /* decr 1, reverse incr 1 in lsht_add */
-           kh_value(h, k) = (isnew) ? 1 : (kh_value(h, k) + 1); /* count set to 1 if new, else incremented by 1 */
+           ht_incr(counts, arr[j] - 1);                         /* incr count of item, initialize if needed */
+                                                                /* arr[j] -1 reverses +1 in lsht_add */
         }
     }
 }
