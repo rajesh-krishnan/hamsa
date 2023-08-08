@@ -50,12 +50,12 @@ void layer_delete(Layer *l) {
     dwtahash_delete(l->_dwtaHasher);
     myunmap(l->_Nodes, l->_noOfNodes * sizeof(Node));
     myunmap(l->_train_array, l->_noOfNodes * l->_batchsize * sizeof(Train));
-    myunmap(l->_randNode, l->_noOfNodes * sizeof(int));
     myunmap(l->_weights, fano * sizeof(float));
     myunmap(l->_bias, l->_noOfNodes * sizeof(float));
     myunmap(l->_adamAvgMom, fano * sizeof(float));
     myunmap(l->_adamAvgVel, fano * sizeof(float));
     myunmap(l->_adamT, fano * sizeof(float));
+    myunmap(l->_randNode, l->_noOfNodes * sizeof(int));
     if (l->_type == Softmax) myunmap(l->_normalizationConstants, l->_batchsize * sizeof(float));
     myunmap(l, sizeof(Layer));
 }
@@ -114,7 +114,7 @@ int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int input
  *   - no other thread reads or modifies n->_train[inputID]._ActiveinputIds for any node in layer
  *   - no other thread reads or modifies n->_train[inputID]._lastActivations for any node in layer
  */
-int layer_forwardPropagate(Layer *l, 
+int layer_fwdprop(Layer *l, 
     int *activeNodesIn, float *activeValuesIn, int lengthIn,        /* from previous layer */
     int *activeNodesOut, float *activeValuesOut, int *lengthOut,    /* to next layer */
     int inputID, int *label, int labelsize, float Sparsity) {
@@ -128,10 +128,8 @@ int layer_forwardPropagate(Layer *l,
         for (int i = 0; i < len; i++) activeNodesOut[i] = i;
     }
     else {
-        int isnew;
-
-        Histo *counts;                                     /* to store active candidates with counts */
-        Histo *cur, *tmp;                                  /* for use with HASH_ITER */  
+        Histo *counts = NULL;                              /* to store active candidates with counts */
+        Histo *cur = NULL, *tmp = NULL;                    /* for use with HASH_ITER */  
 
         if (l->_type == Softmax && labelsize > 0) {        /* ensure label node is in candidates */
             for (int i = 0; i < labelsize; i++) ht_put(&counts, i, l->_L);
@@ -141,7 +139,6 @@ int layer_forwardPropagate(Layer *l,
         lsht_retrieve_histogram(l->_hashTables, hashes, &counts); /* get candidates from lsht */
 
         assert(((MINACTIVE > 0) && (THRESH == 0)) || ((THRESH > 0) && (MINACTIVE == 0)));
-
         if (THRESH > 1) {                                  /* drop candidates with counts < THRESH */
             HASH_ITER(hh, counts, cur, tmp) { 
                 if (cur->value < THRESH) ht_del(&counts, &cur); 

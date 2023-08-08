@@ -120,7 +120,7 @@ void layer_randinit(Layer *l);
 void layer_updateHasher(Layer *l);
 void layer_updateRandomNodes(Layer *l);
 int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID);
-int layer_forwardPropagate(Layer *l, 
+int layer_fwdprop(Layer *l, 
     int *activeNodesIn, float *activeValuesIn, int lengthIn, 
     int *activeNodesOut, float *activeValuesOut, int *lengthOut, 
     int inputID, int *label, int labelsize, float Sparsity);
