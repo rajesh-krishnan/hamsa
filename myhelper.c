@@ -1,6 +1,6 @@
 #include "hdefs.h"
-#include "cnpy/cnpy.h"
 #include "sfmt/SFMT.h"
+#include "npy_array/npy_array.h"
 
 void *mymap(size_t size) {
     void *ptr;
@@ -59,62 +59,18 @@ inline int __attribute__((always_inline)) myrand_unif() {
     return(sfmt_genrand_uint32(&sfmt)>>1);
 }
 
-void mysave_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
-    cnpy_array a;
-    size_t index[2];
-    index[0] = d0;
-    index[1] = (twoD ? d1 : 1);
-    unlink(fn);
-    if (cnpy_create(fn, CNPY_BE, CNPY_F4, CNPY_FORTRAN_ORDER, (twoD?2:1), index, &a) != CNPY_SUCCESS) {
-        cnpy_perror("Unable to create file");
-        abort();
-    }
-
-    size_t cur = 0;
-    for(int i = 0; i < index[0]; i++) {
-        for(int j = 0; j < index[1]; j++) {
-            size_t tidx[2];
-            tidx[0] = i;
-            tidx[1] = j;
-            cnpy_set_f4(a, tidx, farr[cur++]);
-        }
-    }
-
-    if (cnpy_close(&a) != CNPY_SUCCESS) {
-        cnpy_perror("Unable to close file");
-        abort();
-    }
+void mysave_fnpy(float *farr, size_t d0, size_t d1, char *fn) {
+    npy_array_save( fn, NPY_ARRAY_BUILDER( farr, SHAPE( d0, d1 ), NPY_DTYPE_FLOAT32 ) );
 }
 
-void myload_fnpy(float *farr, bool twoD, size_t d0, size_t d1, char *fn) {
-    cnpy_array a;
-    size_t index[2];
-
-    if (cnpy_open(fn, false, &a) != CNPY_SUCCESS) {
-        cnpy_perror("Unable to load file");
-        abort();
-    }
-
-    assert(a.n_dim == (twoD ? 2 : 1));
-    assert(a.dims[0] == d0);
-    if (a.n_dim==2) assert(a.dims[1] == d1);
-    index[0] = d0;
-    index[1] = (twoD ? d1 : 1);
-
-    size_t cur = 0;
-    for(int i = 0; i < index[0]; i++) {
-        for(int j = 0; j < index[1]; j++) {
-            size_t tidx[2];
-            tidx[0] = i;
-            tidx[1] = j;
-            farr[cur++] = cnpy_get_f4(a, tidx);
-        }
-    }
-
-  if (cnpy_close(&a) != CNPY_SUCCESS) {
-    cnpy_perror("Unable to close file");
-    abort();
-  }
+void myload_fnpy(float *farr, size_t d0, size_t d1, char *fn) {
+    npy_array_t *a = npy_array_load(fn);
+    assert(a != NULL);
+    assert((a->typechar == 'f') && (a->elem_size == sizeof(float)) && (a->ndim == 2));
+    assert(a->shape[0] == d0);
+    assert(a->shape[1] == d1);
+    memcpy(farr, a->data, d0 * d1 * sizeof(float));
+    npy_array_free(a);
 }
 
 inline void __attribute__((always_inline)) ht_put(Histo **counts, int key, size_t value) {

@@ -85,12 +85,12 @@ inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path,
     size_t len = strlen(path);
     assert(len < 1000);
     strcpy(fn, path);
-    void (*rwfn)(float*,bool,size_t,size_t,char*);
+    void (*rwfn)(float*,size_t,size_t,char*);
     rwfn = load ? myload_fnpy : mysave_fnpy;
     sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_bias, false, l->_noOfNodes, 1, fn);
+    (*rwfn)(l->_bias, l->_noOfNodes, 1, fn);
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_weights, true, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
+    (*rwfn)(l->_weights, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
     /* could also save ADAM parameters here */
     fprintf(stderr, "%s parameters for layer %d\n", load ? "Loaded" : "Saved", l->_layerID);
 }

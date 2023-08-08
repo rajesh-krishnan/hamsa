@@ -70,24 +70,19 @@ static void test_wrnpy() {
     printf("\nTest saving and loading of 1D and 2D float arrays as npy files\n");
     for (int i=0; i<20; i++) ifarr[i] = i;
 
-    mysave_fnpy(ifarr, false, 20, 1, "/tmp/float_20.npy");
+    mysave_fnpy(ifarr, 1, 20, "/tmp/float_1x20.npy");
     for (int i=0; i<20; i++) ofarr[i] = 0;
-    myload_fnpy(ofarr, false, 20, 1, "/tmp/float_20.npy");
+    myload_fnpy(ofarr, 1, 20, "/tmp/float_1x20.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
 
-    mysave_fnpy(ifarr, true, 1, 20, "/tmp/float_1x20.npy");
+    mysave_fnpy(ifarr, 20, 1, "/tmp/float_20x1.npy");
     for (int i=0; i<20; i++) ofarr[i] = 0;
-    myload_fnpy(ofarr, true, 1, 20, "/tmp/float_1x20.npy");
+    myload_fnpy(ofarr, 20, 1, "/tmp/float_20x1.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
 
-    mysave_fnpy(ifarr, true, 20, 1, "/tmp/float_20x1.npy");
+    mysave_fnpy(ifarr, 4, 5, "/tmp/float_4x5.npy");
     for (int i=0; i<20; i++) ofarr[i] = 0;
-    myload_fnpy(ofarr, true, 20, 1, "/tmp/float_20x1.npy");
-    for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
-
-    mysave_fnpy(ifarr, true, 4, 5, "/tmp/float_4x5.npy");
-    for (int i=0; i<20; i++) ofarr[i] = 0;
-    myload_fnpy(ofarr, true, 4, 5, "/tmp/float_4x5.npy");
+    myload_fnpy(ofarr, 4, 5, "/tmp/float_4x5.npy");
     for (int i=0; i<20; i++) assert(ifarr[i] == ofarr[i]);
 }
 
@@ -165,12 +160,13 @@ static void test_network(bool save, bool reload) {
         cfg = config_new("./data/config.json");
         n = network_new(cfg, true);
         t2 = time(NULL);
-        printf("Allocating and loading %ld seconds\n", t2 - t1); 
+        printf("Allocating and loading took %ld seconds\n", t2 - t1); 
         network_delete(n);
         config_delete(cfg);
         printf("Deleted network\n"); fflush(stdout);
     }
 }
+
 
 int main(int argc, char *argv[]) {
 /*
@@ -183,6 +179,6 @@ int main(int argc, char *argv[]) {
     test_layer(true);
     test_network(true, true);
 */
-    test_network(false, false);
+    test_network(true, true);
     return 0;
 }

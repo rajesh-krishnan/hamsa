@@ -1,4 +1,6 @@
-SOURCES = sfmt/SFMT.c tiny-json/tiny-json.c myhelper.c configfile.c lsht.c dwtahash.c node.c layer.c network.c
+SOURCES = sfmt/SFMT.c tiny-json/tiny-json.c npy_array/npy_array.c \
+          myhelper.c configfile.c \
+          lsht.c dwtahash.c node.c layer.c network.c
 
 OBJECTS  = $(SOURCES:.c=.o)
 CC       = gcc
@@ -17,7 +19,8 @@ hamsa: main.c libhamsa.a
 	gcc $(INCLUDES) $(CFLAGS) -o $@ -fopenmp $< libhamsa.a -lm
 
 libhamsa.a: $(OBJECTS)
-	ar r $@ $^
+	ar rcs $@ $^
+	ranlib $@
 
 libhamsa.so: $(OBJECTS)
 	gcc $(INCLUDES) $(CFLAGS) -shared -o $@ $^
