@@ -29,7 +29,7 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
     else                 l->_normalizationConstants = NULL;
 
     for (size_t n = 0; n < noOfNodes; n++) l->_randNode[n] = n;
-    myshuffle(l->_randNode, noOfNodes);
+    layer_updateRandomNodes(l);
 
     (load) ?  layer_load(l, path) : layer_randinit(l);
 
@@ -60,7 +60,7 @@ void layer_delete(Layer *l) {
     myunmap(l, sizeof(Layer));
 }
 
-void layer_rehash(Layer *l) {
+inline void __attribute__((always_inline)) layer_rehash(Layer *l) {
     lsht_clear(l->_hashTables);
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t index = l->_prevLayerNumOfNodes * i;
@@ -71,7 +71,7 @@ void layer_rehash(Layer *l) {
 /* 
  * Kaiming initialization preferable for faster covergence in deep networks 
  */
-void layer_randinit(Layer *l) {
+inline void __attribute__((always_inline)) layer_randinit(Layer *l) {
     float ksd = sqrt(1.0/l->_prevLayerNumOfNodes);
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t fano = i * l->_prevLayerNumOfNodes;
@@ -99,20 +99,22 @@ void layer_load(Layer *l, char *path) { layer_rw(l, path, true); }
 
 void layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
 
-void layer_updateHasher(Layer *l) {
+inline void __attribute__((always_inline)) layer_updateHasher(Layer *l) {
     dwtahash_delete(l->_dwtaHasher);
     l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_prevLayerNumOfNodes);
 }
 
-void layer_updateRandomNodes(Layer *l) { myshuffle(l->_randNode, l->_noOfNodes); }
+inline void __attribute__((always_inline)) layer_updateRandomNodes(Layer *l) { 
+    myshuffle(l->_randNode, l->_noOfNodes); 
+}
 
-void layer_addToHashTable(Layer *l, float* weights, int length, int id) {
+inline void __attribute__((always_inline)) layer_addToHashTable(Layer *l, float* weights, int length, int id) {
     int *hashes = dwtahash_getHashEasy(l->_dwtaHasher, weights, length);
     lsht_add(l->_hashTables, hashes, id);
     free(hashes);
 }
 
-int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID) {
+inline int __attribute__((always_inline)) layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID) {
     assert(l->_type == Softmax);
     int predict_class = -1;
     float max_act = INT_MIN;
@@ -215,7 +217,7 @@ int layer_forwardPropagate(Layer *l,
     return retrievals;
 }
 
-void layer_adam(Layer *l, float lr, int ratio) {
+inline void __attribute__((always_inline)) layer_adam(Layer *l, float lr, int ratio) {
 #pragma omp parallel for
     for (size_t m = 0; m < l->_noOfNodes; m++) node_adam(&l->_Nodes[m], l->_prevLayerNumOfNodes, lr, ratio);
 }
