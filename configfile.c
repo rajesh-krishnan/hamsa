@@ -33,7 +33,7 @@ static char *load_file(char *filename) {
 static char *dupstr(const char* s) {
   size_t slen = strlen(s);
   char *result = malloc(slen + 1);
-  if(result == NULL) return NULL;
+  assert(result != NULL);
   memcpy(result, s, slen+1);
   return result;
 }
