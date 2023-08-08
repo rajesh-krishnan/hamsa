@@ -9,7 +9,7 @@ HugeTLB Pages enabled, with gcc compiler and OpenMP should suffice.
 
 This implementation follows the SLIDE paper referenced below and the author's
 original implementation in C++.  Our implementation is in C with minimal external 
-dependencies; included third-party dependencies include klib, tiny-json, SFMT,
+dependencies; included third-party dependencies include uthash, tiny-json, SFMT,
 and cnpy.  We have refactored the code considerably, included code to replace 
 C++ std functions, eliminated code repetition, and dependency on C++ cnpy and 
 zlib. We import/export to `.npy` files instead of the `.npz` archives. Based
@@ -23,7 +23,9 @@ file, we use JSON from which the network can be loaded; the config can also be
 saved.  We also build a shared library to allow calling from Python.
 
 The code is research-grade, and requires extensive analysis and testing for 
-overflows, corner cases, and thread safety where omp pragmas are used.
+overflows, corner cases, and thread safety where omp pragmas are used. 
+Currently omp parallism is used across inputs in a batch in network_infer 
+and network_train, and also across nodes at the end of each batch in layer_adam.
 
 Once the core capability is built and tested, we plan to focus on two problem
 domains: (i) natural language processing using large language models and (ii)
