@@ -1,41 +1,12 @@
 #include "hdefs.h"
 #include "tiny-json/tiny-json.h"
 
-static void save_file(char *filename, char *buffer) {
-    FILE *f = fopen(filename, "w");
-    size_t length = strlen(buffer);
-    if (f) {
-        int x = fwrite(buffer, 1, length, f);
-        assert(x == length);
-    }
-    fclose(f);
-}
-
-static char *load_file(char *filename) {
-    char *buffer = 0;
-    size_t length;
-    FILE *f = fopen(filename, "rb");
-    if (f) {
-        fseek(f, 0, SEEK_END);
-        length = ftell(f);
-        fseek (f, 0, SEEK_SET);
-        buffer = malloc(length+1);
-        if (buffer) {
-            int x = fread(buffer, 1, length, f);
-            assert(x == length);
-        }
-        buffer[length] = '\0';
-        fclose(f);
-   }
-   return buffer;
-}
-
 static char *dupstr(const char* s) {
-  size_t slen = strlen(s);
-  char *result = malloc(slen + 1);
-  assert(result != NULL);
-  memcpy(result, s, slen+1);
-  return result;
+    size_t slen = strlen(s);
+    char *result = malloc(slen + 1);
+    assert(result != NULL);
+    memcpy(result, s, slen+1);
+    return result;
 }
 
 static float *dupfloats(json_t const *x, int *count) {
@@ -249,16 +220,35 @@ static void string_to_config(char *jstr, Config *cfg) {
 
 Config *config_new(char *cfgFile) {
     Config *cfg = (Config *) malloc(sizeof(Config));
-    char *jstr = load_file(cfgFile);
-    string_to_config(jstr, cfg);
-    free(jstr);
+    char *buffer;
+    size_t length;
+    FILE *f = fopen(cfgFile, "rb");
+    assert(f != NULL);
+    fseek(f, 0, SEEK_END);
+    length = ftell(f);
+    fseek (f, 0, SEEK_SET);
+    buffer = malloc(length+1);
+    if (buffer) {
+        int x = fread(buffer, 1, length, f);
+        assert(x == length);
+        buffer[length] = '\0';
+    }
+    fclose(f);
+    string_to_config(buffer, cfg);
+    free(buffer);
     return cfg;
 }
 
 void config_save(Config *cfg, char *cfgFile) {
-    char ostr[10000];
-    config_to_string(cfg, ostr, 10000);
-    save_file(cfgFile, ostr);
+    char buffer[10000];
+    config_to_string(cfg, buffer, 10000);
+    FILE *f = fopen(cfgFile, "w");
+    size_t length = strlen(buffer);
+    if (f) {
+        int x = fwrite(buffer, 1, length, f);
+        assert(x == length);
+    }
+    fclose(f);
 }
 
 void config_delete(Config *cfg) {
