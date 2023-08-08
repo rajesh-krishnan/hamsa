@@ -60,18 +60,20 @@ void layer_delete(Layer *l) {
     myunmap(l, sizeof(Layer));
 }
 
-inline void __attribute__((always_inline)) layer_rehash(Layer *l) {
+void layer_rehash(Layer *l) {
     lsht_clear(l->_hashTables);
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t index = l->_prevLayerNumOfNodes * i;
-        layer_addToHashTable(l, &l->_weights[index], l->_prevLayerNumOfNodes, i);
+        int *hashes = dwtahash_getHashEasy(l->_dwtaHasher, &l->_weights[index], l->_prevLayerNumOfNodes);
+        lsht_add(l->_hashTables, hashes, i);
+        free(hashes);
     }
 }
 
 /* 
  * Kaiming initialization preferable for faster covergence in deep networks 
  */
-inline void __attribute__((always_inline)) layer_randinit(Layer *l) {
+void layer_randinit(Layer *l) {
     float ksd = sqrt(1.0/l->_prevLayerNumOfNodes);
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t fano = i * l->_prevLayerNumOfNodes;
@@ -80,41 +82,17 @@ inline void __attribute__((always_inline)) layer_randinit(Layer *l) {
     }
 }
 
-inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path, bool load) {
-    char fn[1024];
-    size_t len = strlen(path);
-    assert(len < 1000);
-    strcpy(fn, path);
-    void (*rwfn)(float*,size_t,size_t,char*);
-    rwfn = load ? myload_fnpy : mysave_fnpy;
-    sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_bias, l->_noOfNodes, 1, fn);
-    sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
-    (*rwfn)(l->_weights, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
-    /* could also save ADAM parameters here */
-    fprintf(stderr, "%s parameters for layer %d\n", load ? "Loaded" : "Saved", l->_layerID);
-}
-
-void layer_load(Layer *l, char *path) { layer_rw(l, path, true); }
-
-void layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
-
-inline void __attribute__((always_inline)) layer_updateHasher(Layer *l) {
+void layer_updateHasher(Layer *l) {
     dwtahash_delete(l->_dwtaHasher);
     l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_prevLayerNumOfNodes);
 }
 
-inline void __attribute__((always_inline)) layer_updateRandomNodes(Layer *l) { 
-    myshuffle(l->_randNode, l->_noOfNodes); 
+void layer_updateRandomNodes(Layer *l) { 
+    myrand_shuffle(l->_randNode, l->_noOfNodes); 
 }
 
-inline void __attribute__((always_inline)) layer_addToHashTable(Layer *l, float* weights, int length, int id) {
-    int *hashes = dwtahash_getHashEasy(l->_dwtaHasher, weights, length);
-    lsht_add(l->_hashTables, hashes, id);
-    free(hashes);
-}
 
-inline int __attribute__((always_inline)) layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID) {
+int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID) {
     assert(l->_type == Softmax);
     int predict_class = -1;
     float max_act = INT_MIN;
@@ -217,7 +195,27 @@ int layer_forwardPropagate(Layer *l,
     return retrievals;
 }
 
-inline void __attribute__((always_inline)) layer_adam(Layer *l, float lr, int ratio) {
+void layer_adam(Layer *l, float lr, int ratio) {
 #pragma omp parallel for
     for (size_t m = 0; m < l->_noOfNodes; m++) node_adam(&l->_Nodes[m], l->_prevLayerNumOfNodes, lr, ratio);
 }
+
+inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path, bool load) {
+    char fn[1024];
+    size_t len = strlen(path);
+    assert(len < 1000);
+    strcpy(fn, path);
+    void (*rwfn)(float*,size_t,size_t,char*);
+    rwfn = load ? myload_fnpy : mysave_fnpy;
+    sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
+    (*rwfn)(l->_bias, l->_noOfNodes, 1, fn);
+    sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
+    (*rwfn)(l->_weights, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
+    /* could also save ADAM parameters here */
+    fprintf(stderr, "%s parameters for layer %d\n", load ? "Loaded" : "Saved", l->_layerID);
+}
+
+void layer_load(Layer *l, char *path) { layer_rw(l, path, true); }
+
+void layer_save(Layer *l, char *path) { layer_rw(l, path, false); }
+

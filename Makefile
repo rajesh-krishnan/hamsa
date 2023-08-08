@@ -1,11 +1,11 @@
 SOURCES = sfmt/SFMT.c tiny-json/tiny-json.c npy_array/npy_array.c \
-          myhelper.c configfile.c \
+          myrand.c configfile.c \
           lsht.c dwtahash.c node.c layer.c network.c
 
 OBJECTS  = $(SOURCES:.c=.o)
 CC       = gcc
 CFLAGS   = -O3 -finline-functions -fno-strict-aliasing \
-           --param max-inline-insns-single=1800 -Wall -std=c99 \
+           --param max-inline-insns-single=2000 -Wall -std=c99 \
            -Wno-missing-prototypes -Wno-unused-variable -Wno-unused-function \
            -fPIC -finline-functions -fopenmp \
            -march=native -mtune=intel \

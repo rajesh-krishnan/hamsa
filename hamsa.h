@@ -117,14 +117,13 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
 void layer_delete(Layer *l);
 void layer_rehash(Layer *l);
 void layer_randinit(Layer *l);
-void layer_load(Layer *l, char *path);
-void layer_save(Layer *l, char *path);
 void layer_updateHasher(Layer *l);
 void layer_updateRandomNodes(Layer *l);
-void layer_addToHashTable(Layer *l, float* weights, int length, int id);
 int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID);
 int layer_forwardPropagate(Layer *l, 
     int *activeNodesIn, float *activeValuesIn, int lengthIn, 
     int *activeNodesOut, float *activeValuesOut, int *lengthOut, 
     int inputID, int *label, int labelsize, float Sparsity);
 void layer_adam(Layer *l, float lr, int ratio);
+void layer_load(Layer *l, char *path);
+void layer_save(Layer *l, char *path);

@@ -18,7 +18,7 @@ DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash) {
     assert((d->_indices != NULL) && (d->_pos != NULL) && (n_array != NULL));
     for (int i = 0; i < d->_rangePow; i++) n_array[i] = i;
     for (int p = 0; p < d->_permute ;p++) {
-        myshuffle(n_array, d->_rangePow);
+        myrand_shuffle(n_array, d->_rangePow);
         int base = d->_rangePow * p;
         for (int j = 0; j < d->_rangePow; j++) {
             d->_indices[base + n_array[j]] = (base + j) / BINSIZE;
@@ -79,6 +79,11 @@ inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float* da
     return hashArray;
 }
 
-int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dLen) { return gethash(d, data, dLen, NULL, true); }
-int *dwtahash_getHash(DWTAHash *d, int *xndx, float* data, int dLen) { return gethash(d, data, dLen, xndx, false); }
+int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dLen) { 
+    return gethash(d, data, dLen, NULL, true); 
+}
+
+int *dwtahash_getHash(DWTAHash *d, int *xndx, float* data, int dLen) { 
+    return gethash(d, data, dLen, xndx, false); 
+}
 

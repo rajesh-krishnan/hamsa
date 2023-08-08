@@ -24,10 +24,10 @@ static void test_norm() {
     printf("Expected mean,stdv: 0.0,0.01  Observed mean,stdv: %.4f,%.4f\n", mean, stdv);
 }
 
-static void test_myshuffle() {
+static void test_shuffle() {
     int i, x[100];
     for (i = 0; i < 100; i++) x[i] = i;
-    myshuffle(x, 100);
+    myrand_shuffle(x, 100);
     printf("\nOutput shuffle of [0:99]\n");
     for (i = 0; i < 100; i++) {
         printf("%d", x[i]);
@@ -169,16 +169,16 @@ static void test_network(bool save, bool reload) {
 
 
 int main(int argc, char *argv[]) {
-/*
+#if 0
     test_mt();
     test_norm();
-    test_myshuffle();
+    test_shuffle();
     test_uthash();
     test_wrnpy();
     test_dwtahash_lsht();
     test_layer(true);
     test_network(true, true);
-*/
-    test_network(true, true);
+#endif
+    test_network(false, false);
     return 0;
 }
