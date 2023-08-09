@@ -128,7 +128,7 @@ int layer_fwdprop(Layer *l,
         for (int i = 0; i < len; i++) activeNodesOut[i] = i;
     }
     else {
-        Histo *counts = NULL;                              /* to store active candidates with counts */
+        Histo *counts = NULL;                              /* active candidates counts _MUST_ NULL init */
         Histo *cur = NULL, *tmp = NULL;                    /* for use with HASH_ITER */  
 
         if (l->_type == Softmax && labelsize > 0) {        /* ensure label node is in candidates */
