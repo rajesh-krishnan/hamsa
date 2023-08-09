@@ -21,8 +21,8 @@ LSHT *lsht_new(int K, int L, int RangePow) {
     assert (K * logbinsize == RangePow);
     Bucket *b;
     size_t sz  = 1 << RangePow;
-    LSHT *l    = (LSHT *) malloc(sizeof(LSHT));
-    l->_bucket = (Bucket **) malloc(L * sizeof(Bucket *));
+    LSHT *l    = (LSHT *) mymap(sizeof(LSHT));
+    l->_bucket = (Bucket **) mymap(L * sizeof(Bucket *));
     assert((l != NULL) && (l->_bucket !=NULL));
     b = (Bucket *) mymap(L * sz * sizeof(Bucket));
     for (int i = 0; i < L; i++) l->_bucket[i] = &b[i * sz];
@@ -37,8 +37,8 @@ void lsht_delete(LSHT *l) {
     size_t sz  = 1 << l->_RangePow;
     Bucket *b  = l->_bucket[0];
     myunmap(b, l->_L * sz * sizeof(Bucket));
-    free(l->_bucket);
-    free(l);
+    myunmap(l->_bucket, l->_L * sizeof(Bucket *));
+    myunmap(l, sizeof(LSHT));
 }
 
 void lsht_clear(LSHT *l) { memset(l->_bucket[0], 0, (1 << l->_RangePow) * l->_L * sizeof(Bucket)); }
@@ -62,7 +62,7 @@ void lsht_add(LSHT *l, int *hashes, int id) {
 
 /* Collect items and their counts across all retrieves buckets, put in hashtable */
 void lsht_retrieve_histogram(LSHT *l, int *hashes, Histo **counts) {
-    int isnew, *arr;
+    int *arr;
     for (int i = 0; i < l->_L; i++) {
         unsigned int index = ith_index(l, hashes, i);
         arr = bucket_get_array(&l->_bucket[i][index]);

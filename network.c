@@ -1,9 +1,9 @@
 #include "hdefs.h"
 
 Network *network_new(Config *cfg, bool loadParams) {
-    Network *n = (Network *) malloc(sizeof(Network));
+    Network *n = (Network *) mymap(sizeof(Network));
     n->_cfg = cfg;
-    n->_hiddenlayers = (Layer **) malloc(cfg->numLayer * sizeof(Layer *));
+    n->_hiddenlayers = (Layer **) mymap(cfg->numLayer * sizeof(Layer *));
     assert((n != NULL) && (n->_hiddenlayers != NULL));
     for (int i = 0; i < cfg->numLayer; i++) {
         int lsize = (i != 0) ?  cfg->sizesOfLayers[i - 1] : cfg->InputDim;
@@ -15,8 +15,8 @@ Network *network_new(Config *cfg, bool loadParams) {
 
 void network_delete(Network *n) {
     for (int i = 0; i < n->_cfg->numLayer; i++) layer_delete(n->_hiddenlayers[i]);
-    free(n->_hiddenlayers);
-    free(n);
+    myunmap(n->_hiddenlayers, n->_cfg->numLayer * sizeof(Layer *));
+    myunmap(n, sizeof(Network));
 }
 
 void network_save_params(Network *n) {
@@ -27,37 +27,36 @@ void network_load_params(Network *n) {
     for (int i = 0; i < n->_cfg->numLayer; i++) layer_load(n->_hiddenlayers[i], n->_cfg->loadPath);
 }
 
+/* Reuse code block in training and inference */
+#define ALLOC_ACTIVEOUT_FWDPROP( S ) \
+            int lengthIn, lengthOut=0; \
+            int *activeNodesIn, *activeNodesOut; \
+            float *activeValuesIn, *activeValuesOut; \
+            activeNodesIn   = (j==0) ? inIndices[i] : activeNodesOut; \
+            activeValuesIn  = (j==0) ? inValues[i]  : activeValuesOut; \
+            lengthIn        = (j==0) ? inLength[i]  : lengthOut; \
+            activeNodesOut  = (int *)   malloc(n->_hiddenlayers[j]->_noOfNodes * sizeof(int)); \
+            activeValuesOut = (float *) malloc(n->_hiddenlayers[j]->_noOfNodes * sizeof(int)); \
+            assert((activeNodesOut != NULL) && (activeValuesOut != NULL)); \
+            int avr = layer_fwdprop(n->_hiddenlayers[j], activeNodesIn, activeValuesIn, lengthIn, \
+                activeNodesOut, activeValuesOut, &lengthOut, i, blabels[i], blabelsize[i], Sparsity);
+
 int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, int **blabels, int *blabelsize) {
     int correctPred = 0;
 #pragma omp parallel for reduction(+:correctPred)
     for (int i = 0; i < n->_cfg->Batchsize; i++) {
         int predict_class = -1; 
         for (int j = 0; j < n->_cfg->numLayer; j++) {
-            int lengthIn, lengthOut=0;
-            int *activeNodesIn, *activeNodesOut;
-            float *activeValuesIn, *activeValuesOut;
-            Layer *thisLay  = n->_hiddenlayers[j];
-            int *label      = blabels[i];
-            int labelsize   = blabelsize[i];
+            /* allocate output vectors and forward propagate */
             float Sparsity  = n->_cfg->Sparsity[n->_cfg->numLayer + j];  /* use second half for infer */
-            int maxlenOut   = thisLay->_noOfNodes;                       /* max active <= layer size */
-            bool last       = (j == n->_cfg->numLayer);
-            bool first      = (j == 0);
-
-            activeNodesIn   = first ? inIndices[i] : activeNodesOut;
-            activeValuesIn  = first ? inValues[i]  : activeValuesOut;
-            lengthIn        = first ? inLength[i]  : lengthOut;
-      
-            activeNodesOut  = (int *)   malloc(maxlenOut * sizeof(int));   
-            activeValuesOut = (float *) malloc(maxlenOut * sizeof(float));
-            assert((activeNodesOut != NULL) && (activeValuesOut != NULL));
-
-            layer_forwardPropagate(n->_hiddenlayers[j], activeNodesIn, activeValuesIn, lengthIn,
-                activeNodesOut, activeValuesOut, &lengthOut, i, label, labelsize, Sparsity);
-
-            if (!first) { free(activeNodesIn);  free(activeValuesIn); }
-            if (last)   predict_class = layer_get_prediction(thisLay, activeNodesOut, lengthOut, i);
-            if (last)   { free(activeNodesOut); free(activeValuesOut); break; }
+            ALLOC_ACTIVEOUT_FWDPROP( Sparsity );
+ 
+            if (j != 0) { free(activeNodesIn);  free(activeValuesIn); } /* free the previous layer's actives */
+            if (j == n->_cfg->numLayer) {                    /* get prediction and free last layer's actives */
+                predict_class = layer_get_prediction(n->_hiddenlayers[j], activeNodesOut, lengthOut, i);
+                free(activeNodesOut); 
+                free(activeValuesOut); 
+            }
         }
         for(int k=0; k < blabelsize[i]; k++) 
             if(blabels[i][k] == predict_class) { correctPred += 1; break; }
@@ -65,12 +64,11 @@ int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, 
     return correctPred;
 }
 
-void network_train(Network *n, int **inputIndices, float **inputValues, int *lengths, int **label, int *labelsize, 
+void network_train(Network *n, int **inIndices, float **inValues, int *inLength, int **blabels, int *blabelsize,
     int iter, bool reperm, bool rehash, bool rebuild) {
-    int numLayer = n->_cfg->numLayer;
-    int *avg_retrieval = (int *) malloc(numLayer * sizeof(int));
+    int *avg_retrieval = (int *) malloc(n->_cfg->numLayer * n->_cfg->Batchsize * sizeof(int));
     assert(avg_retrieval != NULL);
-    for (int j = 0; j < numLayer; j++) avg_retrieval[j] = 0;
+    memset(avg_retrieval, 0, n->_cfg->numLayer * n->_cfg->Batchsize * sizeof(int)); /* init to 0 */
 
     float tmplr = n->_cfg->Lr * sqrt((1 - pow(BETA2, iter + 1))) / (1 - pow(BETA1, iter + 1));
 
@@ -89,13 +87,18 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
         activeNodes [0] = inputIndices[i];  // inputs parsed from training data file
         activeValues[0] = inputValues[i];
         sizes[0] = lengths[i];
+#endif
 
-        // forward propagate
-        for (int j = 0; j < _numberOfLayers; j++) {
-            avg_retrieval[j] += layer_forwardPropagate(n->_hiddenlayers[j], activeNodes , activeValues, 
-                sizes, j, i, labels[i], labelsize[i], _Sparsity[j], iter*_currentBatchSize+i);
+        for (int j = 0; j < n->_cfg->numLayer; j++) {
+            /* allocate output vectors and forward propagate */
+            float Sparsity  = n->_cfg->Sparsity[j];                   /* use second half for train */
+            ALLOC_ACTIVEOUT_FWDPROP( Sparsity );
+
+            avg_retrieval[i * n->_cfg->numLayer + j] += avr;          /* save stats */
+            /* XXX: save actives for backprop */
         }
 
+#if 0
         // back propagate 
         for (int j = _numberOfLayers - 1; j >= 0; j--) {
             Layer* layer = _hiddenlayers[j];
@@ -118,15 +121,19 @@ void network_train(Network *n, int **inputIndices, float **inputValues, int *len
     // XXX: deallocate memory
 
     // gradient descent after each batch
-    for (int j=0; j < numLayer; j++) {
+    for (int j=0; j < n->_cfg->numLayer; j++) {
         float Sparsity  = n->_cfg->Sparsity[j];                /* use first half for training */
         Layer *l        = n->_hiddenlayers[j];
-        bool last       = (numLayer - 1);
+        bool last       = (n->_cfg->numLayer - 1);
         layer_adam(l, tmplr, 1);
         if (rebuild && (Sparsity < 1)) layer_updateHasher(l);
         if (rehash && (Sparsity < 1))  layer_rehash(l);
         if (reperm && last)            layer_updateRandomNodes(l);
-        if (rehash) 
-             fprintf(stderr, "Layer %d average sample size = %lf\n", j, avg_retrieval[j]*1.0/n->_cfg->Batchsize);
+        // statistics for batch
+        if (rehash) {
+            int avg = 0;
+            for (int i = 0; i < n->_cfg->Batchsize; i++) avg += avg_retrieval[i * n->_cfg->numLayer + j];
+            fprintf(stderr, "Layer %d average sample size = %lf\n", j, avg*1.0/n->_cfg->Batchsize);
+        }
     }
 }
