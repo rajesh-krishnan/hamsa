@@ -120,8 +120,8 @@ void myrand_shuffle(int *array, int n);
 
 DWTAHash *dwtahash_new(int numHashes, int noOfBitsToHash);
 void dwtahash_delete(DWTAHash *d);
-int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dLen);
-int *dwtahash_getHash(DWTAHash *d, int *xndx, float* data, int dLen);
+int *dwtahash_getHashEasy(DWTAHash *d, float *data, int dLen);
+int *dwtahash_getHash(DWTAHash *d, int *xndx, float *data, int dLen);
 
 LSHT *lsht_new(int K, int L, int RangePow);
 void lsht_delete(LSHT *l);
@@ -134,13 +134,12 @@ void node_update(Node *n, int nodeID, NodeType type, int batchsize,
 float node_get_last_activation(Node *n, int inputID);
 void node_set_last_activation(Node *n, int inputID, float realActivation);
 void node_increment_delta(Node *n, int inputID, float incrementValue);
-float node_get_activation(Node *n, int* indices, float* values, int length, int inputID);
+float node_get_activation(Node *n, int *indices, float *values, int length, int inputID);
 bool node_get_input_active(Node *n, int inputID);
-bool node_get_active_inputs(Node *n);
-void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int* label, int labelsize);
-void node_backprop(Node *n, Node* prevLayerNodes, int* prevLayerActiveNodeIds, int prevLayerActiveNodeSize, 
+void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int *label, int labelsize);
+void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeIds, int prevLayerActiveNodeSize, 
     float learningRate, int inputID);
-void node_backprop_firstlayer(Node *n, int* nnzindices, float* nnzvalues, int nnzSize, 
+void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nnzSize, 
     float learningRate, int inputID);
 void node_adam(Node *n, int dim, float tmplr, int ratio);
 
