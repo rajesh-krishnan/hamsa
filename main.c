@@ -102,10 +102,11 @@ static void test_dwtahash_lsht() {
 
     int ids[128];
     float myweights[128];
-    for(int i = 128; i >= 0; i--) ids[i] = i;
+    for(int i = 127; i >= 0; i--) ids[i] = i;
     for(int i = 0; i < 128; i++) myweights[i] = weights[(4*128) + i];
 
-    Histo *counts, *cur, *tmp;
+    Histo *counts = NULL; 
+    Histo *cur, *tmp;
     hashes = dwtahash_getHash(d, ids, myweights, 128);
     lsht_retrieve_histogram(l, hashes, &counts);
 
