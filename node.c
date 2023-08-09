@@ -1,7 +1,7 @@
 #include "hdefs.h"
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
-    float *weights, float *bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob) {
+    float *weights, float *bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train *train_blob) {
     n->_IDinLayer = nodeID;
     n->_type = type;
     n->_currentBatchsize = batchsize;
@@ -11,7 +11,6 @@ void node_update(Node *n, int nodeID, NodeType type, int batchsize,
     n->_adamAvgVel = adamAvgVel;
     n->_t = adam_t;
     n->_train = train_blob + nodeID * batchsize;
-    n->_activeInputs = 0;
     n->_tbias = 0.;
     n->_adamAvgMombias = 0.;
     n->_adamAvgVelbias = 0.;
@@ -30,12 +29,11 @@ void node_increment_delta(Node *n, int inputID, float incrementValue) {
     if (n->_train[inputID]._lastActivations > 0) n->_train[inputID]._lastDeltaforBPs += incrementValue;
 }
 
-float node_get_activation(Node *n, int* indices, float* values, int length, int inputID) {
+float node_get_activation(Node *n, int *indices, float *values, int length, int inputID) {
     assert(inputID <= n->_currentBatchsize);
 
     if (n->_train[inputID]._ActiveinputIds != 1) {
         n->_train[inputID]._ActiveinputIds = 1; //activate input
-        n->_activeInputs++;
     }
 
     n->_train[inputID]._lastActivations = 0;
@@ -67,18 +65,14 @@ bool node_get_input_active(Node *n, int inputID) {
     return n->_train[inputID]._ActiveinputIds == 1;
 }
 
-bool node_get_active_inputs(Node *n) {
-    return n->_activeInputs > 0;
-}
-
-bool ID_in_label(int * label, int labelsize, int idd) {
+bool ID_in_label(int *label, int labelsize, int idd) {
   for (int i = 0; i < labelsize; i++) {
       if (label[i] == idd) return true; 
   }
   return false;
 }
 
-void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int* label, int labelsize) {
+void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int *label, int labelsize) {
     assert(n->_train[inputID]._ActiveinputIds == 1);
 
     n->_train[inputID]._lastActivations /= normalizationConstant + 0.0000001;
@@ -93,13 +87,13 @@ void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputI
     }
 }
 
-void node_backprop(Node *n, Node* prevLayerNodes, int* prevLayerActiveNodeIds, int prevLayerActiveNodeSize, 
+/* can be done in parallel across inputs of a batch, provided layer prop is sequential */
+void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeIds, int prevLayerActiveNodeSize, 
     float learningRate, int inputID) {
     assert(n->_train[inputID]._ActiveinputIds == 1);
-    for (int i = 0; i < prevLayerActiveNodeSize; i++)
-    {
+    for (int i = 0; i < prevLayerActiveNodeSize; i++) {
         // Update delta before updating weights
-        Node* prev_node = &(prevLayerNodes[prevLayerActiveNodeIds[i]]);
+        Node *prev_node = &(prevLayerNodeArray[prevLayerActiveNodeIds[i]]);
         node_increment_delta(prev_node, inputID, 
             n->_train[inputID]._lastDeltaforBPs * n->_weights[prevLayerActiveNodeIds[i]]);
         float grad_t = n->_train[inputID]._lastDeltaforBPs * node_get_last_activation(prev_node, inputID);
@@ -109,10 +103,10 @@ void node_backprop(Node *n, Node* prevLayerNodes, int* prevLayerActiveNodeIds, i
     n->_train[inputID]._ActiveinputIds = 0;
     n->_train[inputID]._lastDeltaforBPs = 0;
     n->_train[inputID]._lastActivations = 0;
-    n->_activeInputs--;
 }
 
-void node_backprop_firstlayer(Node *n, int* nnzindices, float* nnzvalues, int nnzSize, 
+/* can be done in parallel across inputs of a batch, provided layer prop is sequential */
+void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nnzSize, 
     float learningRate, int inputID) {
     assert(n->_train[inputID]._ActiveinputIds == 1);
     for (int i = 0; i < nnzSize; i++) {
@@ -123,10 +117,10 @@ void node_backprop_firstlayer(Node *n, int* nnzindices, float* nnzvalues, int nn
     n->_train[inputID]._ActiveinputIds = 0;
     n->_train[inputID]._lastDeltaforBPs = 0;
     n->_train[inputID]._lastActivations = 0;
-    n->_activeInputs--;
 }
 
-void node_adam(Node *n, int dim, float tmplr, int ratio) {
+/* can be done at end of each batch, in parallel across nodes of a layer */
+void node_adam(Node *n, int dim, float tmplr, int ratio) { 
     float *local_weights = (float *) malloc(dim * sizeof(float));
     assert(local_weights != NULL);
     memcpy(local_weights, n->_weights, dim * sizeof(float));
@@ -144,7 +138,7 @@ void node_adam(Node *n, int dim, float tmplr, int ratio) {
     n->_adamAvgMombias = BETA1 * n->_adamAvgMombias + (1 - BETA1) * n->_tbias;
     n->_adamAvgVelbias = BETA2 * n->_adamAvgVelbias + (1 - BETA2) * n->_tbias * n->_tbias;
     *n->_bias += ratio*tmplr * n->_adamAvgMombias / (sqrt(n->_adamAvgVelbias) + EPS);
-    n->_tbias = 0;
+    n->_tbias = 0; 
     memcpy(n->_weights, local_weights, dim * sizeof(float));
     free(local_weights);
 }
