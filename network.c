@@ -47,15 +47,12 @@ int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, 
     for (int i = 0; i < n->_cfg->Batchsize; i++) {
         int predict_class = -1; 
         for (int j = 0; j < n->_cfg->numLayer; j++) {
-            /* allocate output vectors and forward propagate */
             float Sparsity  = n->_cfg->Sparsity[n->_cfg->numLayer + j];  /* use second half for infer */
             ALLOC_ACTIVEOUT_FWDPROP( Sparsity );
- 
             if (j != 0) { free(activeNodesIn);  free(activeValuesIn); } /* free the previous layer's actives */
             if (j == n->_cfg->numLayer) {                    /* get prediction and free last layer's actives */
                 predict_class = layer_get_prediction(n->_hiddenlayers[j], activeNodesOut, lengthOut, i);
-                free(activeNodesOut); 
-                free(activeValuesOut); 
+                free(activeNodesOut); free(activeValuesOut); 
             }
         }
         for(int k=0; k < blabelsize[i]; k++) 
@@ -72,53 +69,64 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
 
     float tmplr = n->_cfg->Lr * sqrt((1 - pow(BETA2, iter + 1))) / (1 - pow(BETA1, iter + 1));
 
-// #pragma omp parallel for // check if safe for training
+#pragma omp parallel for
     for (int i = 0; i < n->_cfg->Batchsize; i++) {
-#if 0
-        int **activeNodes = new int *[_numberOfLayers + 1]();
-        float **activeValues= new float *[_numberOfLayers + 1]();
-        // allocate activeNodes and activeValues for relevant layers
-        int *sizes = new int[_numberOfLayers + 1]();
-
-        activeNodesPerBatch[i] = activeNodes ;
-        activeValuesPerBatch[i] = activeValues;
-        sizesPerBatch[i] = sizes;
-
-        activeNodes [0] = inputIndices[i];  // inputs parsed from training data file
-        activeValues[0] = inputValues[i];
-        sizes[0] = lengths[i];
-#endif
-
-        for (int j = 0; j < n->_cfg->numLayer; j++) {
-            /* allocate output vectors and forward propagate */
+        int   **activeNodes  = (int **)   malloc(n->_cfg->numLayer * sizeof(int *));
+        float **activeValues = (float **) malloc(n->_cfg->numLayer * sizeof(float *));
+        int   *activeLength  = (int *)    malloc(n->_cfg->numLayer * sizeof(int));
+        for (int j = 0; j < n->_cfg->numLayer; j++) {                 /* forward prop across layers */
             float Sparsity  = n->_cfg->Sparsity[j];                   /* use second half for train */
             ALLOC_ACTIVEOUT_FWDPROP( Sparsity );
-
             avg_retrieval[i * n->_cfg->numLayer + j] += avr;          /* save stats */
-            /* XXX: save actives for backprop */
+            activeNodes[j]  = activeNodesOut;                         /* save for backprop */
+            activeValues[j] = activeValuesOut;
+            activeLength[j] = lengthOut;
         }
+
+        for (int j = n->_cfg->numLayer - 1; j >= 0; j--) {           /* back prop across layers */
+            Layer* thisLay = n->_hiddenlayers[j];
+            Layer* prevLay = n->_hiddenlayers[j-1];
 
 #if 0
-        // back propagate 
-        for (int j = _numberOfLayers - 1; j >= 0; j--) {
-            Layer* layer = _hiddenlayers[j];
-            Layer* prev_layer = _hiddenlayers[j - 1];
-            for (int k = 0; k < sizesPerBatch[i][j + 1]; k++) {
-                Node* node = layer->getNodebyID(activeNodesPerBatch[i][j + 1][k]);
+            // move these functions to layer, network must not see Node
+            for (int k = 0; k < activeLength[j + 1]; k++) {
+                Node* node = thisLay->getNodebyID(activeNodes[j + 1][k]);
+
                 if (j == _numberOfLayers - 1) {
-                    node->ComputeExtaStatsForSoftMax(layer->_normalizationConstant[i], i, labels[i], labelsize[i]);
+/* if this is last layer, compute extra stats for softmax for all active nodes in layer */
+                    node->ComputeExtaStatsForSoftMax(thisLay->_normalizationConstant[i], i, blabels[i], blabelsize[i]);
                 }
                 if (j != 0) {
-                    node->backPropagate(prev_layer->getAllNodes(), activeNodesPerBatch[i][j], sizesPerBatch[i][j], tmplr, i);
+/* for all layers except the first, provide the previous layer's actives for backprop */ 
+            // need to provide 
+            //   layer ptr
+            //   inputID
+            //   learning rate
+            //   thisLayer active nodes to iterate over
+            //   prevLayer active nodes/values/length to provide to each active node to adjust training weights for inputID
+                    node->backPropagate(prevLay->getAllNodes(), activeNodes[j], sizes[j], tmplr, i);
                 } else {
-                    node->backPropagateFirstLayer(inputIndices[i], inputValues[i], lengths[i], tmplr, i);
+/* if this is first layer, provide the input values */
+            // need to provide 
+            //   layer ptr
+            //   inputID
+            //   learning rate
+            //   thisLayer active nodes to iterate over
+            //   input indices/values/length to provide to each active node to adjust training weights for inputID
+                    node->backPropagateFirstLayer(inIndices[i], inValues[i], inLength[i], tmplr, i);
                 }
             }
-        }
 #endif
-    }
+        }
 
-    // XXX: deallocate memory
+        for(int k = 0; k < n->_cfg->numLayer; k++) {
+            free(activeNodes[k]);
+            free(activeValues[k]);
+        }
+        free(activeNodes);
+        free(activeValues);
+        free(activeLength);
+    }
 
     // gradient descent after each batch
     for (int j=0; j < n->_cfg->numLayer; j++) {
