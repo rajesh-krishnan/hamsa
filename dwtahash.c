@@ -67,9 +67,10 @@ inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float *da
         while (next == INT_MIN) {
             count++;
             int r = dwtahash_getRandDoubleHash(d, i, count);
-            int index = r < d->_numhashes ? r : d->_numhashes;
+            int index = r < d->_numhashes ? r : d->_numhashes - 1; /* original was min of r, d->numhashes, yikes! */
             next = hashes[index];
             if (count > 100) break;      /* Densification failure XXX: but why 100? */
+                                         /* this leaves hashArray[i] with MIN_INT, yikes! */
         }
         hashArray[i] = next;
     }

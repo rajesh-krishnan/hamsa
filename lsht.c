@@ -1,6 +1,7 @@
 #include "hdefs.h"
 
-static int logbinsize = (int)floor(log2(BINSIZE));  /* original used natural log, check */
+//static int logbinsize = (int)floor(log2(BINSIZE));  /* original used natural log, check */
+static int logbinsize = (int)floor(log(BINSIZE));  /* original used natural log, check */
 
 inline static void __attribute__((always_inline)) bucket_reset(Bucket *b) { b->count = 0; }
 
@@ -18,14 +19,14 @@ inline static int __attribute__((always_inline)) *bucket_get_array(Bucket *b) {
 }
 
 inline static size_t __attribute__((always_inline)) lsht_size(int K, int L, int RangePow) {
-    size_t sz  = 1 << RangePow;
+    size_t sz  = (1 << RangePow);
     size_t hugepg_size = (2L << 21);  /* 2MB Hugepage */
     size_t buffer_size = sizeof(LSHT) + L * sizeof (Bucket *) + L * sz * sizeof(Bucket);
     return (size_t) ceil(hugepg_size * buffer_size * 1.0 / hugepg_size);
 }
 
 LSHT *lsht_new(int K, int L, int RangePow) {
-    assert (K * logbinsize == RangePow);
+    // assert (K * logbinsize == RangePow);
     size_t sz  = 1 << RangePow;
     size_t buffer_size  = lsht_size(K, L, RangePow);
     void *buf = mymap(buffer_size);
@@ -55,9 +56,28 @@ void lsht_clear(LSHT *l) { memset(l->_bucket[0], 0, (1 << l->_RangePow) * l->_L 
 inline static unsigned int __attribute__((always_inline)) ith_index(LSHT *l, int *hashes, int i) {
     unsigned int index = 0;
     for (int j = 0; j < l->_K; j++) {
+        if(hashes[l->_K*i + j] == INT_MIN) continue; // Densification failure
         unsigned int h = hashes[l->_K*i + j];
         index += h<<((l->_K-1-j) * logbinsize);
     }
+
+if(index >= (1 << l->_RangePow)) {
+    unsigned int tmpindex = 0;
+    for (int j = 0; j < l->_K; j++) {
+        unsigned int h = hashes[l->_K*i + j];
+
+        fprintf(stderr, "i=%d,L=%d,j=%d,K=%d,hidx(K*i+j)=%d,hval=%u,index=%u,", 
+            i, l->_L, j, l->_K, l->_K*i+j, h, tmpindex);
+
+        tmpindex += h<<((l->_K-1-j) * logbinsize);
+
+        fprintf(stderr, "rshift=%d,sshift=%d,shifted-hval=%u,u-index=%u\n", 
+          (l->_K-1-j), ((l->_K-1-j) * logbinsize), h<<((l->_K-1-j) * logbinsize), tmpindex);
+    }
+    fprintf(stderr, "returned-index=%u max=%u\n", tmpindex, (1 << l->_RangePow));
+}
+
+    assert(index < (1 << l->_RangePow));
     return index;
 }
 

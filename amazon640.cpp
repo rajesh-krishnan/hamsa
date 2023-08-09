@@ -1,5 +1,8 @@
 #include <chrono>
 #include <iostream>
+#include <fstream>
+#include <vector>
+#include <cstring>
 
 extern "C" {
 #include "hamsa.h"
@@ -7,16 +10,18 @@ extern "C" {
 
 using namespace std;
 
-#if 0
-void EvalDataSVM(int numBatchesTest,  Network* _mynet, int iter){
+float globalTime = 0;
+
+void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
+    int Batchsize = cfg->Batchsize;
+
     int totCorrect = 0;
     int debugnumber = 0;
-    std::ifstream testfile(testData);
+    std::ifstream testfile(cfg->testData);
     string str;
-    //Skipe header
-    std::getline( testfile, str );
+    std::getline(testfile, str); //Skip header
 
-    ofstream outputFile(logFile,  std::ios_base::app);
+    ofstream outputFile(cfg->logFile,  std::ios_base::app);
     for (int i = 0; i < numBatchesTest; i++) {
         int **records = new int *[Batchsize];
         float **values = new float *[Batchsize];
@@ -91,7 +96,8 @@ void EvalDataSVM(int numBatchesTest,  Network* _mynet, int iter){
         }
 
         std::cout << Batchsize << " records, with "<< num_features << " features and " << num_labels << " labels" << std::endl;
-        auto correctPredict = _mynet->predictClass(records, values, sizes, labels, labelsize);
+        // auto correctPredict = 0;
+        auto correctPredict = network_infer(mynet, records, values, sizes, labels, labelsize);
         totCorrect += correctPredict;
         std::cout <<" iter "<< i << ": " << totCorrect*1.0/(Batchsize*(i+1)) << " correct" << std::endl;
 
@@ -108,17 +114,20 @@ void EvalDataSVM(int numBatchesTest,  Network* _mynet, int iter){
     testfile.close();
     cout << "over all " << totCorrect * 1.0 / (numBatchesTest*Batchsize) << endl;
     outputFile << iter << " " << globalTime/1000 << " " << totCorrect * 1.0 / (numBatchesTest*Batchsize) << endl;
-
 }
 
-void ReadDataSVM(size_t numBatches,  Network* _mynet, int epoch){
-    std::ifstream file(trainData);
+void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
+    int Batchsize = cfg->Batchsize;
+    int Rebuild = cfg->Rebuild;
+    int Rehash  = cfg->Rehash;
+    int Stepsize  = cfg->Stepsize;
+
+    std::ifstream file(cfg->trainData);
     std::string str;
-    //skipe header
-    std::getline( file, str );
-    for (size_t i = 0; i < numBatches; i++) {
+    std::getline( file, str ); // Skip header
+    for (int i = 0; i < numBatches; i++) {
         if((i+epoch*numBatches)%Stepsize==0) {
-            EvalDataSVM(20, _mynet, epoch*numBatches+i);
+            EvalDataSVM(cfg, mynet, 20, epoch*numBatches+i);
         }
         int **records = new int *[Batchsize];
         float **values = new float *[Batchsize];
@@ -185,26 +194,16 @@ void ReadDataSVM(size_t numBatches,  Network* _mynet, int epoch){
 
         bool rehash = false;
         bool rebuild = false;
-        if ((epoch*numBatches+i)%(Rehash/Batchsize) == ((size_t)Rehash/Batchsize-1)){
-            if(Mode==1 || Mode==4) {
-                rehash = true;
-            }
-        }
-
-        if ((epoch*numBatches+i)%(Rebuild/Batchsize) == ((size_t)Rehash/Batchsize-1)){
-            if(Mode==1 || Mode==4) {
-                rebuild = true;
-            }
-        }
+        bool reperm = false;
+        if ((epoch*numBatches+i)%(Rehash/Batchsize) == (Rehash/Batchsize-1))  rehash = true;
+        if ((epoch*numBatches+i)%(Rebuild/Batchsize) == (Rehash/Batchsize-1)) rebuild = true;
+        // 6496 was harcoded in Network, mvoing it here 
+        if ((epoch*numBatches+i)%6946 == 6945)                                reperm = true;
 
         auto t1 = std::chrono::high_resolution_clock::now();
-
-        // logloss
-        _mynet->ProcessInput(records, values, sizes, labels, labelsize, epoch * numBatches + i,
-                                            rehash, rebuild);
-
+        network_train(mynet, records, values, sizes, labels, labelsize, epoch * numBatches + i,
+            reperm, rehash, rebuild);
         auto t2 = std::chrono::high_resolution_clock::now();
-
         int timeDiffInMiliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         globalTime+= timeDiffInMiliseconds;
 
@@ -221,50 +220,33 @@ void ReadDataSVM(size_t numBatches,  Network* _mynet, int epoch){
 
     }
     file.close();
-
 }
-#endif
 
 int main(int argc, char* argv[])
 {
-    //parseconfig(argv[1]);
-
-    // int numBatches = totRecords/Batchsize;
-    // int numBatchesTest = totRecordsTest/Batchsize;
-
-    auto t1 = std::chrono::high_resolution_clock::now();
     Config *cfg = config_new((char *)"sampleconfig.json");
+    std::cout << "Loaded config" << std::endl;
+    auto t1 = std::chrono::high_resolution_clock::now();
     Network *n = network_new(cfg, false);
     auto t2 = std::chrono::high_resolution_clock::now();
     float timeDiffInMiliseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     std::cout << "Network Initialization takes " << timeDiffInMiliseconds/1000 << " milliseconds" << std::endl;
-
-#if 0
-    //***********************************
-    // Start Training
-    //***********************************
-
-    for (int e=0; e< Epoch; e++) {
-        ofstream outputFile(logFile,  std::ios_base::app);
+    int numBatches = cfg->totRecords / cfg->Batchsize;
+    int numBatchesTest = cfg->totRecordsTest / cfg->Batchsize;
+    int e = 0;
+    while(e < cfg->Epoch) {
+        ofstream outputFile(cfg->logFile, std::ios_base::app);
         outputFile<<"Epoch "<<e<<endl;
-        // train
-        ReadDataSVM(numBatches, _mynet, e);
-
-        // test
-        if(e==Epoch-1) {
-            EvalDataSVM(numBatchesTest, _mynet, (e+1)*numBatches);
+        ReadDataSVM(cfg, n, numBatches, e);
+        e++;
+        if(e == cfg->Epoch) {
+            EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
         }else{
-            EvalDataSVM(50, _mynet, (e+1)*numBatches);
+            EvalDataSVM(cfg, n, 50, e*numBatches);
         }
-        _mynet->saveWeights(savedWeights);
-
     }
-
-    delete [] RangePow;
-    delete [] K;
-    delete [] L;
-    delete [] Sparsity;
-#endif
-
+    network_save_params(n);
+    network_delete(n);
+    config_delete(cfg);
     return 0;
 }

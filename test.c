@@ -102,7 +102,7 @@ static void test_dwtahash_lsht() {
 
     int ids[128];
     float myweights[128];
-    for(int i = 127; i >= 0; i--) ids[i] = i;
+    for(int i = 0; i < 128; i++) ids[i] = i;
     for(int i = 0; i < 128; i++) myweights[i] = weights[(4*128) + i];
 
     Histo *counts = NULL; 
@@ -180,6 +180,6 @@ int main(int argc, char *argv[]) {
     test_layer(true);
     test_network(true, true);
 #endif
-    test_network(false, false);
+    test_dwtahash_lsht();
     return 0;
 }
