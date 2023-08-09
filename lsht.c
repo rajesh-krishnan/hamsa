@@ -17,14 +17,24 @@ inline static int __attribute__((always_inline)) *bucket_get_array(Bucket *b) {
     return b->arr;
 }
 
+inline static size_t __attribute__((always_inline)) lsht_size(int K, int L, int RangePow) {
+    size_t sz  = 1 << RangePow;
+    size_t hugepg_size = (2L << 21);  /* 2MB Hugepage */
+    size_t buffer_size = sizeof(LSHT) + L * sizeof (Bucket *) + L * sz * sizeof(Bucket);
+    return (size_t) ceil(hugepg_size * buffer_size * 1.0 / hugepg_size);
+}
+
 LSHT *lsht_new(int K, int L, int RangePow) {
     assert (K * logbinsize == RangePow);
-    Bucket *b;
     size_t sz  = 1 << RangePow;
-    LSHT *l    = (LSHT *) mymap(sizeof(LSHT));
-    l->_bucket = (Bucket **) mymap(L * sizeof(Bucket *));
-    assert((l != NULL) && (l->_bucket !=NULL));
-    b = (Bucket *) mymap(L * sz * sizeof(Bucket));
+    size_t buffer_size  = lsht_size(K, L, RangePow);
+    void *buf = mymap(buffer_size);
+    fprintf(stderr, "Allocated %ld bytes for LSHT at %p\n", buffer_size, buf);
+
+    LSHT *l    = (LSHT *)    buf; buf += sizeof(LSHT);
+    l->_bucket = (Bucket **) buf; buf += L * sizeof(Bucket *);
+    Bucket *b  = (Bucket *)  buf; buf += L * sz * sizeof(Bucket);
+
     for (int i = 0; i < L; i++) l->_bucket[i] = &b[i * sz];
     l->_K = K;
     l->_L = L;
@@ -34,11 +44,10 @@ LSHT *lsht_new(int K, int L, int RangePow) {
 }
 
 void lsht_delete(LSHT *l) {
-    size_t sz  = 1 << l->_RangePow;
     Bucket *b  = l->_bucket[0];
-    myunmap(b, l->_L * sz * sizeof(Bucket));
-    myunmap(l->_bucket, l->_L * sizeof(Bucket *));
-    myunmap(l, sizeof(LSHT));
+    size_t buffer_size = lsht_size(l->_K, l->_L, l->_RangePow);
+    fprintf(stderr, "Freeing %ld bytes for LSHT  at %p\n", buffer_size, l);
+    myunmap(l, buffer_size);
 }
 
 void lsht_clear(LSHT *l) { memset(l->_bucket[0], 0, (1 << l->_RangePow) * l->_L * sizeof(Bucket)); }

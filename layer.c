@@ -1,32 +1,42 @@
 #include "hdefs.h"
 
+inline static size_t __attribute__((always_inline)) layer_size(size_t noOfNodes, int prevLayerNumOfNodes, 
+    int batchsize) {
+    size_t hugepg_size = (2L << 21);  /* 2MB Hugepage */
+    size_t fano = noOfNodes * prevLayerNumOfNodes;
+    size_t buffer_size = sizeof(Layer) + noOfNodes * sizeof(Node) + noOfNodes * batchsize * sizeof(Train) + 
+        fano * sizeof(float) + noOfNodes * sizeof(float) + fano * sizeof(float) + fano * sizeof(float) + 
+        fano * sizeof(float) + noOfNodes * sizeof(int) + batchsize * sizeof(float);
+    return (size_t) ceil(hugepg_size * buffer_size * 1.0 / hugepg_size);
+}
+
 Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeType type, int batchsize, 
     int K, int L, int RangePow, bool load, char *path) {
     size_t fano = noOfNodes * prevLayerNumOfNodes;
-    Layer *l = (Layer *) mymap(sizeof(Layer));
+    size_t buffer_size = layer_size(noOfNodes, prevLayerNumOfNodes, batchsize);
+    void *buf = mymap(buffer_size);
+    fprintf(stderr, "Allocated %ld bytes for Layer %d at %p\n", buffer_size, layerID, buf);
 
-    l->_noOfNodes = noOfNodes;
-    l->_prevLayerNumOfNodes = prevLayerNumOfNodes;
-    l->_layerID = layerID;
-    l->_type = type;
-    l->_batchsize = batchsize;
-    l->_K = K;
-    l->_L = L;
-    l->_RangePow = RangePow;
-
-    l->_Nodes       = (Node *)  mymap(noOfNodes * sizeof(Node));
-    l->_train_array = (Train *) mymap(noOfNodes * batchsize * sizeof(Train));
-    l->_weights     = (float *) mymap(fano * sizeof(float));
-    l->_bias        = (float *) mymap(noOfNodes * sizeof(float));
-    l->_adamAvgMom  = (float *) mymap(fano * sizeof(float));
-    l->_adamAvgVel  = (float *) mymap(fano * sizeof(float));
-    l->_adamT       = (float *) mymap(fano * sizeof(float));
-    l->_randNode    = (int *)   mymap(noOfNodes * sizeof(int));
-    l->_hashTables  = lsht_new(K, L, RangePow);
-    l->_dwtaHasher  = dwtahash_new(K * L, prevLayerNumOfNodes);
-
-    if (type == Softmax) l->_normalizationConstants = (float *) mymap(batchsize * sizeof(float));
-    else                 l->_normalizationConstants = NULL;
+    Layer *l                   = (Layer *) buf; buf += sizeof(Layer);
+    l->_Nodes                  = (Node *)  buf; buf += noOfNodes * sizeof(Node);
+    l->_train_array            = (Train *) buf; buf += noOfNodes * batchsize * sizeof(Train);
+    l->_weights                = (float *) buf; buf += fano * sizeof(float);
+    l->_bias                   = (float *) buf; buf += noOfNodes * sizeof(float);
+    l->_adamAvgMom             = (float *) buf; buf += fano * sizeof(float);
+    l->_adamAvgVel             = (float *) buf; buf += fano * sizeof(float);
+    l->_adamT                  = (float *) buf; buf += fano * sizeof(float);
+    l->_randNode               = (int *)   buf; buf += noOfNodes * sizeof(int);
+    l->_normalizationConstants = (float *) buf; buf += batchsize * sizeof(float);
+    l->_hashTables             = lsht_new(K, L, RangePow);
+    l->_dwtaHasher             = dwtahash_new(K * L, prevLayerNumOfNodes);
+    l->_noOfNodes              = noOfNodes;
+    l->_prevLayerNumOfNodes    = prevLayerNumOfNodes;
+    l->_layerID                = layerID;
+    l->_type                   = type;
+    l->_batchsize              = batchsize;
+    l->_K                      = K;
+    l->_L                      = L;
+    l->_RangePow               = RangePow;
 
     for (size_t n = 0; n < noOfNodes; n++) l->_randNode[n] = n;
     layer_updateRandomNodes(l);
@@ -45,19 +55,11 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
 }
 
 void layer_delete(Layer *l) {
-    size_t fano = l->_noOfNodes * l->_prevLayerNumOfNodes;
     lsht_delete(l->_hashTables);
     dwtahash_delete(l->_dwtaHasher);
-    myunmap(l->_Nodes, l->_noOfNodes * sizeof(Node));
-    myunmap(l->_train_array, l->_noOfNodes * l->_batchsize * sizeof(Train));
-    myunmap(l->_weights, fano * sizeof(float));
-    myunmap(l->_bias, l->_noOfNodes * sizeof(float));
-    myunmap(l->_adamAvgMom, fano * sizeof(float));
-    myunmap(l->_adamAvgVel, fano * sizeof(float));
-    myunmap(l->_adamT, fano * sizeof(float));
-    myunmap(l->_randNode, l->_noOfNodes * sizeof(int));
-    if (l->_type == Softmax) myunmap(l->_normalizationConstants, l->_batchsize * sizeof(float));
-    myunmap(l, sizeof(Layer));
+    size_t buffer_size = layer_size(l->_noOfNodes, l->_prevLayerNumOfNodes, l->_batchsize);
+    fprintf(stderr, "Freeing %ld bytes for Layer %d at %p\n", buffer_size, l->_layerID, l);
+    myunmap(l, buffer_size);
 }
 
 void layer_rehash(Layer *l) {

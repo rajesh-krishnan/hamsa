@@ -2,6 +2,7 @@
 #define BUCKETSIZE 128
 #define BINSIZE 8
 
+#pragma pack(push,1)
 typedef struct _struct_dwtahash {
     int _numhashes;
     int _rangePow;
@@ -98,6 +99,7 @@ typedef struct _struct_network {
     Layer **_hiddenlayers;
     Config *_cfg;
 } Network;
+#pragma pack(pop)
 
 Config *config_new(char *cfgFile);
 void config_delete(Config *cfg);
