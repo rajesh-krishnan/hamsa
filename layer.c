@@ -192,6 +192,32 @@ int layer_fwdprop(Layer *l,
     return retrievals;
 }
 
+void layer_compute_softmax_stats(Layer *l, int *thisLayActiveIds, int thisLayActLen,
+    float normalizationConstant, int inputID, int *label, int labelsize) {
+    for(int i=0; i < thisLayActLen; i++) {
+        Node *n = &(l->_Nodes[thisLayActiveIds[i]]);
+        node_compute_softmax_stats(n, normalizationConstant, inputID, label, labelsize);
+    }
+}
+
+void layer_backprop(Layer *l, int *thisLayActiveIds, int thisLayActLen, Layer *prevLay,
+    int *prevLayerActiveNodeIds, int prevLayerActiveNodeSize, float learningRate, int inputID) {
+    Node *prevLayerNodeArray = prevLay->_Nodes;
+    for(int i=0; i < thisLayActLen; i++) {
+        Node *n = &(l->_Nodes[thisLayActiveIds[i]]);
+        node_backprop(n, prevLayerNodeArray, prevLayerActiveNodeIds, prevLayerActiveNodeSize, 
+            learningRate, inputID);
+    }
+}
+
+void layer_backprop_firstlayer(Layer *l, int *thisLayActiveIds, int thisLayActLen,
+    int *nnzindices, float *nnzvalues, int nnzSize, float learningRate, int inputID) {
+    for(int i=0; i < thisLayActLen; i++) {
+        Node *n = &(l->_Nodes[thisLayActiveIds[i]]);
+        node_backprop_firstlayer(n, nnzindices, nnzvalues, nnzSize, learningRate, inputID);
+    }
+}
+
 void layer_adam(Layer *l, float lr, int ratio) {
 #pragma omp parallel for
     for (size_t m = 0; m < l->_noOfNodes; m++) node_adam(&l->_Nodes[m], l->_prevLayerNumOfNodes, lr, ratio);

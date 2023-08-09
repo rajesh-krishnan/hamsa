@@ -40,7 +40,7 @@ inline static int __attribute__((always_inline)) dwtahash_getRandDoubleHash(DWTA
     return (d->_randHash[0] * tohash << 3) >> (32 - d->_lognumhash);
 }
 
-inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float* data, int dLen, int *xidx, bool easy) {
+inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float *data, int dLen, int *xidx, bool easy) {
     int *hashes = (int *) malloc(d->_numhashes * sizeof(int));
     float *values = (float *) malloc(d->_numhashes * sizeof(float));
     int *hashArray = (int *) malloc(d->_numhashes * sizeof(int));
@@ -79,11 +79,11 @@ inline static int __attribute__((always_inline)) *gethash(DWTAHash *d, float* da
     return hashArray;
 }
 
-int *dwtahash_getHashEasy(DWTAHash *d, float* data, int dLen) { 
+int *dwtahash_getHashEasy(DWTAHash *d, float *data, int dLen) {
     return gethash(d, data, dLen, NULL, true); 
 }
 
-int *dwtahash_getHash(DWTAHash *d, int *xndx, float* data, int dLen) { 
+int *dwtahash_getHash(DWTAHash *d, int *xndx, float *data, int dLen) {
     return gethash(d, data, dLen, xndx, false); 
 }
 

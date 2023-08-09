@@ -18,7 +18,7 @@ typedef struct _struct_bucket {
 } Bucket;
 
 typedef struct _struct_lsht {
-    Bucket ** _bucket;
+    Bucket **_bucket;
     int _K;
     int _L;
     int _RangePow;
@@ -46,7 +46,6 @@ typedef struct _struct_node {
     float _tbias;
     float _adamAvgMombias;
     float _adamAvgVelbias;
-    int _activeInputs;
 } Node;
 
 typedef struct _struct_layer {
@@ -124,6 +123,12 @@ int layer_fwdprop(Layer *l,
     int *activeNodesIn, float *activeValuesIn, int lengthIn, 
     int *activeNodesOut, float *activeValuesOut, int *lengthOut, 
     int inputID, int *label, int labelsize, float Sparsity);
+void layer_compute_softmax_stats(Layer *l, int *thisLayActiveIds, int thisLayActLen,
+    float normalizationConstant, int inputID, int *label, int labelsize);
+void layer_backprop(Layer *l, int *thisLayActiveIds, int thisLayActLen, Layer *prevLay,
+    int *prevLayerActiveNodeIds, int prevLayerActiveNodeSize, float learningRate, int inputID);
+void layer_backprop_firstlayer(Layer *l, int *thisLayActiveIds, int thisLayActLen,
+    int *nnzindices, float *nnzvalues, int nnzSize, float learningRate, int inputID);
 void layer_adam(Layer *l, float lr, int ratio);
 void layer_load(Layer *l, char *path);
 void layer_save(Layer *l, char *path);
