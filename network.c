@@ -86,37 +86,18 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
         for (int j = n->_cfg->numLayer - 1; j >= 0; j--) {           /* back prop across layers */
             Layer* thisLay = n->_hiddenlayers[j];
             Layer* prevLay = n->_hiddenlayers[j-1];
-
-#if 0
-            // move these functions to layer, network must not see Node
-            for (int k = 0; k < activeLength[j + 1]; k++) {
-                Node* node = thisLay->getNodebyID(activeNodes[j + 1][k]);
-
-                if (j == _numberOfLayers - 1) {
-/* if this is last layer, compute extra stats for softmax for all active nodes in layer */
-                    node->ComputeExtaStatsForSoftMax(thisLay->_normalizationConstant[i], i, blabels[i], blabelsize[i]);
-                }
-                if (j != 0) {
-/* for all layers except the first, provide the previous layer's actives for backprop */ 
-            // need to provide 
-            //   layer ptr
-            //   inputID
-            //   learning rate
-            //   thisLayer active nodes to iterate over
-            //   prevLayer active nodes/values/length to provide to each active node to adjust training weights for inputID
-                    node->backPropagate(prevLay->getAllNodes(), activeNodes[j], sizes[j], tmplr, i);
-                } else {
-/* if this is first layer, provide the input values */
-            // need to provide 
-            //   layer ptr
-            //   inputID
-            //   learning rate
-            //   thisLayer active nodes to iterate over
-            //   input indices/values/length to provide to each active node to adjust training weights for inputID
-                    node->backPropagateFirstLayer(inIndices[i], inValues[i], inLength[i], tmplr, i);
-                }
+            if (j == n->_cfg->numLayer - 1) {
+                layer_compute_softmax_stats(thisLay, activeNodes[j], activeLength[j],
+                     thisLay->_normalizationConstants[i], i, blabels[i], blabelsize[i]);
             }
-#endif
+            if (j != 0) {
+                layer_backprop(thisLay, activeNodes[j], activeLength[j], prevLay,
+                    activeNodes[j-1], activeLength[j-1], tmplr, i);
+            } 
+            else {
+                layer_backprop_firstlayer(thisLay, activeNodes[j], activeLength[j],
+                    inIndices[i], inValues[i], inLength[i], tmplr, i);
+            }
         }
 
         for(int k = 0; k < n->_cfg->numLayer; k++) {
