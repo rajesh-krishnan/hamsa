@@ -41,32 +41,11 @@ void network_load_params(Network *n) {
             int avr = layer_fwdprop(n->_hiddenlayers[j], activeNodesIn, activeValuesIn, lengthIn, \
                 activeNodesOut, activeValuesOut, &lengthOut, i, blabels[i], blabelsize[i], Sparsity);
 
-int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, int **blabels, int *blabelsize) {
-    int correctPred = 0;
-#pragma omp parallel for reduction(+:correctPred)
-    for (int i = 0; i < n->_cfg->Batchsize; i++) {
-        int predict_class = -1; 
-        for (int j = 0; j < n->_cfg->numLayer; j++) {
-            float Sparsity  = n->_cfg->Sparsity[n->_cfg->numLayer + j];  /* use second half for infer */
-            ALLOC_ACTIVEOUT_FWDPROP( Sparsity );
-            if (j != 0) { free(activeNodesIn);  free(activeValuesIn); } /* free the previous layer's actives */
-            if (j == n->_cfg->numLayer) {                    /* get prediction and free last layer's actives */
-                predict_class = layer_get_prediction(n->_hiddenlayers[j], activeNodesOut, lengthOut, i);
-                free(activeNodesOut); free(activeValuesOut); 
-            }
-        }
-        for(int k=0; k < blabelsize[i]; k++) 
-            if(blabels[i][k] == predict_class) { correctPred += 1; break; }
-    }
-    return correctPred;
-}
-
 void network_train(Network *n, int **inIndices, float **inValues, int *inLength, int **blabels, int *blabelsize,
     int iter, bool reperm, bool rehash, bool rebuild) {
     int *avg_retrieval = (int *) malloc(n->_cfg->numLayer * n->_cfg->Batchsize * sizeof(int));
     assert(avg_retrieval != NULL);
     memset(avg_retrieval, 0, n->_cfg->numLayer * n->_cfg->Batchsize * sizeof(int)); /* init to 0 */
-
     float tmplr = n->_cfg->Lr * sqrt((1 - pow(BETA2, iter + 1))) / (1 - pow(BETA1, iter + 1));
 
 #pragma omp parallel for
@@ -93,7 +72,7 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
             if (j != 0) {
                 layer_backprop(thisLay, activeNodes[j], activeLength[j], prevLay,
                     activeNodes[j-1], activeLength[j-1], tmplr, i);
-            } 
+            }
             else {
                 layer_backprop_firstlayer(thisLay, activeNodes[j], activeLength[j],
                     inIndices[i], inValues[i], inLength[i], tmplr, i);
@@ -117,12 +96,32 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
         layer_adam(l, tmplr, 1);
         if (rebuild && (Sparsity < 1)) layer_updateHasher(l);
         if (rehash && (Sparsity < 1))  layer_rehash(l);
-        if (reperm && last)            layer_updateRandomNodes(l);
-        // statistics for batch
+        if (reperm && last)            layer_updateRandomNodes(l);   /* XXX: why only last layer */
         if (rehash) {
             int avg = 0;
             for (int i = 0; i < n->_cfg->Batchsize; i++) avg += avg_retrieval[i * n->_cfg->numLayer + j];
-            fprintf(stderr, "Layer %d average sample size = %lf\n", j, avg*1.0/n->_cfg->Batchsize);
+            fprintf(stderr, "Layer %d average sample size = %lf Sparsity=%f\n", j, avg*1.0/n->_cfg->Batchsize, Sparsity);
         }
     }
 }
+
+int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, int **blabels, int *blabelsize) {
+    int correctPred = 0;
+#pragma omp parallel for reduction(+:correctPred)
+    for (int i = 0; i < n->_cfg->Batchsize; i++) {
+        int predict_class = -1;
+        for (int j = 0; j < n->_cfg->numLayer; j++) {
+            float Sparsity  = n->_cfg->Sparsity[n->_cfg->numLayer + j];  /* use second half for infer */
+            ALLOC_ACTIVEOUT_FWDPROP( Sparsity );
+            if (j != 0) { free(activeNodesIn);  free(activeValuesIn); } /* free the previous layer's actives */
+            if (j == n->_cfg->numLayer) {                    /* get prediction and free last layer's actives */
+                predict_class = layer_get_prediction(n->_hiddenlayers[j], activeNodesOut, lengthOut, i);
+                free(activeNodesOut); free(activeValuesOut);
+            }
+        }
+        for(int k=0; k < blabelsize[i]; k++)
+            if(blabels[i][k] == predict_class) { correctPred += 1; break; }
+    }
+    return correctPred;
+}
+
