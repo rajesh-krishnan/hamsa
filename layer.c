@@ -124,6 +124,7 @@ int layer_fwdprop(Layer *l,
     int retrievals = 0;
     int len;
 
+    assert(Sparsity <= 1.0);
     if(Sparsity == 1.0) {
         len = l->_noOfNodes;
         *lengthOut = len;
