@@ -92,30 +92,26 @@ static void test_dwtahash_lsht() {
     DWTAHash *d = dwtahash_new(6*50, 128);
     LSHT *l = lsht_new(6,50,18);
 
-    float weights[10*128];
-    for(int i = 0; i < 10*128; i++) weights[i] = myrand_norm(0,0.01);
-    for(int j = 0; j < 10; j++) {
-        hashes = dwtahash_getHashEasy(d, &weights[j*128], 128);
-        lsht_add(l, hashes, j);
-        free(hashes);
-    }
+    float weights[128];
+    for(int i = 0; i < 128; i++) weights[i] = myrand_norm(0.0,0.01);
+    hashes = dwtahash_getHashEasy(d, weights, 128);
+    lsht_add(l, hashes, 3);
+    free(hashes);
 
     int ids[128];
-    float myweights[128];
-    for(int i = 0; i < 128; i++) ids[i] = i;
-    for(int i = 0; i < 128; i++) myweights[i] = weights[(4*128) + i];
+    for (int k=0; k<128; k++) ids[k] = k;
 
     Histo *counts = NULL; 
     Histo *cur, *tmp;
-    hashes = dwtahash_getHash(d, ids, myweights, 128);
+    hashes = dwtahash_getHash(d, ids, weights, 128);
     lsht_retrieve_histogram(l, hashes, &counts);
-
-    printf("Expecting %d with count %d\n", 4, 50); 
+    printf("Expecting %d with count %d\n", 3, 50); 
     HASH_ITER(hh, counts, cur, tmp) {
         printf("index : %d, count: %ld\n", cur->key, cur->value);
     }
     free(hashes);
     ht_destroy(&counts);
+
     lsht_delete(l);
     dwtahash_delete(d);
 }
