@@ -114,7 +114,7 @@ int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, 
             float Sparsity  = n->_cfg->Sparsity[n->_cfg->numLayer + j];  /* use second half for infer */
             ALLOC_ACTIVEOUT_FWDPROP( Sparsity );
             if (j != 0) { free(activeNodesIn);  free(activeValuesIn); } /* free the previous layer's actives */
-            if (j == n->_cfg->numLayer) {                    /* get prediction and free last layer's actives */
+            if (j == n->_cfg->numLayer - 1) {                    /* get prediction and free last layer's actives */
                 predict_class = layer_get_prediction(n->_hiddenlayers[j], activeNodesOut, lengthOut, i);
                 free(activeNodesOut); free(activeValuesOut);
             }
