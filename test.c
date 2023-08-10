@@ -103,14 +103,26 @@ static void test_dwtahash_lsht() {
 
     Histo *counts = NULL; 
     Histo *cur, *tmp;
+
     hashes = dwtahash_getHash(d, ids, weights, 128);
     lsht_retrieve_histogram(l, hashes, &counts);
-    printf("Expecting %d with count %d\n", 3, 50); 
+    printf("Query what was added, expecting %d with count %d\n", 3, 50); 
     HASH_ITER(hh, counts, cur, tmp) {
         printf("index : %d, count: %ld\n", cur->key, cur->value);
     }
     free(hashes);
-    ht_destroy(&counts);
+    ht_destroy(&counts); counts = NULL;
+
+    for(int i = 0; i < 128; i++) weights[i] = myrand_norm(0.0,0.01);
+    hashes = dwtahash_getHash(d, ids, weights, 128);
+    lsht_retrieve_histogram(l, hashes, &counts);
+    printf("Random query, expecting no retrievals (or a few with low count)\n");
+    HASH_ITER(hh, counts, cur, tmp) {
+        printf("index : %d, count: %ld\n", cur->key, cur->value);
+    }
+    printf("Done\n");
+    free(hashes);
+    ht_destroy(&counts); counts = NULL;
 
     lsht_delete(l);
     dwtahash_delete(d);
