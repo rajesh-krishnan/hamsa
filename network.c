@@ -100,7 +100,7 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
         if (rehash) {
             int avg = 0;
             for (int i = 0; i < n->_cfg->Batchsize; i++) avg += avg_retrieval[i * n->_cfg->numLayer + j];
-            fprintf(stderr, "Layer %d average sample size = %lf Sparsity=%f\n", j, avg*1.0/n->_cfg->Batchsize, Sparsity);
+            // fprintf(stderr, "Layer %d average sample size = %lf Sparsity=%f\n", j, avg*1.0/n->_cfg->Batchsize, Sparsity);
         }
     }
 }
