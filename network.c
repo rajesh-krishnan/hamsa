@@ -65,7 +65,7 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
         for (int j = n->_cfg->numLayer - 1; j >= 0; j--) {           /* back prop across layers */
             Layer* thisLay = n->_hiddenlayers[j];
             Layer* prevLay = n->_hiddenlayers[j-1];
-            if (j == n->_cfg->numLayer - 1) {
+            if (j == (n->_cfg->numLayer - 1)) {
                 layer_compute_softmax_stats(thisLay, activeNodes[j], activeLength[j],
                      thisLay->_normalizationConstants[i], i, blabels[i], blabelsize[i]);
             }
@@ -92,16 +92,18 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
     for (int j=0; j < n->_cfg->numLayer; j++) {
         float Sparsity  = n->_cfg->Sparsity[j];                /* use first half for training */
         Layer *l        = n->_hiddenlayers[j];
-        bool last       = (n->_cfg->numLayer - 1);
+        bool last       = (j == (n->_cfg->numLayer - 1));
         layer_adam(l, tmplr, 1);
         if (rebuild && (Sparsity < 1)) layer_updateHasher(l);
         if (rehash && (Sparsity < 1))  layer_rehash(l);
         if (reperm && last)            layer_updateRandomNodes(l);   /* XXX: why only last layer */
+        /*
         if (rehash) {
             int avg = 0;
             for (int i = 0; i < n->_cfg->Batchsize; i++) avg += avg_retrieval[i * n->_cfg->numLayer + j];
-            // fprintf(stderr, "Layer %d average sample size = %lf Sparsity=%f\n", j, avg*1.0/n->_cfg->Batchsize, Sparsity);
+            fprintf(stderr, "Layer %d average sample size = %lf Sparsity=%f\n", j, avg*1.0/n->_cfg->Batchsize, Sparsity);
         }
+        */
     }
 }
 

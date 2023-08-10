@@ -101,9 +101,9 @@ typedef struct _struct_network {
 } Network;
 #pragma pack(pop)
 
-Config *config_new(char *cfgFile);
+Config *config_new(const char *cfgFile);
 void config_delete(Config *cfg);
-void config_save(Config *cfg, char *cfgFile);
+void config_save(Config *cfg, const char *cfgFile);
 
 Network *network_new(Config *cfg, bool loadParams);
 void network_delete(Network *n);

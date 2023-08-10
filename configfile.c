@@ -218,7 +218,7 @@ static void string_to_config(char *jstr, Config *cfg) {
     free(tmp);
 }
 
-Config *config_new(char *cfgFile) {
+Config *config_new(const char *cfgFile) {
     Config *cfg = (Config *) malloc(sizeof(Config));
     char *buffer;
     size_t length;
@@ -239,7 +239,7 @@ Config *config_new(char *cfgFile) {
     return cfg;
 }
 
-void config_save(Config *cfg, char *cfgFile) {
+void config_save(Config *cfg, const char *cfgFile) {
     char buffer[10000];
     config_to_string(cfg, buffer, 10000);
     FILE *f = fopen(cfgFile, "w");
