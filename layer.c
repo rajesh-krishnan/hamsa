@@ -93,7 +93,6 @@ void layer_updateRandomNodes(Layer *l) {
     myrand_shuffle(l->_randNode, l->_noOfNodes); 
 }
 
-
 int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int inputID) {
     assert(l->_type == Softmax);
     int predict_class = -1;
