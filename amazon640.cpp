@@ -95,11 +95,10 @@ void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
             num_labels += labelsize[i];
         }
 
-        std::cout << Batchsize << " records, with "<< num_features << " features and " << num_labels << " labels" << std::endl;
-        // auto correctPredict = 0;
+        //cout << "Test: " << Batchsize << " records, with "<< num_features << " features, " << num_labels << " labels" << endl;
         auto correctPredict = network_infer(mynet, records, values, sizes, labels, labelsize);
         totCorrect += correctPredict;
-        std::cout <<" iter "<< i << ": " << totCorrect*1.0/(Batchsize*(i+1)) << " correct" << std::endl;
+        //cout <<"testbatch "<< i << ": " << totCorrect*1.0/(Batchsize*(i+1)) << " correct" << endl;
 
         delete[] sizes;
         delete[] labels;
@@ -112,7 +111,7 @@ void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
 
     }
     testfile.close();
-    cout << "over all " << totCorrect * 1.0 / (numBatchesTest*Batchsize) << endl;
+    //cout << "over " << numBatchesTest << " batches " << " for iter " << iter << totCorrect * 1.0 / (numBatchesTest*Batchsize) << " correct" << endl;
     outputFile << iter << " " << globalTime/1000 << " " << totCorrect * 1.0 / (numBatchesTest*Batchsize) << endl;
 }
 
@@ -197,9 +196,17 @@ void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
         bool reperm = false;
         if ((epoch*numBatches+i)%(Rehash/Batchsize) == (Rehash/Batchsize-1))  rehash = true;
         if ((epoch*numBatches+i)%(Rebuild/Batchsize) == (Rehash/Batchsize-1)) rebuild = true;
-        // 6496 was harcoded in Network, mvoing it here 
-        if ((epoch*numBatches+i)%6946 == 6945)                                reperm = true;
+        /* XXX: Original code hardcoded 6496 and layerID 1 (last?) in network training, why? */
+        if ((epoch*numBatches+i)%6946 == 6945) reperm = true; 
 
+        int num_features = 0, num_labels = 0;
+        for (int i = 0; i < Batchsize; i++)
+        {
+            num_features += sizes[i];
+            num_labels += labelsize[i];
+        }
+
+        //cout << "Train: " << Batchsize << " records, with "<< num_features << " features, " << num_labels << " labels" << endl;
         auto t1 = std::chrono::high_resolution_clock::now();
         network_train(mynet, records, values, sizes, labels, labelsize, epoch * numBatches + i,
             reperm, rehash, rebuild);
@@ -225,15 +232,16 @@ void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
 int main(int argc, char* argv[])
 {
     Config *cfg = config_new((char *)"sampleconfig.json");
-    std::cout << "Loaded config" << std::endl;
+    cout << "Loaded config" << endl;
     auto t1 = std::chrono::high_resolution_clock::now();
     Network *n = network_new(cfg, false);
     auto t2 = std::chrono::high_resolution_clock::now();
     float timeDiffInMiliseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    std::cout << "Network Initialization takes " << timeDiffInMiliseconds/1000 << " milliseconds" << std::endl;
+    cout << "Network Initialization takes " << timeDiffInMiliseconds/1000 << " milliseconds" << endl;
     int numBatches = cfg->totRecords / cfg->Batchsize;
     int numBatchesTest = cfg->totRecordsTest / cfg->Batchsize;
     int e = 0;
+
     while(e < cfg->Epoch) {
         ofstream outputFile(cfg->logFile, std::ios_base::app);
         outputFile<<"Epoch "<<e<<endl;
