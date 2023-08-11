@@ -104,9 +104,7 @@ void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nn
 /* including at the layer level above */
 void node_adam(Node *n, int dim, int batchsize, float tmplr, int ratio) {
     float tbias = 0.0;
-    float *local_weights = (float *) malloc(dim * sizeof(float));
-    assert(local_weights != NULL);
-    memcpy(local_weights, n->_weights, dim * sizeof(float));
+    float *local_weights = n->_weights;
 
     for (int d=0; d<dim; d++){
         float _t = n->_t[d];
@@ -130,7 +128,5 @@ void node_adam(Node *n, int dim, int batchsize, float tmplr, int ratio) {
     *n->_adamAvgMombias = BETA1 * (*n->_adamAvgMombias) + (1 - BETA1) * tbias;
     *n->_adamAvgVelbias = BETA2 * (*n->_adamAvgVelbias) + (1 - BETA2) * tbias * tbias;
     *n->_bias += ratio * tmplr * (*n->_adamAvgMombias) / (sqrt(*n->_adamAvgVelbias) + EPS);
-    memcpy(n->_weights, local_weights, dim * sizeof(float));
-    free(local_weights);
 }
 
