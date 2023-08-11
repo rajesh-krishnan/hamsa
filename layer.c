@@ -134,7 +134,7 @@ int layer_fwdprop(Layer *l,
         Histo *cur = NULL, *tmp = NULL;                    /* for use with HASH_ITER */  
 
         if (l->_type == Softmax && labelsize > 0) {        /* ensure label node is in candidates */
-            for (int i = 0; i < labelsize; i++) ht_put(&counts, i, l->_L);
+            for (int i = 0; i < labelsize; i++) ht_put(&counts, label[i], l->_L);
         }
 
         int *hashes = dwtahash_getHash(l->_dwtaHasher, activeNodesIn, activeValuesIn, lengthIn);
