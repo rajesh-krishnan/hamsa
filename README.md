@@ -42,7 +42,7 @@ $ hugeadm --pool-list
 1073741824        0        0        0         
 ```
 
-Our initial implementation is based directly on the [SLIDE](#Chen2020) paper and 
+Our initial implementation is based directly on the SLIDE paper [Chen2020](#Chen2020) and 
 the author's original [implementation](https://github.com/RUSH-LAB/SLIDE) in C++. 
 We have refactored the code considerably:
 
@@ -277,7 +277,7 @@ signedness and overflows, corner cases, and concurrency.
 
 Once the core capability is built and tested, we plan to focus on two problem
 domains: (i) natural language processing using large language models and (ii)
-stochatic planning on continuous domains using RDDL (see [this]()).
+stochatic planning on continuous domains using RDDL (see [Ga2017](#Ga2017)).
 
 Code improvements that would help:
   * Use a logging function with timestamp, uniform format, and level
