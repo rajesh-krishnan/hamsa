@@ -2,7 +2,7 @@
 
 inline static size_t __attribute__((always_inline)) layer_size(size_t noOfNodes, int prevLayerNumOfNodes, 
     int batchsize) {
-    size_t hugepg_size = (2L << 21);  /* 2MB Hugepage */
+    size_t hugepg_size = (1L << 21);  /* 2MB Hugepage */
     size_t fano = noOfNodes * prevLayerNumOfNodes;
     size_t buffer_size = sizeof(Layer) + noOfNodes * sizeof(Node) + noOfNodes * batchsize * sizeof(Train) + 
         4 * fano * sizeof(float) + 3 * noOfNodes * sizeof(float) + noOfNodes * sizeof(int) + batchsize * sizeof(float);

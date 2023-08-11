@@ -19,7 +19,7 @@ inline static int __attribute__((always_inline)) *bucket_get_array(Bucket *b) {
 
 inline static size_t __attribute__((always_inline)) lsht_size(int K, int L, int RangePow) {
     size_t sz  = (1 << RangePow);
-    size_t hugepg_size = (2L << 21);  /* 2MB Hugepage */
+    size_t hugepg_size = (1L << 21);  /* 2MB Hugepage */
     size_t buffer_size = sizeof(LSHT) + L * sizeof (Bucket *) + L * sz * sizeof(Bucket);
     return (size_t) ceil(hugepg_size * buffer_size * 1.0 / hugepg_size);
 }
