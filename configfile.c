@@ -94,7 +94,7 @@ static void config_to_string(Config *cfg, char *ostr, int maxlen) {
     ADD_ITEM("  \"Rebuild\":         ");
     sprintf(buffer, "%d%s", cfg->Rebuild, ",\n");
     ADD_ITEM(buffer);
-    ADD_ITEM("  \"Reperm\":         ");
+    ADD_ITEM("  \"Reperm\":          ");
     sprintf(buffer, "%d%s", cfg->Reperm, ",\n");
     ADD_ITEM(buffer);
     ADD_ITEM("  \"InputDim\":        ");
