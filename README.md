@@ -124,6 +124,17 @@ Neural network configuration seems to be largely a black art. However, some note
 on the configuration file may help, which is particualr for the Amazon640K bag of 
 words dataset.
 
+`BETA1` and `BETA2` defined in `hdefs.h` are used to compute the temproary learning 
+rate and ADAM parameters. `EPS` is a small constant used to avoid divide by zero issues.
+`BUCKETSIZE` and `BINSIZE` are used for configuring hashing in conjunction with
+other parameters as described below.
+
+`MINACTIVE` and `THRESH` determine sampling strategy of active nodes when using locality
+sensitive hashing. One of them must be zero.  If `THRESH > 0`, only those nodes retrieved
+from the hash which have a count of `THRESH` are more are considered. If `MINACTIVE > 0`
+additional nodes are randomly added to the selection to the minimum of the layer size
+or `MINACTIVE`.
+
 
 ```
 "InputDim":        135909
@@ -154,7 +165,8 @@ The number of hashes, it is unclear how K is selected for a given scenario.
 ```
 Note `BINSIZE` defined as 8 in `hdefs.h`. The algorithm requires that  
 `K * floor(log2(BINSIZE)) == RangePow`, which explains the choices. Each
-bucket in the LSHT will have `(1<<RangePow)` elements allocated.
+LSHT will have `L* (1<<RangePow)` buckets, with each bucket having
+`BUCKETSIZE` elements where `BUCKETSIZE` is defiens to be 128 in `hdefs.c`.
 
 ```
 "L":               [20,50],
@@ -227,6 +239,14 @@ setting.
 ```
 Once every Rebuild/Bathsize batches, delete and get a new DWTA hasher.
 It is unclear how to choose this setting.
+
+```
+"Reperm":         640000,
+```
+Once every Reperm/Bathsize batches, repermute the randNodes list.
+It applies only to the last layer, and it is unclear how to choose 
+this setting. The original code had this hardcoded to `6946*Batchsize`
+and I chose a "nicer" multiple of the Batchsize.
 
 ```
 "loadPath":        "./data",
