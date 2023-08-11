@@ -89,8 +89,7 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
         free(activeLength);
     }
 
-    // gradient descent after each batch
-    for (int j=0; j < n->_cfg->numLayer; j++) {
+    for (int j=0; j < n->_cfg->numLayer; j++) {                /* gradient descent after each batch */
         float Sparsity  = n->_cfg->Sparsity[j];                /* use first half for training */
         Layer *l        = n->_hiddenlayers[j];
         bool last       = (j == (n->_cfg->numLayer - 1));
@@ -99,11 +98,13 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
             if (rebuild) layer_updateHasher(l);
             if (rehash)  layer_rehash(l);
             if (reperm)  layer_updateRandomNodes(l);
+            /*
             if (rehash) {
                 int avg = 0;
                 for (int i = 0; i < n->_cfg->Batchsize; i++) avg += avg_retrieval[i * n->_cfg->numLayer + j];
                 fprintf(stderr, "Layer %d average sample size = %lf\n", j, avg*1.0/n->_cfg->Batchsize);
             }
+            */
         }
     }
 }
