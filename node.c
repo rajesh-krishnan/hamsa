@@ -43,10 +43,10 @@ float node_get_activation(Node *n, int *indices, float *values, int length, int 
     case ReLU:
         if (n->_train[inputID]._lastActivations < 0) {
             n->_train[inputID]._lastActivations = 0;
-            n->_train[inputID]._lastGradients = 1;
+            //n->_train[inputID]._lastGradients = 1;
             n->_train[inputID]._lastDeltaforBPs = 0;
         }else{
-            n->_train[inputID]._lastGradients = 0;
+            //n->_train[inputID]._lastGradients = 0;
         }
         break;
     case Softmax:
@@ -62,6 +62,7 @@ bool node_get_input_active(Node *n, int inputID) {
     return n->_train[inputID]._ActiveinputIds == 1;
 }
 
+// XXX: why will the node id be in label?
 bool ID_in_label(int *label, int labelsize, int idd) {
   for (int i = 0; i < labelsize; i++) {
       if (label[i] == idd) return true; 
@@ -73,7 +74,7 @@ void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputI
     assert(n->_train[inputID]._ActiveinputIds == 1);
     n->_train[inputID]._lastActivations /= normalizationConstant + 0.0000001;
     /* TODO: check gradient */
-    n->_train[inputID]._lastGradients = 1;
+    //n->_train[inputID]._lastGradients = 1;
     if (ID_in_label (label, labelsize, n->_IDinLayer)) {
         n->_train[inputID]._lastDeltaforBPs = (1.0/labelsize - n->_train[inputID]._lastActivations) / batchsize;
     }
@@ -94,7 +95,8 @@ void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeId
         float grad_t = n->_train[inputID]._lastDeltaforBPs * node_get_last_activation(prev_node, inputID);
         n->_t[prevLayerActiveNodeIds[i]] += grad_t;
     }
-    n->_tbias += n->_train[inputID]._lastDeltaforBPs;
+    // XXX: move to adam
+    n->_tbias += n->_train[inputID]._lastDeltaforBPs; // XXX: safe for parallel?
     n->_train[inputID]._ActiveinputIds = 0;
     n->_train[inputID]._lastDeltaforBPs = 0;
     n->_train[inputID]._lastActivations = 0;
@@ -108,7 +110,8 @@ void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nn
         float grad_t = n->_train[inputID]._lastDeltaforBPs * nnzvalues[i];
         n->_t[nnzindices[i]] += grad_t;
     }
-    n->_tbias += n->_train[inputID]._lastDeltaforBPs;
+    // XXX: move to adam
+    n->_tbias += n->_train[inputID]._lastDeltaforBPs; // XXX: safe for parallel?
     n->_train[inputID]._ActiveinputIds = 0;
     n->_train[inputID]._lastDeltaforBPs = 0;
     n->_train[inputID]._lastActivations = 0;
@@ -119,7 +122,14 @@ void node_adam(Node *n, int dim, float tmplr, int ratio) {
     float *local_weights = (float *) malloc(dim * sizeof(float));
     assert(local_weights != NULL);
     memcpy(local_weights, n->_weights, dim * sizeof(float));
-    for (int d=0; d < dim;d++){
+
+    // XXX: collate the _tbias here across _train array
+    // XXX: clear _train array fields
+    // XXX: only AvgMom and AvgVel of a dimension are referenced later
+    // XXX: tbias, adamAvgMombias, adamAvgVelbias can all be local variables 
+    // XXX: no need for Mombias, make local variable?
+    // XXX: no need for Velbias, make local variable?
+    for (int d=0; d<dim; d++){
         float _t = n->_t[d];
         float Mom = n->_adamAvgMom[d];
         float Vel = n->_adamAvgVel[d];

@@ -30,7 +30,7 @@ typedef enum { ReLU = 1, Softmax = 2 } NodeType;
 typedef struct _struct_train {
     float _lastDeltaforBPs;
     float _lastActivations;
-    float _lastGradients;
+    //float _lastGradients;
     int _ActiveinputIds;
 } Train;
 
