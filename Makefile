@@ -17,15 +17,13 @@ CC       = gcc
 AR       = ar
 RANLIB   = ranlib
 
-all: amazon640 test
+all: amazon640 test libhamsa.so
 
-amazon640: amazon640.cpp hamsalib
+amazon640: amazon640.cpp libhamsa.a
 	$(CPP) $(CPLFLAGS) -o $@ -fopenmp $< libhamsa.a -lm
 
-test: test.c hamsalib
+test: test.c libhamsa.a
 	$(CC) $(CFLAGS) -o $@ -fopenmp $< libhamsa.a -lm
-
-hamsalib: libhamsa.so libhamsa.a
 
 libhamsa.a: $(OBJECTS)
 	$(AR) rcs $@ $^

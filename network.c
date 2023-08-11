@@ -94,16 +94,16 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
         Layer *l        = n->_hiddenlayers[j];
         bool last       = (j == (n->_cfg->numLayer - 1));
         layer_adam(l, tmplr, 1);
-        if (rebuild && (Sparsity < 1)) layer_updateHasher(l);
-        if (rehash && (Sparsity < 1))  layer_rehash(l);
-        if (reperm && last)            layer_updateRandomNodes(l);   /* XXX: why only last layer */
-        /*
-        if (rehash) {
-            int avg = 0;
-            for (int i = 0; i < n->_cfg->Batchsize; i++) avg += avg_retrieval[i * n->_cfg->numLayer + j];
-            fprintf(stderr, "Layer %d average sample size = %lf Sparsity=%f\n", j, avg*1.0/n->_cfg->Batchsize, Sparsity);
+        if (Sparsity < 1) {
+            if (rebuild) layer_updateHasher(l);
+            if (rehash)  layer_rehash(l);
+            if (reperm)  layer_updateRandomNodes(l);
+            if (rehash) {
+                int avg = 0;
+                for (int i = 0; i < n->_cfg->Batchsize; i++) avg += avg_retrieval[i * n->_cfg->numLayer + j];
+                fprintf(stderr, "Layer %d average sample size = %lf\n", j, avg*1.0/n->_cfg->Batchsize);
+            }
         }
-        */
     }
 }
 
