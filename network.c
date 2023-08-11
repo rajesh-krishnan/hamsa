@@ -29,7 +29,6 @@ void network_load_params(Network *n) {
 
 /* Reuse code block in training and inference */
 #define ALLOC_ACTIVEOUT_FWDPROP( S ) \
-            int lengthIn, lengthOut=0; \
             int *activeNodesIn, *activeNodesOut; \
             float *activeValuesIn, *activeValuesOut; \
             activeNodesIn   = (j==0) ? inIndices[i] : activeNodesOut; \
@@ -39,7 +38,7 @@ void network_load_params(Network *n) {
             activeValuesOut = (float *) malloc(n->_hiddenlayers[j]->_noOfNodes * sizeof(int)); \
             assert((activeNodesOut != NULL) && (activeValuesOut != NULL)); \
             int avr = layer_fwdprop(n->_hiddenlayers[j], activeNodesIn, activeValuesIn, lengthIn, \
-                activeNodesOut, activeValuesOut, &lengthOut, i, blabels[i], blabelsize[i], Sparsity);
+                activeNodesOut, activeValuesOut, &lengthOut, i, blabels[i], blabelsize[i], S); 
 
 void network_train(Network *n, int **inIndices, float **inValues, int *inLength, int **blabels, int *blabelsize,
     int iter, bool reperm, bool rehash, bool rebuild) {
@@ -53,6 +52,7 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
         int   **activeNodes  = (int **)   malloc(n->_cfg->numLayer * sizeof(int *));
         float **activeValues = (float **) malloc(n->_cfg->numLayer * sizeof(float *));
         int   *activeLength  = (int *)    malloc(n->_cfg->numLayer * sizeof(int));
+        int   lengthIn=0, lengthOut=0;
         for (int j = 0; j < n->_cfg->numLayer; j++) {                 /* forward prop across layers */
             float Sparsity  = n->_cfg->Sparsity[j];                   /* use second half for train */
             ALLOC_ACTIVEOUT_FWDPROP( Sparsity );
@@ -60,6 +60,7 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
             activeNodes[j]  = activeNodesOut;                         /* save for backprop */
             activeValues[j] = activeValuesOut;
             activeLength[j] = lengthOut;
+            //fprintf(stderr,"Layer: %d, Iter %d, Input: %d, lengthIn: %d, lengthOut: %d\n", j, iter, i, lengthIn, lengthOut);
         }
 
         for (int j = n->_cfg->numLayer - 1; j >= 0; j--) {           /* back prop across layers */
@@ -112,6 +113,7 @@ int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, 
 #pragma omp parallel for reduction(+:correctPred)
     for (int i = 0; i < n->_cfg->Batchsize; i++) {
         int predict_class = -1;
+        int lengthIn=0, lengthOut=0;
         for (int j = 0; j < n->_cfg->numLayer; j++) {
             float Sparsity  = n->_cfg->Sparsity[n->_cfg->numLayer + j];  /* use second half for infer */
             ALLOC_ACTIVEOUT_FWDPROP( Sparsity );
