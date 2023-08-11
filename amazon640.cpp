@@ -93,14 +93,8 @@ void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
     for (int i = 0; i < numBatchesTest; i++) {
         PARSE_LOAD_DATA
 
-        // int num_features = 0, num_labels = 0;
-        // for (int i = 0; i < Batchsize; i++) { num_features += sizes[i]; num_labels += labelsize[i]; }
-        // cout << "Test: " << Batchsize << " records, with "<< num_features << " features, " << num_labels << " labels" << endl;
-
         auto correctPredict = network_infer(mynet, records, values, sizes, labels, labelsize);
         totCorrect += correctPredict;
-
-        // cout <<"testbatch "<< i << ": " << totCorrect*1.0/(Batchsize*(i+1)) << " correct" << endl;
 
         RELEASE_MEMORY
     }
@@ -111,8 +105,8 @@ void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
 void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
     int Batchsize = cfg->Batchsize;
     int Rebuild = cfg->Rebuild;
-    int Rehash  = cfg->Rehash;
-    int Stepsize  = cfg->Stepsize;
+    int Rehash = cfg->Rehash;
+    int Stepsize = cfg->Stepsize;
 
     ifstream file(cfg->trainData);
     string str;
@@ -122,16 +116,10 @@ void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
 
         if((i+epoch*numBatches)%Stepsize==0) { EvalDataSVM(cfg, mynet, 20, epoch*numBatches+i); }
 
-        bool rehash = false;
-        bool rebuild = false;
-        bool reperm = false;
-        if ((epoch*numBatches+i)%(Rehash/Batchsize) == (Rehash/Batchsize-1))  rehash = true;
-        if ((epoch*numBatches+i)%(Rebuild/Batchsize) == (Rebuild/Batchsize-1)) rebuild = true;
-        if ((epoch*numBatches+i)%6946 == 6945) reperm = true;    /* XXX: Why 6496 and why only last layer? */
+        bool rehash  = ((epoch*numBatches+i)%(Rehash/Batchsize) == (Rehash/Batchsize-1));
+        bool rebuild = ((epoch*numBatches+i)%(Rebuild/Batchsize) == (Rebuild/Batchsize-1));
+        bool reperm  = ((epoch*numBatches+i)%6946 == 6945);  /* why 6496 and why only last layer? */
 
-        // int num_features = 0, num_labels = 0;
-        // for (int i = 0; i < Batchsize; i++) { num_features += sizes[i]; num_labels += labelsize[i]; }
-        // cout << "Train: " << Batchsize << " records, with "<< num_features << " features, " << num_labels << " labels" << endl;
         auto t1 = std::chrono::high_resolution_clock::now();
         network_train(mynet, records, values, sizes, labels, labelsize, epoch * numBatches + i,
             reperm, rehash, rebuild);
