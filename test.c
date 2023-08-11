@@ -188,6 +188,6 @@ int main(int argc, char *argv[]) {
     test_layer(true);
     test_network(true, true);
 #endif
-    test_dwtahash_lsht();
+    test_layer(true);
     return 0;
 }

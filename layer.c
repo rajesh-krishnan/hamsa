@@ -38,12 +38,13 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
     l->_L                      = L;
     l->_RangePow               = RangePow;
 
-    for (size_t n = 0; n < noOfNodes; n++) l->_randNode[n] = n;
-    layer_updateRandomNodes(l);
+    for (size_t n = 0; n < noOfNodes; n++) l->_randNode[n] = n;      /* Init randNode array */
+    layer_updateRandomNodes(l);                                      /* Shuffle randNode array */
 
-    (load) ?  layer_load(l, path) : layer_randinit(l);
+    for (size_t n = 0; n < fano; n++) l->_adamT[n] = 0.0;            /* Set ADAM t array to 0 */
+    (load) ?  layer_load(l, path) : layer_randinit(l);               /* Set weights, bias, ADAM vel, ADAM mom */
 
-    for (size_t i = 0; i < noOfNodes; i++) {
+    for (size_t i = 0; i < noOfNodes; i++) {                         /* Set node-specific pointers for convenience */
         size_t index = prevLayerNumOfNodes * i;
         node_update(&l->_Nodes[i], i, type, batchsize,
             &l->_weights[index], &l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
@@ -236,7 +237,10 @@ inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path,
     (*rwfn)(l->_bias, l->_noOfNodes, 1, fn);
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_weights, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
-    /* could also save ADAM parameters here */
+    sprintf(fn+len, "/av_layer_%d.npy", l->_layerID);
+    (*rwfn)(l->_adamAvgVel, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
+    sprintf(fn+len, "/am_layer_%d.npy", l->_layerID);
+    (*rwfn)(l->_adamAvgMom, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
     fprintf(stderr, "%s parameters for layer %d\n", load ? "Loaded" : "Saved", l->_layerID);
 }
 
