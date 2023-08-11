@@ -5,8 +5,7 @@ inline static size_t __attribute__((always_inline)) layer_size(size_t noOfNodes,
     size_t hugepg_size = (2L << 21);  /* 2MB Hugepage */
     size_t fano = noOfNodes * prevLayerNumOfNodes;
     size_t buffer_size = sizeof(Layer) + noOfNodes * sizeof(Node) + noOfNodes * batchsize * sizeof(Train) + 
-        fano * sizeof(float) + noOfNodes * sizeof(float) + fano * sizeof(float) + fano * sizeof(float) + 
-        fano * sizeof(float) + noOfNodes * sizeof(int) + batchsize * sizeof(float);
+        4 * fano * sizeof(float) + 3 * noOfNodes * sizeof(float) + noOfNodes * sizeof(int) + batchsize * sizeof(float);
     return (size_t) ceil(hugepg_size * buffer_size * 1.0 / hugepg_size);
 }
 
@@ -21,10 +20,12 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
     l->_Nodes                  = (Node *)  buf; buf += noOfNodes * sizeof(Node);
     l->_train_array            = (Train *) buf; buf += noOfNodes * batchsize * sizeof(Train);
     l->_weights                = (float *) buf; buf += fano * sizeof(float);
-    l->_bias                   = (float *) buf; buf += noOfNodes * sizeof(float);
     l->_adamAvgMom             = (float *) buf; buf += fano * sizeof(float);
     l->_adamAvgVel             = (float *) buf; buf += fano * sizeof(float);
     l->_adamT                  = (float *) buf; buf += fano * sizeof(float);
+    l->_bias                   = (float *) buf; buf += noOfNodes * sizeof(float);
+    l->_adamAvgMombias         = (float *) buf; buf += noOfNodes * sizeof(float);
+    l->_adamAvgVelbias         = (float *) buf; buf += noOfNodes * sizeof(float);
     l->_randNode               = (int *)   buf; buf += noOfNodes * sizeof(int);
     l->_normalizationConstants = (float *) buf; buf += batchsize * sizeof(float);
     l->_hashTables             = lsht_new(K, L, RangePow);
@@ -41,14 +42,22 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
     for (size_t n = 0; n < noOfNodes; n++) l->_randNode[n] = n;      /* Init randNode array */
     layer_updateRandomNodes(l);                                      /* Shuffle randNode array */
 
-    for (size_t n = 0; n < fano; n++) l->_adamT[n] = 0.0;            /* Set ADAM t array to 0 */
+    for (size_t k = 0; k < fano; k++) l->_adamT[k] = 0.0;            /* Set ADAM t array to 0 */
+
+    size_t tblks = noOfNodes * batchsize;
+    for (size_t k = 0; k < tblks; k++) {                             /* Init train array */
+        l->_train_array[k]._lastDeltaforBPs = 0.0;
+        l->_train_array[k]._lastActivations = 0.0;
+        l->_train_array[k]. _ActiveinputIds = 0;
+    }
+
     (load) ?  layer_load(l, path) : layer_randinit(l);               /* Set weights, bias, ADAM vel, ADAM mom */
 
     for (size_t i = 0; i < noOfNodes; i++) {                         /* Set node-specific pointers for convenience */
         size_t index = prevLayerNumOfNodes * i;
-        node_update(&l->_Nodes[i], i, type, batchsize,
-            &l->_weights[index], &l->_bias[i], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
-            l->_train_array);
+        node_update(&l->_Nodes[i], i, type, batchsize, l->_train_array,
+            &l->_weights[index], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
+            &l->_bias[i], &l->_adamAvgMombias[i], &l->_adamAvgVelbias[i]);
     }
 
     layer_rehash(l);
@@ -82,6 +91,8 @@ void layer_randinit(Layer *l) {
         size_t fano = i * l->_prevLayerNumOfNodes;
         for (size_t j = 0; j < l->_prevLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,ksd);
         l->_bias[i] = 0.0;
+        l->_adamAvgMombias[i] = 0.0;
+        l->_adamAvgVelbias[i] = 0.0;
     }
 }
 
@@ -223,7 +234,8 @@ void layer_backprop_firstlayer(Layer *l, int *thisLayActiveIds, int thisLayActLe
 
 void layer_adam(Layer *l, float lr, int ratio) {
 #pragma omp parallel for
-    for (size_t m = 0; m < l->_noOfNodes; m++) node_adam(&l->_Nodes[m], l->_prevLayerNumOfNodes, lr, ratio);
+    for (size_t m = 0; m < l->_noOfNodes; m++) 
+        node_adam(&l->_Nodes[m], l->_prevLayerNumOfNodes, l->_batchsize, lr, ratio);
 }
 
 inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path, bool load) {
@@ -235,6 +247,11 @@ inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path,
     rwfn = load ? myload_fnpy : mysave_fnpy;
     sprintf(fn+len, "/b_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_bias, l->_noOfNodes, 1, fn);
+    sprintf(fn+len, "/amb_layer_%d.npy", l->_layerID);
+    (*rwfn)(l->_adamAvgMombias, l->_noOfNodes, 1, fn);
+    sprintf(fn+len, "/avb_layer_%d.npy", l->_layerID);
+    (*rwfn)(l->_adamAvgVelbias, l->_noOfNodes, 1, fn);
+
     sprintf(fn+len, "/w_layer_%d.npy", l->_layerID);
     (*rwfn)(l->_weights, l->_noOfNodes, l->_prevLayerNumOfNodes, fn);
     sprintf(fn+len, "/av_layer_%d.npy", l->_layerID);

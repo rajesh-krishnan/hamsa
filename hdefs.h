@@ -129,8 +129,9 @@ void lsht_clear(LSHT *l);
 void lsht_add(LSHT *l, int *hashes, int id);
 void lsht_retrieve_histogram(LSHT *l, int *hashes, Histo **counts);
 
-void node_update(Node *n, int nodeID, NodeType type, int batchsize, 
-    float *weights, float *bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train* train_blob);
+void node_update(Node *n, int nodeID, NodeType type, int batchsize, Train *train_blob,
+    float *weights, float *adamAvgMom, float *adamAvgVel, float *adam_t,
+    float *bias, float *adamAvgMombias, float *adamAvgVelbias);
 float node_get_last_activation(Node *n, int inputID);
 void node_set_last_activation(Node *n, int inputID, float realActivation);
 void node_increment_delta(Node *n, int inputID, float incrementValue);
@@ -141,5 +142,5 @@ void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeId
     float learningRate, int inputID);
 void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nnzSize, 
     float learningRate, int inputID);
-void node_adam(Node *n, int dim, float tmplr, int ratio);
+void node_adam(Node *n, int dim, int batchsize, float tmplr, int ratio);
 

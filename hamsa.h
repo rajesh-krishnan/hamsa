@@ -14,8 +14,8 @@ typedef struct _struct_dwtahash {
 } DWTAHash;
 
 typedef struct _struct_bucket {
-  int count;
-  int arr[BUCKETSIZE];
+    int count;
+    int arr[BUCKETSIZE];
 } Bucket;
 
 typedef struct _struct_lsht {
@@ -30,7 +30,6 @@ typedef enum { ReLU = 1, Softmax = 2 } NodeType;
 typedef struct _struct_train {
     float _lastDeltaforBPs;
     float _lastActivations;
-    //float _lastGradients;
     int _ActiveinputIds;
 } Train;
 
@@ -39,13 +38,12 @@ typedef struct _struct_node {
     NodeType _type;
     Train *_train;
     float *_weights;
-    float *_bias;
-    float *_t;
     float *_adamAvgMom;
     float *_adamAvgVel;
-    float _tbias;
-    float _adamAvgMombias;
-    float _adamAvgVelbias;
+    float *_t;
+    float *_bias;
+    float *_adamAvgMombias;
+    float *_adamAvgVelbias;
 } Node;
 
 typedef struct _struct_layer {
@@ -58,16 +56,18 @@ typedef struct _struct_layer {
     int _L;
     int _RangePow;
     Node *_Nodes;
-    LSHT *_hashTables;
-    DWTAHash *_dwtaHasher;
     Train *_train_array;
-    int *_randNode;
     float *_weights;
-    float *_bias;
     float *_adamAvgMom;
     float *_adamAvgVel;
     float *_adamT;
+    float *_bias;
+    float *_adamAvgMombias;
+    float *_adamAvgVelbias;
+    int *_randNode;
     float *_normalizationConstants;
+    LSHT *_hashTables;
+    DWTAHash *_dwtaHasher;
 } Layer;
 
 typedef struct _struct_config {
