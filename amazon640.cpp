@@ -104,8 +104,9 @@ void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
 
 void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
     int Batchsize = cfg->Batchsize;
-    int Rebuild = cfg->Rebuild;
     int Rehash = cfg->Rehash;
+    int Rebuild = cfg->Rebuild;
+    int Reperm = cfg->Reperm;
     int Stepsize = cfg->Stepsize;
 
     ifstream file(cfg->trainData);
@@ -118,7 +119,7 @@ void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
 
         bool rehash  = ((epoch*numBatches+i)%(Rehash/Batchsize) == (Rehash/Batchsize-1));
         bool rebuild = ((epoch*numBatches+i)%(Rebuild/Batchsize) == (Rebuild/Batchsize-1));
-        bool reperm  = ((epoch*numBatches+i)%6946 == 6945);  /* why 6496 and why only last layer? */
+        bool reperm  = ((epoch*numBatches+i)%(Reperm/Batchsize) == (Reperm/Batchsize-1)); 
 
         auto t1 = std::chrono::high_resolution_clock::now();
         network_train(mynet, records, values, sizes, labels, labelsize, epoch * numBatches + i,

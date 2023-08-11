@@ -81,6 +81,7 @@ typedef struct _struct_config {
     int Batchsize;
     int Rehash;
     int Rebuild;
+    int Reperm;
     int InputDim;
     int totRecords;
     int totRecordsTest;

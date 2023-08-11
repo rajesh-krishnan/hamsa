@@ -9,6 +9,7 @@
   "Batchsize":       128,
   "Rehash":          6400,
   "Rebuild":         128000,
+  "Reperm":          640000,
   "InputDim":        135909,
   "totRecords":      490449,
   "totRecordsTest":  153025,

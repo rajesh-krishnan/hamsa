@@ -94,6 +94,9 @@ static void config_to_string(Config *cfg, char *ostr, int maxlen) {
     ADD_ITEM("  \"Rebuild\":         ");
     sprintf(buffer, "%d%s", cfg->Rebuild, ",\n");
     ADD_ITEM(buffer);
+    ADD_ITEM("  \"Reperm\":         ");
+    sprintf(buffer, "%d%s", cfg->Reperm, ",\n");
+    ADD_ITEM(buffer);
     ADD_ITEM("  \"InputDim\":        ");
     sprintf(buffer, "%d%s", cfg->InputDim, ",\n");
     ADD_ITEM(buffer);
@@ -182,6 +185,9 @@ static void string_to_config(char *jstr, Config *cfg) {
     x = json_getProperty(json, "Rebuild");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->Rebuild = (int) json_getInteger(x);
+    x = json_getProperty(json, "Reperm");
+    assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
+    cfg->Reperm = (int) json_getInteger(x);
     x = json_getProperty(json, "InputDim");
     assert((x != NULL) && (json_getType(x) == JSON_INTEGER));
     cfg->InputDim = (int) json_getInteger(x);
