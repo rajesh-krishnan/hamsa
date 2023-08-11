@@ -37,7 +37,6 @@ typedef struct _struct_train {
 typedef struct _struct_node {
     size_t _IDinLayer;
     NodeType _type;
-    int _currentBatchsize;
     Train *_train;
     float *_weights;
     float *_bias;
@@ -126,7 +125,7 @@ int layer_fwdprop(Layer *l,
     int *activeNodesOut, float *activeValuesOut, int *lengthOut, 
     int inputID, int *label, int labelsize, float Sparsity);
 void layer_compute_softmax_stats(Layer *l, int *thisLayActiveIds, int thisLayActLen,
-    float normalizationConstant, int inputID, int *label, int labelsize);
+    float normalizationConstant, int inputID, int batchsize, int *label, int labelsize);
 void layer_backprop(Layer *l, int *thisLayActiveIds, int thisLayActLen, Layer *prevLay,
     int *prevLayerActiveNodeIds, int prevLayerActiveNodeSize, float learningRate, int inputID);
 void layer_backprop_firstlayer(Layer *l, int *thisLayActiveIds, int thisLayActLen,

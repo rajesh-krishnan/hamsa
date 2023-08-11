@@ -195,10 +195,10 @@ int layer_fwdprop(Layer *l,
 }
 
 void layer_compute_softmax_stats(Layer *l, int *thisLayActiveIds, int thisLayActLen,
-    float normalizationConstant, int inputID, int *label, int labelsize) {
+    float normalizationConstant, int inputID, int batchsize, int *label, int labelsize) {
     for(int i=0; i < thisLayActLen; i++) {
         Node *n = &(l->_Nodes[thisLayActiveIds[i]]);
-        node_compute_softmax_stats(n, normalizationConstant, inputID, label, labelsize);
+        node_compute_softmax_stats(n, normalizationConstant, inputID, batchsize, label, labelsize);
     }
 }
 

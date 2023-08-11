@@ -4,7 +4,6 @@ void node_update(Node *n, int nodeID, NodeType type, int batchsize,
     float *weights, float *bias, float *adamAvgMom, float *adamAvgVel, float *adam_t, Train *train_blob) {
     n->_IDinLayer = nodeID;
     n->_type = type;
-    n->_currentBatchsize = batchsize;
     n->_weights = weights;
     n->_bias = bias;
     n->_adamAvgMom = adamAvgMom;
@@ -30,8 +29,6 @@ void node_increment_delta(Node *n, int inputID, float incrementValue) {
 }
 
 float node_get_activation(Node *n, int *indices, float *values, int length, int inputID) {
-    assert(inputID <= n->_currentBatchsize);
-
     if (n->_train[inputID]._ActiveinputIds != 1) {
         n->_train[inputID]._ActiveinputIds = 1; //activate input
     }
@@ -72,18 +69,16 @@ bool ID_in_label(int *label, int labelsize, int idd) {
   return false;
 }
 
-void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int *label, int labelsize) {
+void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int batchsize, int *label, int labelsize) {
     assert(n->_train[inputID]._ActiveinputIds == 1);
-
     n->_train[inputID]._lastActivations /= normalizationConstant + 0.0000001;
-
     /* TODO: check gradient */
     n->_train[inputID]._lastGradients = 1;
     if (ID_in_label (label, labelsize, n->_IDinLayer)) {
-        n->_train[inputID]._lastDeltaforBPs = (1.0/labelsize - n->_train[inputID]._lastActivations) / n->_currentBatchsize;
+        n->_train[inputID]._lastDeltaforBPs = (1.0/labelsize - n->_train[inputID]._lastActivations) / batchsize;
     }
     else {
-        n->_train[inputID]._lastDeltaforBPs = (-n->_train[inputID]._lastActivations) / n->_currentBatchsize;
+        n->_train[inputID]._lastDeltaforBPs = (-n->_train[inputID]._lastActivations) / batchsize;
     }
 }
 

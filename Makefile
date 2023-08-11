@@ -7,11 +7,11 @@ CFLAGS   = -O3 -finline-functions -fno-strict-aliasing \
            -Wno-missing-prototypes -Wno-unused-variable -Wno-unused-function \
            -fPIC -finline-functions -fopenmp \
            -march=native -mtune=intel \
-           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 -pg 
+           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937
 CPLFLAGS = -O3 -Wall -std=c++11 \
            -march=native -mtune=intel \
            -Wno-unused-variable -Wno-unused-function \
-           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 -pg
+           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937
 CPP      = g++
 CC       = gcc
 AR       = ar

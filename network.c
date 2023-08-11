@@ -67,7 +67,7 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
             Layer* prevLay = n->_hiddenlayers[j-1];
             if (j == (n->_cfg->numLayer - 1)) {
                 layer_compute_softmax_stats(thisLay, activeNodes[j], activeLength[j],
-                     thisLay->_normalizationConstants[i], i, blabels[i], blabelsize[i]);
+                     thisLay->_normalizationConstants[i], i, n->_cfg->Batchsize, blabels[i], blabelsize[i]);
             }
             if (j != 0) {
                 layer_backprop(thisLay, activeNodes[j], activeLength[j], prevLay,
