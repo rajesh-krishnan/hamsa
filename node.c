@@ -66,7 +66,7 @@ bool ID_in_label(int *label, int labelsize, int idd) {
 
 void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int batchsize, int *label, int labelsize) {
     assert(n->_train[inputID]._ActiveinputIds == 1);
-    n->_train[inputID]._lastActivations /= normalizationConstant + 0.0000001;
+    n->_train[inputID]._lastActivations /= normalizationConstant + EPS;
     if (ID_in_label (label, labelsize, n->_IDinLayer)) {
         n->_train[inputID]._lastDeltaforBPs = (1.0/labelsize - n->_train[inputID]._lastActivations) / batchsize;
     }
