@@ -120,7 +120,7 @@ void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
     for (int i = 0; i < numBatches; i++) {
         PARSE_LOAD_DATA
 
-        if((i+epoch*numBatches)%Stepsize==0) { EvalDataSVM(cfg, mynet, 20, epoch*numBatches+i); }
+        if((i+epoch*numBatches)%Stepsize==0) { EvalDataSVM(cfg, mynet, 10, epoch*numBatches+i); }
 
         bool rehash = false;
         bool rebuild = false;
@@ -170,13 +170,9 @@ int main(int argc, char* argv[])
         ofstream outputFile(cfg->logFile, std::ios_base::app);
         outputFile<<"Epoch "<<e<<endl;
         ReadDataSVM(cfg, n, numBatches, e);
-        e++;
-        if(e == cfg->Epoch) {
-            EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
-        }else{
-            EvalDataSVM(cfg, n, 50, e*numBatches);
-        }
         network_save_params(n);
+        e++;
+        EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
     }
 
     network_delete(n);
