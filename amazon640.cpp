@@ -100,7 +100,7 @@ void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
         auto correctPredict = network_infer(mynet, records, values, sizes, labels, labelsize);
         totCorrect += correctPredict;
 
-        cout <<"testbatch "<< i << ": " << totCorrect*1.0/(Batchsize*(i+1)) << " correct" << endl;
+        // cout <<"testbatch "<< i << ": " << totCorrect*1.0/(Batchsize*(i+1)) << " correct" << endl;
 
         RELEASE_MEMORY
     }
@@ -120,15 +120,14 @@ void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
     for (int i = 0; i < numBatches; i++) {
         PARSE_LOAD_DATA
 
-        if((i+epoch*numBatches)%Stepsize==0) { EvalDataSVM(cfg, mynet, 10, epoch*numBatches+i); }
+        if((i+epoch*numBatches)%Stepsize==0) { EvalDataSVM(cfg, mynet, 20, epoch*numBatches+i); }
 
         bool rehash = false;
         bool rebuild = false;
         bool reperm = false;
         if ((epoch*numBatches+i)%(Rehash/Batchsize) == (Rehash/Batchsize-1))  rehash = true;
-        if ((epoch*numBatches+i)%(Rebuild/Batchsize) == (Rehash/Batchsize-1)) rebuild = true;
-        /* XXX: Original code hardcoded 6496 and layerID 1 (last?) in network_train, why? */
-        if ((epoch*numBatches+i)%6946 == 6945) reperm = true; 
+        if ((epoch*numBatches+i)%(Rebuild/Batchsize) == (Rebuild/Batchsize-1)) rebuild = true;
+        if ((epoch*numBatches+i)%6946 == 6945) reperm = true;    /* XXX: Why 6496 and why only last layer? */
 
         // int num_features = 0, num_labels = 0;
         // for (int i = 0; i < Batchsize; i++) { num_features += sizes[i]; num_labels += labelsize[i]; }
@@ -172,7 +171,7 @@ int main(int argc, char* argv[])
         ReadDataSVM(cfg, n, numBatches, e);
         network_save_params(n);
         e++;
-        EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
+        if (e == cfg->Epoch) EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
     }
 
     network_delete(n);
