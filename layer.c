@@ -124,8 +124,7 @@ int layer_get_prediction(Layer *l, int *activeNodesOut, int lengthOut, int input
  *   - no other thread modifies label
  *   - activeNodesIn/Out, activeValuesIn/Out, and lengthOut are dedicated to this call
  *   - no other thread reads or modifies l->_normalizationConstants[inputID]
- *   - no other thread reads or modifies n->_train[inputID]._ActiveinputIds for any node in layer
- *   - no other thread reads or modifies n->_train[inputID]._lastActivations for any node in layer
+ *   - no other thread reads or modifies n->_train[inputID] for any node in the layer
  */
 int layer_fwdprop(Layer *l, 
     int *activeNodesIn, float *activeValuesIn, int lengthIn,        /* from previous layer */
