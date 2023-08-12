@@ -3,18 +3,17 @@
 int myrand_unif() { 
     static sfmt_t sfmt;
     static int inited = 0;
+    if (inited) return(sfmt_genrand_uint32(&sfmt)>>1);
     int rd;
     unsigned int init[] = {0x123, 0x234, 0x345, 0x456};
-    if (!inited) {
-        if((rd = open("/dev/urandom", O_RDONLY)) < 0) {
+    if((rd = open("/dev/urandom", O_RDONLY)) < 0) {
             fprintf(stderr, "Could not open /dev/urandom\n");
-        }
-        else {
-            if(read(rd, init, 4) < 0) fprintf(stderr, "Read from /dev/urandom failed\n");
-        }
-        sfmt_init_by_array(&sfmt, init, 4);
-        inited = 1;
     }
+    else {
+            if(read(rd, init, 4) < 0) fprintf(stderr, "Read from /dev/urandom failed\n");
+    }
+    sfmt_init_by_array(&sfmt, init, 4);
+    inited = 1;
     return(sfmt_genrand_uint32(&sfmt)>>1);
 }
 
