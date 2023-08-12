@@ -109,8 +109,10 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
 }
 
 int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, int **blabels, int *blabelsize) {
-    int correctPred = 0;
-#pragma omp parallel for reduction(+:correctPred)
+    int *correctPred = (int *) malloc(n->_cfg->Batchsize * sizeof(int));
+    assert(correctPred != NULL);
+    memset(correctPred, 0, n->_cfg->Batchsize * sizeof(int));
+#pragma omp parallel for 
     for (int i = 0; i < n->_cfg->Batchsize; i++) {
         int predict_class = -1;
         int lengthIn=0, lengthOut=0;
@@ -123,9 +125,13 @@ int network_infer(Network *n, int **inIndices, float **inValues, int *inLength, 
                 free(activeNodesOut); free(activeValuesOut);
             }
         }
-        for(int k=0; k < blabelsize[i]; k++)
-            if(blabels[i][k] == predict_class) { correctPred += 1; break; }
+        for(int k=0; k < blabelsize[i]; k++) {
+            if(blabels[i][k] == predict_class) { correctPred[i] += 1; break; } // correct predictions for inputID
+        }
     }
-    return correctPred;
+    int batchCorrectPred = 0;
+    for (int i = 0; i < n->_cfg->Batchsize; i++) batchCorrectPred += correctPred[i];
+    free(correctPred);
+    return batchCorrectPred;
 }
 
