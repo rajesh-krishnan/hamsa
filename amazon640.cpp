@@ -68,7 +68,7 @@ using namespace std;
             count++; \
             if (count >= Batchsize) \
                 break; \
-        } 
+        }
 
 #define RELEASE_MEMORY \
         delete[] sizes; \
@@ -113,11 +113,15 @@ void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
     for (int i = 0; i < numBatches; i++) {
         ALLOC_MEMORY_LOAD_NEXTBATCH
 
-        if((i+epoch*numBatches)%Stepsize==0) { EvalDataSVM(cfg, mynet, 20, epoch*numBatches+i); } // Progress check
+        if((i+epoch*numBatches)%Stepsize==0) {
+            cout << "Checking progress on batch " << (i+epoch*numBatches) << " at time " << time(NULL) << endl;
+            EvalDataSVM(cfg, mynet, 10, epoch*numBatches+i);
+            cout << "Logged progress on batch " << (i+epoch*numBatches) << " at time " << time(NULL) << endl;
+        }
 
         bool rehash  = ((epoch*numBatches+i)%(Rehash/Batchsize) == (Rehash/Batchsize-1));
         bool rebuild = ((epoch*numBatches+i)%(Rebuild/Batchsize) == (Rebuild/Batchsize-1));
-        bool reperm  = ((epoch*numBatches+i)%(Reperm/Batchsize) == (Reperm/Batchsize-1)); 
+        bool reperm  = ((epoch*numBatches+i)%(Reperm/Batchsize) == (Reperm/Batchsize-1));
 
         auto t1 = std::chrono::high_resolution_clock::now();
         network_train(mynet, records, values, sizes, labels, labelsize, epoch * numBatches + i,
@@ -127,16 +131,17 @@ void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
         globalTime+= timeDiffInMiliseconds;
 
         RELEASE_MEMORY
+        if((i+epoch*numBatches)%100==99) {
+            cout << "Trained on " << (i+epoch*numBatches) + 1 << " batches at " << time(NULL) << " s " << endl;
+        }
     }
     file.close();
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     const char *inCfgFile  = "sampleconfig.json";
     const char *savCfgFile = "./data/config.json";
     Config *cfg = config_new(inCfgFile);
-
     cout << "Loaded config" << endl;
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -146,20 +151,25 @@ int main(int argc, char* argv[])
     cout << "Network initialization takes " << timeDiffInMiliseconds/1000 << " milliseconds" << endl;
 
     config_save(cfg, savCfgFile);
+    cout << "Saved network configuration" << endl;
     network_save_params(n);
-    cout << "Saved network configuration and initial parameters" << endl;
 
     int numBatches = cfg->totRecords / cfg->Batchsize;
     int numBatchesTest = cfg->totRecordsTest / cfg->Batchsize;
     int e = 0;
+    ofstream outputFile(cfg->logFile, std::ios_base::trunc);
     while(e < cfg->Epoch) {
-        ofstream outputFile(cfg->logFile, std::ios_base::app);
         outputFile<<"Epoch "<<e<<endl;
+        cout << "Start training epoch " << e << " at " << time(NULL) << " s " << endl;
         ReadDataSVM(cfg, n, numBatches, e);
+        cout << "Completed training epoch " << e << " at " << time(NULL) << " s " << endl;
         network_save_params(n);
         e++;
-        if (e == cfg->Epoch) EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
     }
+    outputFile<<"Evaluation"<<endl;
+    cout << "Start evaluation over entire test set" << e << " at " << time(NULL) << " s " << endl;
+    EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
+    cout << "Completed evaluation over entire test set" << e << " at " << time(NULL) << " s " << endl;
 
     network_delete(n);
     config_delete(cfg);
