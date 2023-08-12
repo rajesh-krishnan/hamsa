@@ -10,7 +10,7 @@ extern "C" {
 
 using namespace std;
 
-#define PARSE_LOAD_DATA \
+#define ALLOC_MEMORY_LOAD_NEXTBATCH \
         int **records = new int *[Batchsize]; \
         float **values = new float *[Batchsize]; \
         int *sizes = new int[Batchsize]; \
@@ -91,11 +91,9 @@ void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
     getline(file, str); //Skip header
 
     for (int i = 0; i < numBatchesTest; i++) {
-        PARSE_LOAD_DATA
-
+        ALLOC_MEMORY_LOAD_NEXTBATCH
         auto correctPredict = network_infer(mynet, records, values, sizes, labels, labelsize);
         totCorrect += correctPredict;
-
         RELEASE_MEMORY
     }
     file.close();
@@ -113,9 +111,9 @@ void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
     string str;
     getline( file, str ); // Skip header
     for (int i = 0; i < numBatches; i++) {
-        PARSE_LOAD_DATA
+        ALLOC_MEMORY_LOAD_NEXTBATCH
 
-        if((i+epoch*numBatches)%Stepsize==0) { EvalDataSVM(cfg, mynet, 20, epoch*numBatches+i); }
+        if((i+epoch*numBatches)%Stepsize==0) { EvalDataSVM(cfg, mynet, 20, epoch*numBatches+i); } // Progress check
 
         bool rehash  = ((epoch*numBatches+i)%(Rehash/Batchsize) == (Rehash/Batchsize-1));
         bool rebuild = ((epoch*numBatches+i)%(Rebuild/Batchsize) == (Rebuild/Batchsize-1));
