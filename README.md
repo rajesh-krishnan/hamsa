@@ -228,7 +228,7 @@ The code checks for progress every Stepsize batches by running inference
 on a small number of batches of test data. 
 
 ```
-"Rehash":          6400,
+"Rehash":          128000,
 ```
 Once every Rehash/Bathsize batches, the LSHT counts are cleared and 
 nodes/weights are rehashed into the LSHT. It is unclear how to choose this
