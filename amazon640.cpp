@@ -146,6 +146,8 @@ int main(int argc, char* argv[]) {
     Config *cfg = config_new(inCfgFile);
     cout << "Loaded config" << endl;
 
+    ofstream f(cfg->logFile, std::ios_base::out); f.close();
+
     auto t1 = std::chrono::high_resolution_clock::now();
     Network *n = network_new(cfg, false);
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -159,20 +161,22 @@ int main(int argc, char* argv[]) {
     int numBatches = cfg->totRecords / cfg->Batchsize;
     int numBatchesTest = cfg->totRecordsTest / cfg->Batchsize;
     int e = 0;
-    ofstream outputFile(cfg->logFile, std::ios_base::app);
     while(e < cfg->Epoch) {
+        ofstream outputFile(cfg->logFile, std::ios_base::app);
         outputFile<<"Epoch "<<e<<endl;
+        outputFile.close();
         cout << "Start training epoch " << e << " at " << time(NULL) << " s " << endl;
         ReadDataSVM(cfg, n, numBatches, e);
         cout << "Completed training epoch " << e << " at " << time(NULL) << " s " << endl;
         network_save_params(n);
         e++;
     }
+    ofstream outputFile(cfg->logFile, std::ios_base::app);
     outputFile<<"Evaluation"<<endl;
+    outputFile.close();
     cout << "Start evaluation over entire test set" << e << " at " << time(NULL) << " s " << endl;
     EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
     cout << "Completed evaluation over entire test set" << e << " at " << time(NULL) << " s " << endl;
-    outputFile.close();
 
     network_delete(n);
     config_delete(cfg);
