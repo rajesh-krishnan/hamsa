@@ -97,6 +97,7 @@ void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
         RELEASE_MEMORY
     }
     file.close();
+    cout << "Progress: " << iter << " " << globalTime/1000 << " " << totCorrect * 1.0 / (numBatchesTest*Batchsize) << endl;
     outputFile << iter << " " << globalTime/1000 << " " << totCorrect * 1.0 / (numBatchesTest*Batchsize) << endl;
 }
 
