@@ -99,6 +99,7 @@ void EvalDataSVM(Config *cfg, Network *mynet, int numBatchesTest, int iter) {
     file.close();
     cout << "Progress: " << iter << " " << globalTime/1000 << " " << totCorrect * 1.0 / (numBatchesTest*Batchsize) << endl;
     outputFile << iter << " " << globalTime/1000 << " " << totCorrect * 1.0 / (numBatchesTest*Batchsize) << endl;
+    outputFile.close();
 }
 
 void ReadDataSVM(Config *cfg, Network* mynet, int numBatches, int epoch){
@@ -158,8 +159,8 @@ int main(int argc, char* argv[]) {
     int numBatches = cfg->totRecords / cfg->Batchsize;
     int numBatchesTest = cfg->totRecordsTest / cfg->Batchsize;
     int e = 0;
-    ofstream outputFile(cfg->logFile, std::ios_base::trunc);
     while(e < cfg->Epoch) {
+        ofstream outputFile(cfg->logFile, std::ios_base::app);
         outputFile<<"Epoch "<<e<<endl;
         cout << "Start training epoch " << e << " at " << time(NULL) << " s " << endl;
         ReadDataSVM(cfg, n, numBatches, e);
@@ -167,10 +168,12 @@ int main(int argc, char* argv[]) {
         network_save_params(n);
         e++;
     }
+    ofstream outputFile(cfg->logFile, std::ios_base::app);
     outputFile<<"Evaluation"<<endl;
     cout << "Start evaluation over entire test set" << e << " at " << time(NULL) << " s " << endl;
     EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
     cout << "Completed evaluation over entire test set" << e << " at " << time(NULL) << " s " << endl;
+    outputFile.close();
 
     network_delete(n);
     config_delete(cfg);
