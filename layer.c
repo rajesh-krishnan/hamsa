@@ -73,6 +73,7 @@ void layer_delete(Layer *l) {
 }
 
 void layer_rehash(Layer *l) {
+    fprintf(stderr, "Rehashing Layer %d\n", l->_layerID);
     lsht_clear(l->_hashTables);
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t index = l->_prevLayerNumOfNodes * i;
@@ -97,11 +98,13 @@ void layer_randinit(Layer *l) {
 }
 
 void layer_updateHasher(Layer *l) {
+    fprintf(stderr, "Rebuilding hasher in Layer %d\n", l->_layerID);
     dwtahash_delete(l->_dwtaHasher);
     l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_prevLayerNumOfNodes);
 }
 
 void layer_updateRandomNodes(Layer *l) { 
+    fprintf(stderr, "Repermuting random nodes in Layer %d\n", l->_layerID);
     myrand_shuffle(l->_randNode, l->_noOfNodes); 
 }
 
