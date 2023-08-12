@@ -132,15 +132,25 @@ void lsht_retrieve_histogram(LSHT *l, int *hashes, Histo **counts);
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, Train *train_blob,
     float *weights, float *adamAvgMom, float *adamAvgVel, float *adam_t,
     float *bias, float *adamAvgMombias, float *adamAvgVelbias);
-float node_get_last_activation(Node *n, int inputID);
-void node_set_last_activation(Node *n, int inputID, float realActivation);
-void node_increment_delta(Node *n, int inputID, float incrementValue);
 float node_get_activation(Node *n, int *indices, float *values, int length, int inputID);
-bool node_get_input_active(Node *n, int inputID);
 void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int batchsize, int *label, int labelsize);
 void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeIds, int prevLayerActiveNodeSize, 
     float learningRate, int inputID);
 void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nnzSize, 
     float learningRate, int inputID);
 void node_adam(Node *n, int dim, int batchsize, float tmplr, int ratio);
+
+inline bool node_get_input_active(Node *n, int inputID) { return n->_train[inputID]._ActiveinputIds == 1; }
+
+inline float __attribute__((always_inline)) node_get_last_activation(Node *n, int inputID) {
+    return (n->_train[inputID]._ActiveinputIds != 1) ? 0.0 : n->_train[inputID]._lastActivations;
+}
+
+inline void __attribute__((always_inline)) node_set_last_activation(Node *n, int inputID, float realActivation) {
+    n->_train[inputID]._lastActivations = realActivation;
+}
+
+inline void __attribute__((always_inline)) node_increment_delta(Node *n, int inputID, float incrementValue) {
+    if (n->_train[inputID]._lastActivations > 0) n->_train[inputID]._lastDeltaforBPs += incrementValue;
+}
 

@@ -15,19 +15,6 @@ void node_update(Node *n, int nodeID, NodeType type, int batchsize, Train *train
     n->_adamAvgVelbias = adamAvgVelbias;
 }
 
-float node_get_last_activation(Node *n, int inputID) {
-    return (n->_train[inputID]._ActiveinputIds != 1) ? 0.0 : n->_train[inputID]._lastActivations;
-}
-
-void node_set_last_activation(Node *n, int inputID, float realActivation) {
-    n->_train[inputID]._lastActivations = realActivation;
-}
-
-void node_increment_delta(Node *n, int inputID, float incrementValue) {
-    assert(n->_train[inputID]._ActiveinputIds == 1);
-    if (n->_train[inputID]._lastActivations > 0) n->_train[inputID]._lastDeltaforBPs += incrementValue;
-}
-
 float node_get_activation(Node *n, int *indices, float *values, int length, int inputID) {
     n->_train[inputID]._lastActivations = 0;
     for (int i = 0; i < length; i++) {
@@ -41,7 +28,7 @@ float node_get_activation(Node *n, int *indices, float *values, int length, int 
     case ReLU:
         if (n->_train[inputID]._lastActivations < 0) {
             n->_train[inputID]._lastActivations = 0;
-            n->_train[inputID]._lastDeltaforBPs = 0;  /* node_increment_delta will update this */
+            n->_train[inputID]._lastDeltaforBPs = 0;
         }
         break;
     case Softmax:
@@ -51,10 +38,6 @@ float node_get_activation(Node *n, int *indices, float *values, int length, int 
         break;
     }
     return n->_train[inputID]._lastActivations;
-}
-
-bool node_get_input_active(Node *n, int inputID) {
-    return n->_train[inputID]._ActiveinputIds == 1;
 }
 
 bool ID_in_label(int *label, int labelsize, int idd) {
