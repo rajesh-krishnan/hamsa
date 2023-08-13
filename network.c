@@ -89,12 +89,12 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
         free(activeLength);
     }
 
-    /* layer_adam is parallelized, so not much benefit in paralleizing this loop */
-    for (int j=0; j < n->_cfg->numLayer; j++) {                /* gradient descent on each layer after each batch */
+    /* gradient descent on each layer for batch, layer_adam parallelized across nodes */
+    for (int j=0; j < n->_cfg->numLayer; j++) layer_adam(n->_hiddenlayers[j], tmprlr, 1);
+
+    for (int j=0; j < n->_cfg->numLayer; j++) {
+        Layer *l = n->_hiddenlayers[j];
         float Sparsity  = n->_cfg->Sparsity[j];                /* use first half for training */
-        Layer *l        = n->_hiddenlayers[j];
-        bool last       = (j == (n->_cfg->numLayer - 1));
-        layer_adam(l, tmplr, 1);
         if (Sparsity < 1) {
             if (rebuild) layer_updateHasher(l);
             if (rehash)  layer_rehash(l);

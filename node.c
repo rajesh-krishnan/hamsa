@@ -94,16 +94,12 @@ void node_adam(Node *n, int dim, int batchsize, float tmplr, int ratio) {
     }
 
 #pragma omp simd
-    for (int d=0; d<dim; d++) n->_adamAvgMom[d] = BETA1 * n->_adamAvgMom[d] + (1 - BETA1) * n->_t[d];
-
-#pragma omp simd
-    for (int d=0; d<dim; d++) n->_adamAvgVel[d] = BETA2 * n->_adamAvgVel[d] + (1 - BETA2) * n->_t[d] * n->_t[d];
-
-#pragma omp simd
-    for (int d=0; d<dim; d++) n->_weights[d] += ratio * tmplr * n->_adamAvgMom[d] / (sqrt(n->_adamAvgVel[d]) + EPS);
-
-#pragma omp simd
-    for (int d=0; d<dim; d++) n->_t[d] = 0;
+    for (int d=0; d<dim; d++) {
+        n->_adamAvgMom[d] = BETA1 * n->_adamAvgMom[d] + (1 - BETA1) * n->_t[d];
+        n->_adamAvgVel[d] = BETA2 * n->_adamAvgVel[d] + (1 - BETA2) * n->_t[d] * n->_t[d];
+        n->_weights[d]   += ratio * tmplr * n->_adamAvgMom[d] / (sqrt(n->_adamAvgVel[d]) + EPS);
+        n->_t[d] = 0;
+    }
 
     *n->_adamAvgMombias = BETA1 * (*n->_adamAvgMombias) + (1 - BETA1) * tbias;
     *n->_adamAvgVelbias = BETA2 * (*n->_adamAvgVelbias) + (1 - BETA2) * tbias * tbias;
