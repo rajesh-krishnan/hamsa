@@ -14,7 +14,7 @@
   "totRecords":      490449,
   "totRecordsTest":  153025,
   "Lr":              0.0001,
-  "Epoch":           10,
+  "Epoch":           20,
   "Stepsize":        1000,
   "trainData":       "./data/Amazon670K.bow/train.txt",
   "testData":        "./data/Amazon670K.bow/test.txt",

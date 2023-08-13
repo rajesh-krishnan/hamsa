@@ -203,7 +203,7 @@ are specified. Current code assumes Amazon640K BOW data
 and format.
 
 ```
-"Epoch":           10,
+"Epoch":           20,
 ```
 This is the number of training passes made through the entire 
 training data set.
