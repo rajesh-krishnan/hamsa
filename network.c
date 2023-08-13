@@ -71,12 +71,18 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
                      thisLay->_normalizationConstants[i], i, n->_cfg->Batchsize, blabels[i], blabelsize[i]);
             }
             if (j != 0) {
+#pragma omp critical
+                {
                 layer_backprop(thisLay, activeNodes[j], activeLength[j], prevLay,
                     activeNodes[j-1], activeLength[j-1], tmplr, i);
+                }
             }
             else {
+#pragma omp critical
+                {
                 layer_backprop_firstlayer(thisLay, activeNodes[j], activeLength[j],
                     inIndices[i], inValues[i], inLength[i], tmplr, i);
+                }
             }
         }
 

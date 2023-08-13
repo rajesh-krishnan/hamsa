@@ -61,7 +61,6 @@ void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputI
 void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeIds, int prevLayerActiveNodeSize,
     float learningRate, int inputID) {
     assert(n->_train[inputID]._ActiveinputIds == 1);
-#pragma omp critical
     for (int i = 0; i < prevLayerActiveNodeSize; i++) {
         // Update delta before updating weights
         Node *prev_node = &(prevLayerNodeArray[prevLayerActiveNodeIds[i]]);
@@ -75,7 +74,6 @@ void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeId
 void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nnzSize,
     float learningRate, int inputID) {
     assert(n->_train[inputID]._ActiveinputIds == 1);
-#pragma omp critical
     for (int i = 0; i < nnzSize; i++) {
         float grad_t = n->_train[inputID]._lastDeltaforBPs * nnzvalues[i];
         n->_t[nnzindices[i]] += grad_t;             /* this is not per inputID, hence critical */
