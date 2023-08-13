@@ -18,18 +18,18 @@ int myrand_unif() {
 }
 
 float myrand_norm(double mu, double sigma) { /* Box-Muller */
-    static double scale = (1.0/0x7fffffff); 
-    static double X1, X2;
+    static float scale = (1.0/0x7fffffff); 
+    static float X1, X2;
     static int call = 0;
-    double U1, U2;
+    float U1, U2;
     call = !call;
-    if (!call) return (float) X2;
+    if (!call) return X2;
     do { U1 = myrand_unif() * scale; } while (U1 == 0); /* Avoid log (0) */
-    U1 = sqrt(-2 * log(U1));
+    U1 = sqrtf(-2 * log(U1));
     U2 = 2 * MY_PI * myrand_unif() * scale;
     X1 = mu + U1 * cos(U2) * sigma;
     X2 = mu + U1 * sin(U2) * sigma;
-    return (float) X1;
+    return X1;
 }
 
 void myrand_shuffle(int *array, int n) {

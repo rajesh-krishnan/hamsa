@@ -20,7 +20,7 @@ static void test_norm() {
     mean = totl / N;
     samp[i] = samp[i] - mean;
     for (i=0, totl=0.0; i<N; i++) totl += samp[i] * samp[i];
-    stdv = sqrt(totl / N);
+    stdv = sqrtf(totl / N);
     printf("Expected mean,stdv: 0.0,0.01  Observed mean,stdv: %.4f,%.4f\n", mean, stdv);
 }
 

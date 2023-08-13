@@ -87,7 +87,7 @@ void layer_rehash(Layer *l) {
  * Kaiming initialization preferable for faster covergence in deep networks 
  */
 void layer_randinit(Layer *l) {
-    float ksd = sqrt(1.0/l->_prevLayerNumOfNodes);
+    float ksd = sqrtf(1.0/l->_prevLayerNumOfNodes);
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t fano = i * l->_prevLayerNumOfNodes;
         for (size_t j = 0; j < l->_prevLayerNumOfNodes; j++) l->_weights[fano+j] = myrand_norm(0.0,ksd);
@@ -198,7 +198,7 @@ int layer_fwdprop(Layer *l,
             if(activeValuesOut[i] > maxValue) maxValue = activeValuesOut[i];
         }
         for (int i = 0; i < len; i++) {
-            float realActivation = exp(activeValuesOut[i] - maxValue);
+            float realActivation = expf(activeValuesOut[i] - maxValue);
             activeValuesOut[i] = realActivation;
             node_set_last_activation(&l->_Nodes[activeNodesOut[i]], inputID, realActivation);
             l->_normalizationConstants[inputID] += realActivation;

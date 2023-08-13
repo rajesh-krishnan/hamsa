@@ -67,12 +67,13 @@ We have refactored the code considerably:
 
   * Currently omp parallelism is used in only 3 places:
     -- forward propagation in parallel across inputIDs in a batch for inference
+        * refactoring to avoid reduction on correctPred and race condition on avg_retrievals
     -- forward and back in parallel across inputIDs in a batch for training
+        * refactoring of backprop plus atomic sections to avoid race conditions
     -- gradient descent in parallel across nodes of a layer, after forward and
        back propagation across all inputIDs in a a batch
 
-  * Our refactor has eliminated a few places where a variable could be modified
-    by multiple threads in parallel.
+  * We have used expf and sqrtf and compile with -ffast-math, which helps a bit
 
   * Instead of the custom config file, we use JSON from which the network can 
     be loaded; the config can also be saved.  
