@@ -82,28 +82,3 @@ void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nn
     }
 }
 
-/* can be done at end of each batch, in parallel across nodes of a layer */
-/* no other thread can access node's _weights, _bias, _train, _adamAvgVel, _adamAvgMom, -t */
-/* including at the layer level above */
-void node_adam(Node *n, int dim, int batchsize, float tmplr, int ratio) {
-    float tbias = 0.0;
-
-    for (int inputID=0; inputID<batchsize; inputID++){
-        tbias += n->_train[inputID]._lastDeltaforBPs;
-        n->_train[inputID]._lastDeltaforBPs = 0;
-        n->_train[inputID]._lastActivations = 0;
-        n->_train[inputID]._ActiveinputIds = 0;
-    }
-
-    for (int d=0; d<dim; d++){
-        n->_adamAvgMom[d] = BETA1 * n->_adamAvgMom[d] + (1 - BETA1) * n->_t[d];
-        n->_adamAvgVel[d] = BETA2 * n->_adamAvgVel[d] + (1 - BETA2) * n->_t[d] * n->_t[d];
-        n->_weights[d]   += ratio * tmplr * n->_adamAvgMom[d] / (sqrt(n->_adamAvgVel[d]) + EPS);
-        n->_t[d] = 0;
-    }
-
-    *n->_adamAvgMombias = BETA1 * (*n->_adamAvgMombias) + (1 - BETA1) * tbias;
-    *n->_adamAvgVelbias = BETA2 * (*n->_adamAvgVelbias) + (1 - BETA2) * tbias * tbias;
-    *n->_bias          += ratio * tmplr * (*n->_adamAvgMombias) / (sqrt(*n->_adamAvgVelbias) + EPS);
-}
-

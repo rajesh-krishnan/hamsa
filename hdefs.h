@@ -138,7 +138,6 @@ void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeId
     float learningRate, int inputID);
 void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nnzSize, 
     float learningRate, int inputID);
-void node_adam(Node *n, int dim, int batchsize, float tmplr, int ratio);
 
 inline bool node_get_input_active(Node *n, int inputID) { return n->_train[inputID]._ActiveinputIds == 1; }
 
@@ -152,5 +151,27 @@ inline void __attribute__((always_inline)) node_set_last_activation(Node *n, int
 
 inline void __attribute__((always_inline)) node_increment_delta(Node *n, int inputID, float incrementValue) {
     if (n->_train[inputID]._lastActivations > 0) n->_train[inputID]._lastDeltaforBPs += incrementValue;
+}
+
+/* done at end of each batch in parallel across nodes of a layer, not in parallel across inputs in a batch */
+inline void __attribute__((always_inline)) node_adam(Node *n, int dim, int batchsize, float tmplr, int ratio) {
+    float tbias = 0.0;
+    for (int inputID=0; inputID<batchsize; inputID++){
+        tbias += n->_train[inputID]._lastDeltaforBPs;
+        n->_train[inputID]._lastDeltaforBPs = 0;
+        n->_train[inputID]._lastActivations = 0;
+        n->_train[inputID]._ActiveinputIds = 0;
+    }
+#pragma omp simd
+    for (int d=0; d<dim; d++) n->_adamAvgMom[d] = BETA1 * n->_adamAvgMom[d] + (1 - BETA1) * n->_t[d];
+#pragma omp simd
+    for (int d=0; d<dim; d++) n->_adamAvgVel[d] = BETA2 * n->_adamAvgVel[d] + (1 - BETA2) * n->_t[d] * n->_t[d];
+#pragma omp simd
+    for (int d=0; d<dim; d++) n->_weights[d] += ratio * tmplr * n->_adamAvgMom[d] / (sqrt(n->_adamAvgVel[d]) + EPS);
+#pragma omp simd
+    for (int d=0; d<dim; d++) n->_t[d] = 0;
+    *n->_adamAvgMombias = BETA1 * (*n->_adamAvgMombias) + (1 - BETA1) * tbias;
+    *n->_adamAvgVelbias = BETA2 * (*n->_adamAvgVelbias) + (1 - BETA2) * tbias * tbias;
+    *n->_bias          += ratio * tmplr * (*n->_adamAvgMombias) / (sqrt(*n->_adamAvgVelbias) + EPS);
 }
 
