@@ -2,16 +2,16 @@ SOURCES = sfmt/SFMT.c tiny-json/tiny-json.c npy_array/npy_array.c \
           myrand.c configfile.c \
           lsht.c dwtahash.c node.c layer.c network.c
 OBJECTS  = $(SOURCES:.c=.o)
-CFLAGS   = -O3 -finline-functions -fno-strict-aliasing \
-           --param max-inline-insns-single=2000 -Wall -std=c99 \
-           -Wno-missing-prototypes -Wno-unused-variable -Wno-unused-function \
-           -fPIC -finline-functions -fopenmp \
+CFLAGS   = -g -O3 -std=c99 \
+           -Wall -Wno-missing-prototypes -Wno-unused-variable -Wno-unused-function \
+           -finline-functions --param max-inline-insns-single=2000 -fno-strict-aliasing \
+           -fPIC -fopenmp -ffast-math \
            -march=native -mtune=intel \
-           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 -g
-CPLFLAGS = -O3 -Wall -std=c++11 \
+           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 
+CPLFLAGS = -g -O3 -std=c++11 \
+           -Wall -Wno-unused-variable -Wno-unused-function \
            -march=native -mtune=intel \
-           -Wno-unused-variable -Wno-unused-function \
-           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937 -g
+           -msse2 -DHAVE_SSE2 -DSFMT_MEXP=19937
 CPP      = g++
 CC       = gcc
 AR       = ar
