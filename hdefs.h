@@ -24,7 +24,7 @@
 #define BETA1 0.9
 #define BETA2 0.999
 #define EPS 0.00000001
-#define MINACTIVE 1000
+#define MINACTIVE 256
 #define THRESH 0
 
 typedef struct _struct_histo {
