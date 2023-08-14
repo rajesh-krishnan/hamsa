@@ -138,7 +138,7 @@ void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeId
     float learningRate, int inputID);
 void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nnzSize, 
     float learningRate, int inputID);
-void node_adam(Node *n, int dim, int batchsize, float tmplr, int ratio);
+void node_adam(Node *n, int dim, int batchsize, float tmplr);
 
 inline bool node_get_input_active(Node *n, int inputID) { return n->_train[inputID]._ActiveinputIds == 1; }
 

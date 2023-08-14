@@ -119,11 +119,42 @@ We have refactored the code considerably:
     We have refactored it to call our C implementation instead, and reduced
     some code repetition. 
 
+### Notes on Performance
+
+Here is an anecdotal comaprison of the original SLIDE and HAMSA (commit tag
+32eb226738a09049d3e3fa1cbbb70f5fd6631899) on the same machine (no AVX-512), 
+same dataset, and with same configuration and hyperparameters. YMMV.
+Each log entry has number of batches trained, cumulative time for training
+(not including other main program function such as data file loading and 
+preparation, progress checks for logging, and looping across batches).
+The speed gains is largely attrbutable to expf/sqrtf with -ffast-math.
+The accuracy figures vary across runs, but note that we use Kaiming weight
+initiliazation and evaluate on 10 batches vs. 20 for SLIDE. The main point
+here is that the port works and appears to be slightly faster.
+
+| SLIDE | HAMSA |
+| --- | --- |
+| Epoch 0 | Epoch 0 |
+| 0 0 0 | 0 0 0 |
+| 1000 402 0.0792969 | 1000 287.143 0.078125 |
+| 2000 794 0.229297 | 2000 588.46 0.209375 |
+| 3000 1188 0.324609 | 3000 882.657 0.2375 |
+| Epoch 1 | Epoch 1 |
+| 4000 1586 0.391797 | 4000 1192.07 0.235156 |
+| 5000 1977 0.486719 | 5000 1500.55 0.266406 |
+| 6000 2363 0.508203 | 6000 1815.46 0.265625 |
+| 7000 2759 0.519922 | 7000 2130.66 0.285938 |
+| ... | ... |
+| Epoch 9 | Epoch 9 |
+| 35000 13876 0.58125 | 35000 11066.6 0.541406 |
+| 36000 14283 0.585156 | 36000 11378.4 0.540625 |
+| 37000 14686 0.582812 | 37000 11691 0.539844 |
+| 38000 15075 0.583594 | 38000 12004.4 0.539062 |
+
 ### Notes on Configuration
 
-Neural network configuration seems to be largely a black art. However, some notes
-on the configuration file may help, which is particualr for the Amazon640K bag of 
-words dataset.
+Neural network configuration is largely a black art. Some notes on the configuration 
+file for the Amazon640K bag of words dataset is provided below.
 
 `BETA1` and `BETA2` defined in `hdefs.h` are used to compute the temproary learning 
 rate and ADAM parameters. `EPS` is a small constant used to avoid divide by zero issues.
@@ -282,6 +313,7 @@ stochatic planning on continuous domains using RDDL (see [Ga2017](#Ga2017)).
 
 Code improvements that would help:
   * Use a logging function with timestamp, uniform format, and level
+  * Use of bfloat16 for the parameters
   * Replace amazon640.cpp with Python or C
   * Check whether amazon640 data can be redistributed -- was hard to find it
 
