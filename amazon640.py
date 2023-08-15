@@ -40,8 +40,8 @@ def doTest(net, sample=False):
     for i in range(numEval):
         records,values,sizes,labels,labelsize,offset,ka = NextBatchData(datafile, offset, batchsize)
         totCorrect += hamsa.network_infer(net, records, values, sizes, labels, labelsize);
-    accuracy = totCorrect * 1.0 / (numBatches*batchsize)
-    print('Finish evaluation on test data at %s with accuracy %.4f' % (datetime.now(), accuracy))
+    accuracy = totCorrect * 1.0 / (numEval*batchsize)
+    print('Finish evaluation on test data at %s' % datetime.now())
     return accuracy
 
 def doTrain(net):
@@ -63,7 +63,7 @@ def doTrain(net):
 
             if ((cbatchnum % stepsize) == 0): 
                 perf = doTest(n, True)
-                print('PROGRESS: Epoch %d Batches %d Train-time %.4f s Accuracy %d' % (epoch, cbatchnum, trainTime, perf))
+                print('PROGRESS: Epoch %d Batches %d Training %.4f s Accuracy %0.4f' % (epoch, cbatchnum, trainTime, perf))
 
             records,values,sizes,labels,labelsize,offset,ka = NextBatchData(datafile, offset, batchsize)
             rehash  = ((cbatchnum % nRehash)  == (nRehash-1))
@@ -96,7 +96,8 @@ if __name__ == '__main__':
     hamsa.network_save_params(n);
 
     doTrain(n)
-    doTest(n)
+    acc = doTest(n)
+    print('Accuracy on full test data %.4f' % acc)
 
     hamsa.network_delete(n);
     hamsa.config_delete(cfg);
