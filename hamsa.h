@@ -2,7 +2,6 @@
 #define BUCKETSIZE 128
 #define BINSIZE 8
 
-#pragma pack(push,1)
 typedef struct _struct_dwtahash {
     int _numhashes;
     int _rangePow;
@@ -99,7 +98,6 @@ typedef struct _struct_network {
     Layer **_hiddenlayers;
     Config *_cfg;
 } Network;
-#pragma pack(pop)
 
 Config *config_new(const char *cfgFile);
 void config_delete(Config *cfg);
@@ -131,6 +129,6 @@ void layer_backprop(Layer *l, int *thisLayActiveIds, int thisLayActLen, Layer *p
     int *prevLayerActiveNodeIds, int prevLayerActiveNodeSize, float learningRate, int inputID);
 void layer_backprop_firstlayer(Layer *l, int *thisLayActiveIds, int thisLayActLen,
     int *nnzindices, float *nnzvalues, int nnzSize, float learningRate, int inputID);
-void layer_adam(Layer *l, float lr, int ratio);
+void layer_adam(Layer *l, float lr);
 void layer_load(Layer *l, char *path);
 void layer_save(Layer *l, char *path);

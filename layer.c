@@ -234,10 +234,10 @@ void layer_backprop_firstlayer(Layer *l, int *thisLayActiveIds, int thisLayActLe
     }
 }
 
-void layer_adam(Layer *l, float lr, int ratio) {
+void layer_adam(Layer *l, float lr) {
 #pragma omp parallel for
     for (size_t m = 0; m < l->_noOfNodes; m++) 
-        node_adam(&l->_Nodes[m], l->_prevLayerNumOfNodes, l->_batchsize, lr, ratio);
+        node_adam(&l->_Nodes[m], l->_prevLayerNumOfNodes, l->_batchsize, lr);
 }
 
 inline static void __attribute__((always_inline)) layer_rw(Layer *l, char *path, bool load) {

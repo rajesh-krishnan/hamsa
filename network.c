@@ -90,7 +90,7 @@ void network_train(Network *n, int **inIndices, float **inValues, int *inLength,
     }
 
     /* gradient descent on each layer for batch, layer_adam parallelized across nodes */
-    for (int j=0; j < n->_cfg->numLayer; j++) layer_adam(n->_hiddenlayers[j], tmplr, 1);
+    for (int j=0; j < n->_cfg->numLayer; j++) layer_adam(n->_hiddenlayers[j], tmplr);
 
     for (int j=0; j < n->_cfg->numLayer; j++) {
         Layer *l = n->_hiddenlayers[j];
