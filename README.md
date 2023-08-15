@@ -13,9 +13,9 @@ HugeTLB Pages enabled, with gcc compiler and OpenMP should suffice.
 
 We provide a basic Makefile, which you will need to adapt to your needs.
 
-An example usage following the original code is `amazon640`. Additionally,
-the `test` program allows testing components. An example of how to use
-the library from Python is provided in `test.py`.
+An example usage following the original code is `amazon640`. An example 
+of how to use the library from Python is provided in `amazon640.py`.
+Additionally, the `test` program allows testing components. 
 
 The configuration I use for testing is below:
 
