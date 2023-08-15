@@ -121,35 +121,34 @@ We have refactored the code considerably:
 
 ### Notes on Performance
 
-Here is an anecdotal comaprison of the original SLIDE and HAMSA (commit tag
+Here is an anecdotal comparison of the original SLIDE and HAMSA (commit tag
 32eb226738a09049d3e3fa1cbbb70f5fd6631899) on the same machine (no AVX-512), 
-same dataset, and with same configuration and hyperparameters. YMMV.
+same dataset, and with same configuration and hyperparameters. 
 Each log entry has number of batches trained, cumulative time for training
 (not including other main program function such as data file loading and 
 preparation, progress checks for logging, and looping across batches).
-The speed gains is largely attrbutable to expf/sqrtf with -ffast-math.
-The accuracy figures vary across runs, but note that we use Kaiming weight
-initiliazation and evaluate on 10 batches vs. 20 for SLIDE. The main point
-here is that the port works and appears to be slightly faster.
+Note that the numbers vary across runs. Also, HAMSA uses expf/sqrtf,
+-ffast-math, Kaiming weight initialization, and 10 batches for periodic
+evaluation every 1000 batches.
 
 | SLIDE | HAMSA |
 | --- | --- |
 | Epoch 0 | Epoch 0 |
 | 0 0 0 | 0 0 0 |
-| 1000 402 0.0792969 | 1000 287.143 0.078125 |
-| 2000 794 0.229297 | 2000 588.46 0.209375 |
-| 3000 1188 0.324609 | 3000 882.657 0.2375 |
+| 1000 402 0.0792969 | 1000 384.585 0.0914062 |
+| 2000 794 0.229297 | 2000 773.652 0.191406 |
+| 3000 1188 0.324609 | 3000 1167.33 0.226562 |
 | Epoch 1 | Epoch 1 |
-| 4000 1586 0.391797 | 4000 1192.07 0.235156 |
-| 5000 1977 0.486719 | 5000 1500.55 0.266406 |
-| 6000 2363 0.508203 | 6000 1815.46 0.265625 |
-| 7000 2759 0.519922 | 7000 2130.66 0.285938 |
+| 4000 1586 0.391797 | 4000 1560.67 0.259375 |
+| 5000 1977 0.486719 | 5000 1945.67 0.266406 |
+| 6000 2363 0.508203 | 6000 2345.15 0.269531 |
+| 7000 2759 0.519922 | 7000 2738.57 0.267188 |
 | ... | ... |
 | Epoch 9 | Epoch 9 |
-| 35000 13876 0.58125 | 35000 11066.6 0.541406 |
-| 36000 14283 0.585156 | 36000 11378.4 0.540625 |
-| 37000 14686 0.582812 | 37000 11691 0.539844 |
-| 38000 15075 0.583594 | 38000 12004.4 0.539062 |
+| 35000 13876 0.58125 | 35000 13990.7 0.540625 |
+| 36000 14283 0.585156 | 36000 14398.2 0.54375 |
+| 37000 14686 0.582812 | 37000 14795.4 0.540625 |
+| 38000 15075 0.583594 | 38000 15181.8 0.535156 |
 
 ### Notes on Configuration
 
