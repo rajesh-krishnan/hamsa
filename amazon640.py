@@ -45,7 +45,6 @@ def doTest(net, sample=False):
     return accuracy
 
 def doTrain(net):
-    offset     = 0
     datafile   = ffi.string(net._cfg.trainData)
     batchsize  = int(net._cfg.Batchsize)
     stepsize   = int(net._cfg.Stepsize)
@@ -58,6 +57,7 @@ def doTrain(net):
 
     for epoch in range(cfg.Epoch):
         print('Start training epoch %d at %s' % (epoch,datetime.now()))
+        offset = 0
         for i in range(numBatches):
             cbatchnum = epoch * numBatches + i
 
