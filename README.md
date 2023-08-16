@@ -120,34 +120,34 @@ We have refactored the code considerably:
 
 ### Notes on Performance
 
-Here is an anecdotal comparison of the original SLIDE and HAMSA (commit tag
-32eb226738a09049d3e3fa1cbbb70f5fd6631899) on the same machine (no AVX-512), 
+Here is an anecdotal comparison of the original SLIDE and HAMSA (commit
+eac43f9dde56ab4467471614e15a01b8723a9c80) on the same machine (no AVX-512), 
 same dataset, and with same configuration and hyperparameters. 
 Each log entry has number of batches trained, cumulative time for training
 (not including other main program function such as data file loading and 
 preparation, progress checks for logging, and looping across batches).
 Note that the numbers vary across runs. Also, HAMSA uses expf/sqrtf,
--ffast-math, Kaiming weight initialization, and 10 batches for periodic
-evaluation every 1000 batches.
+-ffast-math, Kaiming weight initialization (vs. N(0,0.01)), and 10 (vs. 20)
+test batches for periodic evaluation every 1000 training batches.
 
 | SLIDE | HAMSA |
 | --- | --- |
 | Epoch 0 | Epoch 0 |
 | 0 0 0 | 0 0 0 |
-| 1000 402 0.0792969 | 1000 384.585 0.0914062 |
-| 2000 794 0.229297 | 2000 773.652 0.191406 |
-| 3000 1188 0.324609 | 3000 1167.33 0.226562 |
+| 1000 402 0.0792969 | 1000 259.847 0.0828125 |
+| 2000 794 0.229297 | 2000 515.164 0.164844 |
+| 3000 1188 0.324609 | 3000 769.202 0.188281 |
 | Epoch 1 | Epoch 1 |
-| 4000 1586 0.391797 | 4000 1560.67 0.259375 |
-| 5000 1977 0.486719 | 5000 1945.67 0.266406 |
-| 6000 2363 0.508203 | 6000 2345.15 0.269531 |
-| 7000 2759 0.519922 | 7000 2738.57 0.267188 |
+| 4000 1586 0.391797 | 4000 1032.23 0.1875 |
+| 5000 1977 0.486719 | 5000 1296.43 0.267188 |
+| 6000 2363 0.508203 | 6000 1564.42 0.269531 |
+| 7000 2759 0.519922 | 7000 1829.89 0.283594 |
 | ... | ... |
 | Epoch 9 | Epoch 9 |
-| 35000 13876 0.58125 | 35000 13990.7 0.540625 |
-| 36000 14283 0.585156 | 36000 14398.2 0.54375 |
-| 37000 14686 0.582812 | 37000 14795.4 0.540625 |
-| 38000 15075 0.583594 | 38000 15181.8 0.535156 |
+| 35000 13876 0.58125 | 35000 9443.35 0.535937 |
+| 36000 14283 0.585156 | 36000 9709.18 0.546875 |
+| 37000 14686 0.582812 | 37000 9978.29 0.539844 |
+| 38000 15075 0.583594 | 38000 10265.1 0.535156 |
 
 ### Notes on Configuration
 
