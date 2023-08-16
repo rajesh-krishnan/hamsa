@@ -77,7 +77,7 @@ def doTrain(net):
             hamsa.network_train(net, records, values, sizes, labels, labelsize, cbatchnum, reperm, rehash, rebuild);
             trainTime += (time() - t)
 
-            if ((cbatchnum % 100) == 99): print('Trained batches %d, last 100 in time %.4f s' % (cbatchnum+1, trainTime))
+            if ((cbatchnum % 100) == 99): print('Trained batches %d in %.4f seconds' % (cbatchnum+1, trainTime))
 
         print('Finish training epoch %d at %s' % (epoch,datetime.now()))
         hamsa.network_save_params(n);
