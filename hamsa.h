@@ -40,6 +40,7 @@ typedef struct _struct_node {
     float *_adamAvgMom;
     float *_adamAvgVel;
     float *_t;
+    float *_tbias;
     float *_bias;
     float *_adamAvgMombias;
     float *_adamAvgVelbias;
@@ -61,6 +62,7 @@ typedef struct _struct_layer {
     float *_adamAvgVel;
     float *_adamT;
     float *_bias;
+    float *_adamTbias;
     float *_adamAvgMombias;
     float *_adamAvgVelbias;
     int *_randNode;

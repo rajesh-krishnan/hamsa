@@ -131,7 +131,7 @@ void lsht_retrieve_histogram(LSHT *l, int *hashes, Histo **counts);
 
 void node_update(Node *n, int nodeID, NodeType type, int batchsize, Train *train_blob,
     float *weights, float *adamAvgMom, float *adamAvgVel, float *adam_t,
-    float *bias, float *adamAvgMombias, float *adamAvgVelbias);
+    float *bias, float *tbias, float *adamAvgMombias, float *adamAvgVelbias);
 float node_get_activation(Node *n, int *indices, float *values, int length, int inputID);
 void node_compute_softmax_stats(Node *n, float normalizationConstant, int inputID, int batchsize, int *label, int labelsize);
 void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeIds, int prevLayerActiveNodeSize, 

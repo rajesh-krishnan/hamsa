@@ -5,7 +5,7 @@ inline static size_t __attribute__((always_inline)) layer_size(size_t noOfNodes,
     size_t hugepg_size = (1L << 21);  /* 2MB Hugepage */
     size_t fano = noOfNodes * prevLayerNumOfNodes;
     size_t buffer_size = sizeof(Layer) + noOfNodes * sizeof(Node) + noOfNodes * batchsize * sizeof(Train) + 
-        4 * fano * sizeof(float) + 3 * noOfNodes * sizeof(float) + noOfNodes * sizeof(int) + batchsize * sizeof(float);
+        4 * fano * sizeof(float) + 4 * noOfNodes * sizeof(float) + noOfNodes * sizeof(int) + batchsize * sizeof(float);
     return (size_t) ceil(hugepg_size * buffer_size * 1.0 / hugepg_size);
 }
 
@@ -24,12 +24,13 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
     l->_adamAvgVel             = (float *) buf; buf += fano * sizeof(float);
     l->_adamT                  = (float *) buf; buf += fano * sizeof(float);
     l->_bias                   = (float *) buf; buf += noOfNodes * sizeof(float);
+    l->_adamTbias              = (float *) buf; buf += noOfNodes * sizeof(float);
     l->_adamAvgMombias         = (float *) buf; buf += noOfNodes * sizeof(float);
     l->_adamAvgVelbias         = (float *) buf; buf += noOfNodes * sizeof(float);
     l->_randNode               = (int *)   buf; buf += noOfNodes * sizeof(int);
     l->_normalizationConstants = (float *) buf; buf += batchsize * sizeof(float);
-    l->_hashTables             = lsht_new(K, L, RangePow);
-    l->_dwtaHasher             = dwtahash_new(K * L, prevLayerNumOfNodes);
+    l->_hashTables             = lsht_new(K, L, RangePow);  /* cleared and init in layer_rehash() */
+    l->_dwtaHasher             = NULL;                      /* alloc and init in layer_updateHasher() */
     l->_noOfNodes              = noOfNodes;
     l->_prevLayerNumOfNodes    = prevLayerNumOfNodes;
     l->_layerID                = layerID;
@@ -42,7 +43,8 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
     for (size_t n = 0; n < noOfNodes; n++) l->_randNode[n] = n;      /* Init randNode array */
     layer_updateRandomNodes(l);                                      /* Shuffle randNode array */
 
-    for (size_t k = 0; k < fano; k++) l->_adamT[k] = 0.0;            /* Set ADAM t array to 0 */
+    for (size_t k = 0; k < fano; k++)      l->_adamT[k] = 0.0;       /* Set ADAM t array to 0 */
+    for (size_t k = 0; k < noOfNodes; k++) l->_adamTbias[k] = 0.0;   /* Set ADAM tbias array to 0 */
 
     size_t tblks = noOfNodes * batchsize;
     for (size_t k = 0; k < tblks; k++) {                             /* Init train array */
@@ -57,9 +59,10 @@ Layer *layer_new(size_t noOfNodes, int prevLayerNumOfNodes, int layerID, NodeTyp
         size_t index = prevLayerNumOfNodes * i;
         node_update(&l->_Nodes[i], i, type, batchsize, l->_train_array,
             &l->_weights[index], &l->_adamAvgMom[index], &l->_adamAvgVel[index], &l->_adamT[index], 
-            &l->_bias[i], &l->_adamAvgMombias[i], &l->_adamAvgVelbias[i]);
+            &l->_bias[i], &l->_adamTbias[i], &l->_adamAvgMombias[i], &l->_adamAvgVelbias[i]);
     }
 
+    layer_updateHasher(l);
     layer_rehash(l);
     return l;
 }
@@ -74,6 +77,7 @@ void layer_delete(Layer *l) {
 
 void layer_rehash(Layer *l) {
     fprintf(stderr, "Rehashing Layer %d\n", l->_layerID);
+    assert(l->_dwtaHasher != NULL);
     lsht_clear(l->_hashTables);
     for (size_t i = 0; i < l->_noOfNodes; i++) {
         size_t index = l->_prevLayerNumOfNodes * i;
@@ -99,7 +103,7 @@ void layer_randinit(Layer *l) {
 
 void layer_updateHasher(Layer *l) {
     fprintf(stderr, "Rebuilding hasher in Layer %d\n", l->_layerID);
-    dwtahash_delete(l->_dwtaHasher);
+    if (l->_dwtaHasher != NULL) dwtahash_delete(l->_dwtaHasher);
     l->_dwtaHasher = dwtahash_new(l->_K * l->_L, l->_prevLayerNumOfNodes);
 }
 
