@@ -60,8 +60,7 @@ We have refactored the code considerably:
   * Based on the results reported in the paper, we have chosen to implement
     only the Densified Winner Take All Hash, First-In-First-Out sampling, and
     Adaptive Moment Estimation gradient descent. Either thresholding or minimum
-    active nodes per layer can be chosen at compilation.  We have eliminated
-    code repetition, fixed several bugs, improv
+    active nodes per layer can be chosen at compilation.
 
   * We use the SFMT library built with SSE2 and AVX256 support.
 
