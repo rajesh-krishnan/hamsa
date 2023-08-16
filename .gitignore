@@ -51,5 +51,5 @@ Module.symvers
 Mkfile.old
 dkms.conf
 data
-amazon640
+amazon670k
 test
