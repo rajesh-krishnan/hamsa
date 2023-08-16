@@ -17,9 +17,9 @@ CC       = gcc
 AR       = ar
 RANLIB   = ranlib
 
-all: amazon640 test libhamsa.so
+all: amazon670k test libhamsa.so
 
-amazon640: amazon640.cpp libhamsa.a
+amazon670k: amazon670k.cpp libhamsa.a
 	$(CPP) $(CPLFLAGS) -o $@ -fopenmp $< libhamsa.a -lm
 
 test: test.c libhamsa.a
@@ -41,5 +41,5 @@ libclean:
 	rm -f libhamsa.a libhamsa.so 
 
 execlean:
-	rm -f test amazon640
+	rm -f test amazon670k
 
