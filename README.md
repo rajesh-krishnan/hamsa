@@ -13,9 +13,9 @@ HugeTLB Pages enabled, with gcc compiler and OpenMP should suffice.
 
 We provide a basic Makefile, which you will need to adapt to your needs.
 
-An example usage following the original code is `amazon640`. An example 
-of how to use the library from Python is provided in `amazon640.py`.
-Additionally, the `test` program allows testing components. 
+An example usage following the original code is `amazon670k.cpp`. An example 
+of how to use the library from Python is provided in `amazon670k.py`.
+Additionally, the `test.c` program allows testing components. 
 
 The configuration I use for testing is below:
 
@@ -114,7 +114,7 @@ We have refactored the code considerably:
 
   * We have added a number of assertions across the code. 
 
-  * For now, we have kept the main.cpp, renamed to amazon640.cpp, in C++. 
+  * For now, we have kept the main.cpp, renamed to amazon670k.cpp, in C++. 
     We have refactored it to call our C implementation instead, and reduced
     some code repetition. 
 
@@ -152,7 +152,7 @@ evaluation every 1000 batches.
 ### Notes on Configuration
 
 Neural network configuration is largely a black art. Some notes on the configuration 
-file for the Amazon640K bag of words dataset is provided below.
+file for the Amazon670K bag of words dataset is provided below.
 
 `BETA1` and `BETA2` defined in `hdefs.h` are used to compute the temproary learning 
 rate and ADAM parameters. `EPS` is a small constant used to avoid divide by zero issues.
