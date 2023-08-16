@@ -35,7 +35,7 @@ def doTest(net, sample=False):
     batchsize  = int(net._cfg.Batchsize)
     numBatches = int(net._cfg.totRecordsTest/batchsize)
     totCorrect = 0
-    numEval    = 20 if sample else numBatches
+    numEval    = 10 if sample else numBatches
     print('Start evaluation on test data at %s' % datetime.now())
     for i in range(numEval):
         records,values,sizes,labels,labelsize,offset,ka = NextBatchData(datafile, offset, batchsize)
