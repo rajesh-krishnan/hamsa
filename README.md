@@ -239,11 +239,13 @@ This is the number of training passes made through the entire
 training data set.
 
 ```
-"Batchsize":       128,
+"Batchsize":       256,
 ```
-This is a batch for training, i.e., this is the number of records 
-to do forward propagation and back propagation on before running 
-gradient descent.
+This is a batch for training, i.e., this is the number of records to do forward
+propagation and back propagation on before running gradient descent (ADAM). If
+more memory is available, we can use a larger batchsize and run the expensive
+ADAM update less frequently, however, this could have an impact on how many
+epochs are needed.
 
 ```
 "Lr":              0.0001,
