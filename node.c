@@ -69,8 +69,15 @@ void node_backprop(Node *n, Node *prevLayerNodeArray, int *prevLayerActiveNodeId
             n->_train[inputID]._lastDeltaforBPs * n->_weights[prevLayerActiveNodeIds[i]]);
         float grad_t = n->_train[inputID]._lastDeltaforBPs * node_get_last_activation(prev_node, inputID);
 #pragma omp atomic
-        n->_t[prevLayerActiveNodeIds[i]] += grad_t;  /* this is not per inputID, hence critical */
+        n->_t[prevLayerActiveNodeIds[i]] += grad_t;      /* _t is not per inputID, hence critical */
     }
+
+#pragma omp atomic
+    *n->_tbias += n->_train[inputID]._lastDeltaforBPs;   /* _tbias is not per inputID, hence atomic */
+
+    n->_train[inputID]._lastDeltaforBPs = 0;
+    n->_train[inputID]._lastActivations = 0;
+    n->_train[inputID]._ActiveinputIds = 0;
 }
 
 void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nnzSize,
