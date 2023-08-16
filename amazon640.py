@@ -46,6 +46,7 @@ def doTest(net, sample=False):
 
 def doTrain(net):
     datafile   = ffi.string(net._cfg.trainData)
+    logfile    = ffi.string(net._cfg.logFile)
     batchsize  = int(net._cfg.Batchsize)
     stepsize   = int(net._cfg.Stepsize)
     numBatches = int(net._cfg.totRecords/batchsize)
@@ -63,7 +64,9 @@ def doTrain(net):
 
             if ((cbatchnum % stepsize) == 0): 
                 perf = doTest(n, True)
-                print('PROGRESS: Epoch %d Batches %d Training %.4f s Accuracy %0.4f' % (epoch, cbatchnum, trainTime, perf))
+                with open(logfile, 'a') as lf:
+                    print('PROGRESS: Epoch %d Batches %d Training %.4f s Accuracy %0.4f' % 
+                          (epoch, cbatchnum, trainTime, perf), file=lf)
 
             records,values,sizes,labels,labelsize,offset,ka = NextBatchData(datafile, offset, batchsize)
             rehash  = ((cbatchnum % nRehash)  == (nRehash-1))
@@ -95,9 +98,11 @@ if __name__ == '__main__':
     print('Saved network configuration')
     hamsa.network_save_params(n);
 
+    logfile = ffi.string(cfg.logFile)
+    with open(logfile, 'w') as lf: print('Opening log file at %s' % datetime.now(), file=lf)
     doTrain(n)
     acc = doTest(n)
-    print('Accuracy on full test data %.4f' % acc)
+    with open(logfile, 'a') as lf: print('Accuracy on test data %.4f at %s' % (acc,datetime.now()), file=lf)
 
     hamsa.network_delete(n);
     hamsa.config_delete(cfg);
