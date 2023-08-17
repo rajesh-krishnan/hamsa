@@ -174,9 +174,9 @@ int main(int argc, char* argv[]) {
     ofstream outputFile(cfg->logFile, std::ios_base::app);
     outputFile<<"Evaluation"<<endl;
     outputFile.close();
-    cout << "Start evaluation over entire test set" << e << " at " << time(NULL) << " s " << endl;
+    cout << "Start evaluation over entire test set" << " at " << time(NULL) << " s " << endl;
     EvalDataSVM(cfg, n, numBatchesTest, e*numBatches);
-    cout << "Completed evaluation over entire test set" << e << " at " << time(NULL) << " s " << endl;
+    cout << "Completed evaluation over entire test set" << " at " << time(NULL) << " s " << endl;
 
     network_delete(n);
     config_delete(cfg);
