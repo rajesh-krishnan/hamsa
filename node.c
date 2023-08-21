@@ -99,6 +99,8 @@ void node_backprop_firstlayer(Node *n, int *nnzindices, float *nnzvalues, int nn
 
 /* done at end of each batch in parallel across nodes of a layer, not in parallel across inputs in a batch */
 void node_adam(Node *n, int dim, int batchsize, float tmplr) {
+    if (*n->_tbias == 0.0) return;  /* XXX: Lazy ADAM -- node update if activated in batch */
+
 #pragma omp simd
     for (int d=0; d<dim; d++) {
         n->_adamAvgMom[d] = BETA1 * n->_adamAvgMom[d] + (1 - BETA1) * n->_t[d];
